@@ -1,0 +1,1 @@
+{"rgbmode": "1080p", "depthmode": "NFOV_UNBINNED", "SyncMode": "Master", "SyncIndex": "0", "OutputFolder": "/", "FilePrefix": "master", "CMD": "C:\\Program Files\\Azure Kinect SDK\\tools\\k4arecorder.exe", "fps": "30"}
