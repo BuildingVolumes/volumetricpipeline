@@ -7,6 +7,11 @@ import glob
 import numpy as np
 from PIL import Image
 
+########################################
+## CalibrationTargetInfo
+## -- just stores nx/ny corners at the moment 
+## -- could be used for different kinds of targets
+########################################
 class CalibrationTargetInfo:
     """Settings for the calibration target"""
     def __init__(self):
@@ -16,12 +21,20 @@ class CalibrationTargetInfo:
         self.NumX = _x
         self.NumY = _y
 
+########################################
+## CameraCalibrationIntrinsics
+## -- just stores the intrinsic matrix and distortions
+########################################
 class CameraCalibrationIntrinsics:
     """stores intrinsics and distortions only for one camera"""
     def __init__(self):
         self.mtx = []
         self.dist = []
 
+########################################
+## CalibrationImage
+## -- data storage for rgb, grayscale, corners, etc
+########################################
 class CalibrationImage:
     def __init__(self, filename):
         self.image = []
@@ -45,7 +58,11 @@ class CalibrationImage:
             self.corners = corners2
             cv2.drawChessboardCorners(self.image_withCorners,(numx,numy),self.corners, ret)
             self.cornersFound = True
-        
+
+########################################
+## CameraCalibration
+## -- the calibrator
+########################################    
 class CameraCalibration:
     """performs intrinsic calibration using opencv"""
     def __init__(self):
@@ -72,7 +89,6 @@ class CameraCalibration:
 
     def addImage(self,filename):
         """adds an image to the calibration list"""
-
         if (filename in self.imageFilenames) == False:
             # not already added to the list
             # so we should load and add to list
@@ -158,64 +174,6 @@ class CameraCalibration:
         self.targetInfo = CalibrationTargetInfo(numx,numy)
 
 
-# rgbmode = "";
-# depthmode = "";
-
-# SyncMode = "";
-# SyncIndex = "";
-
-# OutputFolder = "";
-# FilePrefix = "";
-# Filename = FilePrefix + SyncIndex + ".mkv"
-# CMD = "";
-# fps = "";
-# config = {"rgbmode":rgbmode, "depthmode":depthmode, "SyncMode":SyncMode, "SyncIndex":SyncIndex, "OutputFolder":OutputFolder, "FilePrefix":FilePrefix, "CMD":CMD, "fps":fps}
-
-
-# def write_config_file():
-#     global config
-#     #config = {"rgbmode":rgbmode, "depthmode":depthmode, "SyncMode":SyncMode, "SyncIndex":SyncIndex, "OutputFolder":OutputFolder, "FilePrefix":FilePrefix, "CMD":CMD, "fps":fps}
-#     with open('config1.json','w') as f:
-#         json.dump(config,f);
-
-# def read_config_file():
-#     global config
-#     with open('config1.json','r') as f:
-#         config = json.load(f);
-    
-
-# def print_all():
-#     global config
-#     print('rgbmode:'+config['rgbmode'])
-#     print('depthmode:'+config['depthmode'])
-#     print('SyncMode:'+config['SyncMode'])
-#     print('SyncIndex:'+config['SyncIndex'])
-#     print('OutputFolder:'+config['OutputFolder'])
-#     print('FilePrefix:'+config['FilePrefix'])
-#     print('CMD:'+config['CMD'])
-#     print('fps:'+config['fps'])
-
-
-# def set_all(valuesT):
-#     global config;
-#     print(config)
-    
-#     config['rgbmode'] = valuesT[1];
-#     config['depthmode'] = valuesT[2];
-#     config['SyncMode'] = valuesT[3];
-#     config['SyncIndex'] = valuesT[4];
-#     config['OutputFolder'] = valuesT[5];
-#     config['FilePrefix'] = valuesT[6];
-#     config['CMD'] = valuesT[7];
-#     config['fps'] = valuesT[8];
-#     print_all()
-
-
-
-# always read the config first
-#read_config_file();
-#print_all()
-
 ############################
 # This is a GUI for OpenCV's Camera Calibration
 # - purpose: to calibrate a SINGLE camera intrinsics
@@ -246,13 +204,13 @@ criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 NumX = 9
 NumY = 6
 
-# prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
-objp = np.zeros((NumY*NumX,3), np.float32)
-objp[:,:2] = np.mgrid[0:NumX,0:NumY].T.reshape(-1,2)
+# # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
+# objp = np.zeros((NumY*NumX,3), np.float32)
+# objp[:,:2] = np.mgrid[0:NumX,0:NumY].T.reshape(-1,2)
 
-# Arrays to store object points and image points from all the images.
-objpoints = [] # 3d point in real world space
-imgpoints = [] # 2d points in image plane.
+# # Arrays to store object points and image points from all the images.
+# objpoints = [] # 3d point in real world space
+# imgpoints = [] # 2d points in image plane.
 
 left_col = [[sg.Text('Folder'), sg.In(size=(25,1), enable_events=True ,key='-FOLDER-'), sg.FolderBrowse(initial_folder='.')],
             [sg.Listbox(values=[], enable_events=True, size=(40,20),key='-FILE LIST-')]]
@@ -281,22 +239,18 @@ layout = [[sg.Frame(layout=[
 # --------------------------------- Create Window ---------------------------------
 window = sg.Window('Image Viewer', layout)
 
-debugOutput=""
-CalibIntrinsicsMatrix = []
-CalibIntrinsicsDist =[]
-Calibrated = False
-
 def mprint(*args, **kwargs):
     window['-TOUTPUT-' + sg.WRITE_ONLY_KEY].print(*args, **kwargs)
 
 print = mprint
+
 calibrator = CameraCalibration()
 calibrator.setCalibrationTarget(NumX,NumY)
 
 # ----- Run the Event Loop -----
 # --------------------------------- Event Loop ---------------------------------
 while True:
-    #try:
+    try:
         event, values = window.read()
 
         if event in (None, 'Exit'):
@@ -312,7 +266,6 @@ while True:
                 os.path.join(folder, f)) and f.lower().endswith((".png", ".jpg", "jpeg", ".tiff", ".bmp"))]
             window['-FILE LIST-'].update(fnames)
         elif event == '-FILE LIST-':    # A file was chosen from the listbox
-            #try:
                 filename = os.path.join(values['-FOLDER-'], values['-FILE LIST-'][0])
                 print(filename)
                 img = calibrator.addImage(filename)
@@ -321,6 +274,7 @@ while True:
                 window['-TOUT-'].update(filename)
                 window['-IMAGE-'].update(data=imgbytes)
         elif event == '-B-FINDTARGET-':
+                
                 filename = os.path.join(values['-FOLDER-'], values['-FILE LIST-'][0])
                 print(filename)
                 img = calibrator.findChessBoard(filename)
@@ -346,8 +300,8 @@ while True:
             calibrator.load(filename)
 
         window['-TOUTPUT-'+sg.WRITE_ONLY_KEY].expand(True,True)
-    #except:
-       # print("MAIN:error")
+    except Exception as e:
+        print(e)
 # --------------------------------- Close & Exit ---------------------------------
 
 window.close()
