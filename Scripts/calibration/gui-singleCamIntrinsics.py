@@ -7,6 +7,136 @@ import glob
 import numpy as np
 from PIL import Image
 
+class CalibrationTargetInfo:
+    """Settings for the calibration target"""
+    def __init__(self):
+        self.NumX = 9
+        self.NumY = 6
+    def __init__(self,_x,_y):
+        self.NumX = _x
+        self.NumY = _y
+
+class CameraCalibrationIntrinsics:
+    """stores intrinsics and distortions only for one camera"""
+    def __init__(self):
+        self.mtx = []
+        self.dist = []
+
+class CalibrationImage:
+    def __init__(self, filename):
+        self.image = []
+        self.filename = filename
+        self.gray = []
+        self.undistorted = []
+        self.corners = []
+        self.image_withCorners = []
+        self.objp = []        
+        self.image = cv2.imread(filename)
+        self.gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
+        self.image_withCorners = self.image.copy()
+        self.cornersFound = False
+
+    def findChessBoard(self, numx, numy):
+        self.objp = np.zeros((NumY*NumX,3), np.float32)
+        self.objp[:,:2] = np.mgrid[0:NumX,0:NumY].T.reshape(-1,2)
+        ret,corners = cv2.findChessboardCorners(self.gray,(numx,numy),None)
+        if ret == True:
+            corners2 = cv2.cornerSubPix(self.gray,corners,(11,11),(-1,-1),criteria)
+            self.corners = corners2
+            cv2.drawChessboardCorners(self.image_withCorners,(numx,numy),self.corners, ret)
+            self.cornersFound = True
+        
+class CameraCalibration:
+    """performs intrinsic calibration using opencv"""
+    def __init__(self):
+        self.intrinsics = CameraCalibrationIntrinsics()
+        self.targetInfo = []
+        self.Calibrated = False
+        self.objpoints = [] # 3d point in real world space
+        self.imagepoints = [] # 2d points in image plane.
+        self.imageFilenames = []
+        self.images = []
+        self.dict_corners_objp = {}
+        self.dict_corners_c2 = {}
+        self.dictImages = {}
+        self.sz = []
+
+    def save(self, fileName):
+        """save calibration info """
+    def load(self,fileName):
+        """load calibration info """
+    def calibrate(self):
+        """performs the calibration """
+    def undistortImage(self,img):
+        """applies the calibration info to the passed in img"""
+
+    def addImage(self,filename):
+        """adds an image to the calibration list"""
+
+        if (filename in self.imageFilenames) == False:
+            # not already added to the list
+            # so we should load and add to list
+            print("Loading:"+filename)
+            self.imageFilenames.append(filename)
+            theImage = CalibrationImage(filename);
+            self.dictImages[filename] = theImage;
+            self.sz = theImage.gray.shape[::-1]; 
+        else:
+            print("File already loaded: "+filename)
+            theImage = self.dictImages[filename]
+            # already in list
+            # get index 
+        if theImage.cornersFound == True:
+            return theImage.image_withCorners
+        else:
+            return theImage.image
+
+    def findChessBoard(self, filename):
+        print("findChessBoard("+filename+")")
+        """ find the chessboard in the passed image """
+        if (filename in self.imageFilenames) == True:
+            theImage = self.dictImages[filename]
+            theImage.findChessBoard(self.targetInfo.NumX,self.targetInfo.NumY)
+            return theImage.image_withCorners
+        print("ERROR:findChessBoard("+filename+")")
+
+    def calibrate(self):
+        try:
+            self.objpoints = [] # 3d point in real world space
+            self.imgpoints = [] # 2d points in image plane.
+            objp = np.zeros((NumY*NumX,3), np.float32)
+            objp[:,:2] = np.mgrid[0:NumX,0:NumY].T.reshape(-1,2)
+            #sz = self.dictImages[1].gray.shape[::-1]
+            print("calibrate()")
+            for fname in self.imageFilenames:
+                print(fname)
+                theImage = self.dictImages[fname]
+                self.objpoints.append(objp)
+                self.imagepoints.append(theImage.corners)
+       
+            print("---cv2.calibrateCamera()")
+            ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(self.objpoints, self.imagepoints, self.sz, None, None)
+            self.intrinsics.mtx=mtx
+            self.intrinsics.dist = dist
+            Calibrated = True
+            mean_error = 0
+            print("---checking reprojection error")
+            length = len(self.objpoints)
+            for i in range(length):
+                imgpoints2, _ = cv2.projectPoints(self.objpoints[i], rvecs[i], tvecs[i], self.intrinsics.mtx, self.intrinsics.dist)
+                error = cv2.norm(self.imagepoints[i], imgpoints2, cv2.NORM_L2)/len(imgpoints2)
+                mean_error += error       
+            print("CameraIntrinsics:", self.intrinsics.mtx)
+            print("Distortion:",self.intrinsics.dist)
+            print( "Reprojection Error: {}".format(mean_error/length))
+        except:
+            print("err")
+
+    def setCalibrationTarget(self, cTargetInfo):
+        self.targetInfo = cTargetInfo
+    def setCalibrationTarget(self, numx,numy):
+        self.targetInfo = CalibrationTargetInfo(numx,numy)
+
 
 # rgbmode = "";
 # depthmode = "";
@@ -87,6 +217,15 @@ from PIL import Image
 # layout = [ [sg.Text('Click Image For Next')],
 #            [sg.Image(filename=files[0], key='-IMAGE-', enable_events=True)]]
 
+def getThumbnail(img, hh):
+    width = img.shape[1]
+    height = img.shape[0]
+    newHeight = hh;
+    scale = newHeight/height
+    newWidth = int(width * scale)
+    imgThumbnail = cv2.resize(img, (newWidth,newHeight), interpolation=cv2.INTER_AREA)
+    return imgThumbnail
+
 
 # termination criteria
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
@@ -134,6 +273,8 @@ def mprint(*args, **kwargs):
     window['-TOUTPUT-' + sg.WRITE_ONLY_KEY].print(*args, **kwargs)
 
 print = mprint
+calibrator = CameraCalibration()
+calibrator.setCalibrationTarget(NumX,NumY)
 
 # ----- Run the Event Loop -----
 # --------------------------------- Event Loop ---------------------------------
@@ -155,79 +296,28 @@ while True:
     elif event == '-FILE LIST-':    # A file was chosen from the listbox
         #try:
             filename = os.path.join(values['-FOLDER-'], values['-FILE LIST-'][0])
-            img = cv2.imread(filename)
-            #image = Image.open(filename)
-            #image.thumbnail((400,400))
-            #bio = io.BytesIO();
-            imgbytes = cv2.imencode('.png',img)[1].tobytes()
-            #image.save(bio,format="PNG")
+            print(filename)
+            img = calibrator.addImage(filename)
+            imgThumbnail = getThumbnail(img,400)
+            imgbytes = cv2.imencode('.png',imgThumbnail)[1].tobytes()
             window['-TOUT-'].update(filename)
-            #window['-IMAGE-'].update(data=bio.getvalue())
             window['-IMAGE-'].update(data=imgbytes)
-            if Calibrated == True:
-                print("Undistorting image")
-                h,w = img.shape[:2]
-                newcameramtx, roi = cv2.getOptimalNewCameraMatrix(CalibIntrinsicsMatrix, CalibIntrinsicsDist, (w,h),1,(w,h))
-                dst = cv2.undistort(img,CalibIntrinsicsMatrix,CalibIntrinsicsDist, None, newcameramtx)
-                x,y,w,h = roi
-                dst = dst[y:y+h,x:x+w]
-                imgbytes = cv2.imencode('.png',dst)[1].tobytes()
-                window['-IMAGE-'].update(data=imgbytes)
     elif event == '-B-FINDTARGET-':
-            NumX = int(values['NX'])
-            NumY = int(values['NY'])
-            objp = np.zeros((NumY*NumX,3), np.float32)
-            objp[:,:2] = np.mgrid[0:NumX,0:NumY].T.reshape(-1,2)
-            objpoints = [] 
-            imgpoints = [] 
             filename = os.path.join(values['-FOLDER-'], values['-FILE LIST-'][0])
-            img = cv2.imread(filename)
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            imgbytes = cv2.imencode('.png',gray)[1].tobytes()
-            window['-IMAGE-'].update(data=imgbytes) 
-            ret,corners = cv2.findChessboardCorners(gray,(NumX,NumY),None)
-            if ret == True:
-                objpoints.append(objp)
-                corners2 = cv2.cornerSubPix(gray,corners,(11,11),(-1,-1),criteria)
-                imgpoints.append(corners2)
-                cv2.drawChessboardCorners(img,(NumX,NumY),corners2, ret)
-                imgbytes = cv2.imencode('.png',img)[1].tobytes()
-                window['-IMAGE-'].update(data=imgbytes)  
+            print(filename)
+            img = calibrator.findChessBoard(filename)
+            imgThumbnail = getThumbnail(img,400)
+            imgbytes = cv2.imencode('.png',imgThumbnail)[1].tobytes()
+            window['-IMAGE-'].update(data=imgbytes)  
     elif event == '-B-CALIBRATE-':
-        NumX = int(values['NX'])
-        NumY = int(values['NY'])
-        objp = np.zeros((NumY*NumX,3), np.float32)
-        objp[:,:2] = np.mgrid[0:NumX,0:NumY].T.reshape(-1,2)
-        objpoints = [] 
-        imgpoints = [] 
         folder = values['-FOLDER-']
         file_list = os.listdir(folder) 
         for f in file_list:
-            filename = os.path.join(values['-FOLDER-'],f)
-            print(filename)
-            img = cv2.imread(filename)
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            ret,corners = cv2.findChessboardCorners(gray,(NumX,NumY),None)
-            if ret == True:
-                objpoints.append(objp)
-                corners2 = cv2.cornerSubPix(gray,corners,(11,11),(-1,-1),criteria)
-                imgpoints.append(corners2)
-                cv2.drawChessboardCorners(img,(NumX,NumY),corners2, ret)
-                imgbytes = cv2.imencode('.png',img)[1].tobytes()
-        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
-        CalibIntrinsicsMatrix=mtx
-        CalibIntrinsicsDist = dist
-        Calibrated = True
-        print("Calibrated!")
-
-        mean_error = 0
-        for i in range(len(objpoints)):
-            imgpoints2, _ = cv2.projectPoints(objpoints[i], rvecs[i], tvecs[i], mtx, dist)
-            error = cv2.norm(imgpoints[i], imgpoints2, cv2.NORM_L2)/len(imgpoints2)
-            mean_error += error
-        print( "total error: {}".format(mean_error/len(objpoints)) )
-        print(mtx)
-        print(dist)
+             filename = os.path.join(values['-FOLDER-'],f)
+             print(filename)
+             calibrator.addImage(filename)
+             calibrator.findChessBoard(filename)
+        calibrator.calibrate()
 
     window['-TOUTPUT-'+sg.WRITE_ONLY_KEY].expand(True,True)
 
