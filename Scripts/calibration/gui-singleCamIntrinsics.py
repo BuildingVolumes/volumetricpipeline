@@ -102,6 +102,11 @@ class CameraCalibration:
 
     def calibrate(self):
         try:
+            if self.Calibrated == True:
+                print("calibrate(): already calibrated!")
+                print("CameraIntrinsics:", self.intrinsics.mtx)
+                print("Distortion:",self.intrinsics.dist)
+                return
             self.objpoints = [] # 3d point in real world space
             self.imgpoints = [] # 2d points in image plane.
             objp = np.zeros((NumY*NumX,3), np.float32)
@@ -118,7 +123,7 @@ class CameraCalibration:
             ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(self.objpoints, self.imagepoints, self.sz, None, None)
             self.intrinsics.mtx=mtx
             self.intrinsics.dist = dist
-            Calibrated = True
+            self.Calibrated = True
             mean_error = 0
             print("---checking reprojection error")
             length = len(self.objpoints)
@@ -130,7 +135,22 @@ class CameraCalibration:
             print("Distortion:",self.intrinsics.dist)
             print( "Reprojection Error: {}".format(mean_error/length))
         except:
-            print("err")
+            print("calibrate()::err")
+    def save(self,filename):
+        print("save:"+filename)
+        m = self.intrinsics.mtx.tolist()
+        d = self.intrinsics.dist.tolist()
+        data = {"camera_matrix":m, "distortions":d}
+        with open(filename,'w') as f:
+            json.dump(data,f);
+    def load(self,filename):
+        print("LOAD:"+filename)
+        with open(filename,'r') as f:
+            data = json.load(f);
+        self.intrinsics.mtx = np.asarray(data["camera_matrix"])
+        self.intrinsics.dist = np.asarray(data["distortions"])
+        print("CameraIntrinsics:", self.intrinsics.mtx)
+        print("Distortion:",self.intrinsics.dist)
 
     def setCalibrationTarget(self, cTargetInfo):
         self.targetInfo = cTargetInfo
@@ -205,17 +225,11 @@ class CameraCalibration:
 # + list all images in a list, select them to show 
 # - add/remove images from list
 # + Find chessboard corners/calibration target in all images in list
-# - setup calibration target info
+# + setup calibration target info
 # - draw calibration target toggle
-# - Button to run calibration
+# + Button to run calibration
 # - save calibration in reasonable format
 # - save rectified images button
-
-# INPUT_FOLDER = r'./'
-# files = [os.path.join(INPUT_FOLDER,f) for f in os.listdir(INPUT_FOLDER) if f.endswith('png')]
-
-# layout = [ [sg.Text('Click Image For Next')],
-#            [sg.Image(filename=files[0], key='-IMAGE-', enable_events=True)]]
 
 def getThumbnail(img, hh):
     width = img.shape[1]
@@ -251,7 +265,10 @@ images_col = [[sg.Text('You choose from the list:')],
 # ----- Full layout -----
 layout = [[sg.Frame(layout=[
                     [sg.Column(left_col), sg.VSeperator(), sg.Column(images_col)],
-                    [sg.Button(button_text='Calibrate (all images)', key='-B-CALIBRATE-')]              
+                    [sg.Button(button_text='Calibrate (all images)', key='-B-CALIBRATE-')],
+                    [sg.Text('Calibration Filename', size=(20, 1)), sg.InputText(default_text='intrinsics.json', key="-T-CALIBFNAME-")],
+                    [sg.Button(button_text='Save Calibration', key="-B-SAVECALIB-")],
+                    [sg.Button(button_text='Load Calibration', key="-B-LOADCALIB-")],
                     ], title='Settings',title_color='white', relief=sg.RELIEF_SUNKEN)],
             [sg.Frame(layout=[
                 [sg.Text('Num Squares X', size=(15, 1)), sg.InputText(key='NX',size=(3,1),default_text=str(NumX))],
@@ -279,48 +296,58 @@ calibrator.setCalibrationTarget(NumX,NumY)
 # ----- Run the Event Loop -----
 # --------------------------------- Event Loop ---------------------------------
 while True:
-    event, values = window.read()
+    #try:
+        event, values = window.read()
 
-    if event in (None, 'Exit'):
-        break
-    if event == '-FOLDER-':                     # Folder name was filled in, make a list of files in the folder
-        folder = values['-FOLDER-']
-        try:
-            file_list = os.listdir(folder)         # get list of files in folder
-        except:
-            file_list = []
+        if event in (None, 'Exit'):
+            break
+        if event == '-FOLDER-':                     # Folder name was filled in, make a list of files in the folder
+            folder = values['-FOLDER-']
+            try:
+                file_list = os.listdir(folder)         # get list of files in folder
+            except:
+                file_list = []
 
-        fnames = [f for f in file_list if os.path.isfile(
-            os.path.join(folder, f)) and f.lower().endswith((".png", ".jpg", "jpeg", ".tiff", ".bmp"))]
-        window['-FILE LIST-'].update(fnames)
-    elif event == '-FILE LIST-':    # A file was chosen from the listbox
-        #try:
-            filename = os.path.join(values['-FOLDER-'], values['-FILE LIST-'][0])
-            print(filename)
-            img = calibrator.addImage(filename)
-            imgThumbnail = getThumbnail(img,400)
-            imgbytes = cv2.imencode('.png',imgThumbnail)[1].tobytes()
-            window['-TOUT-'].update(filename)
-            window['-IMAGE-'].update(data=imgbytes)
-    elif event == '-B-FINDTARGET-':
-            filename = os.path.join(values['-FOLDER-'], values['-FILE LIST-'][0])
-            print(filename)
-            img = calibrator.findChessBoard(filename)
-            imgThumbnail = getThumbnail(img,400)
-            imgbytes = cv2.imencode('.png',imgThumbnail)[1].tobytes()
-            window['-IMAGE-'].update(data=imgbytes)  
-    elif event == '-B-CALIBRATE-':
-        folder = values['-FOLDER-']
-        file_list = os.listdir(folder) 
-        for f in file_list:
-             filename = os.path.join(values['-FOLDER-'],f)
-             print(filename)
-             calibrator.addImage(filename)
-             calibrator.findChessBoard(filename)
-        calibrator.calibrate()
+            fnames = [f for f in file_list if os.path.isfile(
+                os.path.join(folder, f)) and f.lower().endswith((".png", ".jpg", "jpeg", ".tiff", ".bmp"))]
+            window['-FILE LIST-'].update(fnames)
+        elif event == '-FILE LIST-':    # A file was chosen from the listbox
+            #try:
+                filename = os.path.join(values['-FOLDER-'], values['-FILE LIST-'][0])
+                print(filename)
+                img = calibrator.addImage(filename)
+                imgThumbnail = getThumbnail(img,400)
+                imgbytes = cv2.imencode('.png',imgThumbnail)[1].tobytes()
+                window['-TOUT-'].update(filename)
+                window['-IMAGE-'].update(data=imgbytes)
+        elif event == '-B-FINDTARGET-':
+                filename = os.path.join(values['-FOLDER-'], values['-FILE LIST-'][0])
+                print(filename)
+                img = calibrator.findChessBoard(filename)
+                imgThumbnail = getThumbnail(img,400)
+                imgbytes = cv2.imencode('.png',imgThumbnail)[1].tobytes()
+                window['-IMAGE-'].update(data=imgbytes)  
+        elif event == '-B-CALIBRATE-':
+            folder = values['-FOLDER-']
+            file_list = os.listdir(folder) 
+            fnames = [f for f in file_list if os.path.isfile(
+                os.path.join(folder, f)) and f.lower().endswith((".png", ".jpg", "jpeg", ".tiff", ".bmp"))]
+            for f in fnames:
+                 filename = os.path.join(values['-FOLDER-'],f)
+                 print(filename)
+                 calibrator.addImage(filename)
+                 calibrator.findChessBoard(filename)
+            calibrator.calibrate()
+        elif event == '-B-SAVECALIB-':
+            filename = os.path.join(values['-FOLDER-'], values['-T-CALIBFNAME-'])
+            calibrator.save(filename)
+        elif event == '-B-LOADCALIB-':
+            filename = os.path.join(values['-FOLDER-'], values['-T-CALIBFNAME-'])
+            calibrator.load(filename)
 
-    window['-TOUTPUT-'+sg.WRITE_ONLY_KEY].expand(True,True)
-
+        window['-TOUTPUT-'+sg.WRITE_ONLY_KEY].expand(True,True)
+    #except:
+       # print("MAIN:error")
 # --------------------------------- Close & Exit ---------------------------------
 
 window.close()
