@@ -17,9 +17,13 @@ class CalibrationTargetInfo:
     def __init__(self):
         self.NumX = 9
         self.NumY = 6
-    def __init__(self,_x,_y):
+        self.SquareSize = 1
+    def __init__(self,_x,_y,_s=1):
         self.NumX = _x
         self.NumY = _y
+        self.SquareSize = _s
+
+
 
 ########################################
 ## CameraCalibrationIntrinsics
@@ -58,6 +62,8 @@ class CalibrationImage:
             self.corners = corners2
             cv2.drawChessboardCorners(self.image_withCorners,(numx,numy),self.corners, ret)
             self.cornersFound = True
+        else:
+            print("CHESSBOARD NOT FOUND: "+self.filename)
 
 ########################################
 ## CameraCalibration
@@ -125,8 +131,11 @@ class CameraCalibration:
                 return
             self.objpoints = [] # 3d point in real world space
             self.imgpoints = [] # 2d points in image plane.
+            NumX = self.targetInfo.NumX
+            NumY = self.targetInfo.NumY
+            GRIDSIZE = self.targetInfo.SquareSize
             objp = np.zeros((NumY*NumX,3), np.float32)
-            objp[:,:2] = np.mgrid[0:NumX,0:NumY].T.reshape(-1,2)
+            objp[:,:2] = np.mgrid[0:NumX,0:NumY].T.reshape(-1,2)*GRIDSIZE
             #sz = self.dictImages[1].gray.shape[::-1]
             print("calibrate()")
             for fname in self.imageFilenames:
@@ -170,8 +179,8 @@ class CameraCalibration:
 
     def setCalibrationTarget(self, cTargetInfo):
         self.targetInfo = cTargetInfo
-    def setCalibrationTarget(self, numx,numy):
-        self.targetInfo = CalibrationTargetInfo(numx,numy)
+    def setCalibrationTarget(self, numx,numy, ss):
+        self.targetInfo = CalibrationTargetInfo(numx,numy, ss)
 
 
 ############################
@@ -203,14 +212,7 @@ def getThumbnail(img, hh):
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 NumX = 9
 NumY = 6
-
-# # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
-# objp = np.zeros((NumY*NumX,3), np.float32)
-# objp[:,:2] = np.mgrid[0:NumX,0:NumY].T.reshape(-1,2)
-
-# # Arrays to store object points and image points from all the images.
-# objpoints = [] # 3d point in real world space
-# imgpoints = [] # 2d points in image plane.
+SSize = 1
 
 left_col = [[sg.Text('Folder'), sg.In(size=(25,1), enable_events=True ,key='-FOLDER-'), sg.FolderBrowse(initial_folder='.')],
             [sg.Listbox(values=[], enable_events=True, size=(40,20),key='-FILE LIST-')]]
@@ -229,8 +231,9 @@ layout = [[sg.Frame(layout=[
                     [sg.Button(button_text='Load Calibration', key="-B-LOADCALIB-")],
                     ], title='Settings',title_color='white', relief=sg.RELIEF_SUNKEN)],
             [sg.Frame(layout=[
-                [sg.Text('Num Squares X', size=(15, 1)), sg.InputText(key='NX',size=(3,1),default_text=str(NumX))],
-                [sg.Text('Num Squares Y', size=(15, 1)), sg.InputText(key='NY', size=(3,1), default_text=str(NumY))],
+                [sg.Text('Num Squares X  ', size=(15, 1)), sg.InputText(key='NX',size=(3,1),default_text=str(NumX))],
+                [sg.Text('Num Squares Y  ', size=(15, 1)), sg.InputText(key='NY', size=(3,1), default_text=str(NumY))],
+                [sg.Text('Square Size(mm)', size=(15, 1)), sg.InputText(key='SS', size=(3,1), default_text=str(SSize))],\
                 [sg.Button(button_text='Find Calibration Target (selected image)', key='-B-FINDTARGET-')],
             ], title='Calibration Target Info',title_color='white', relief=sg.RELIEF_SUNKEN)],
 
@@ -245,7 +248,7 @@ def mprint(*args, **kwargs):
 print = mprint
 
 calibrator = CameraCalibration()
-calibrator.setCalibrationTarget(NumX,NumY)
+calibrator.setCalibrationTarget(NumX,NumY,1)
 
 # ----- Run the Event Loop -----
 # --------------------------------- Event Loop ---------------------------------
@@ -274,7 +277,11 @@ while True:
                 window['-TOUT-'].update(filename)
                 window['-IMAGE-'].update(data=imgbytes)
         elif event == '-B-FINDTARGET-':
-                
+                NumX = int(values['NX'])
+                NumY = int(values['NY'])
+                SSize = int(values['SS'])
+                calibrator.setCalibrationTarget(NumX,NumY, SSize)
+
                 filename = os.path.join(values['-FOLDER-'], values['-FILE LIST-'][0])
                 print(filename)
                 img = calibrator.findChessBoard(filename)
@@ -282,6 +289,10 @@ while True:
                 imgbytes = cv2.imencode('.png',imgThumbnail)[1].tobytes()
                 window['-IMAGE-'].update(data=imgbytes)  
         elif event == '-B-CALIBRATE-':
+            NumX = int(values['NX'])
+            NumY = int(values['NY'])
+            SSize = int(values['SS'])
+            calibrator.setCalibrationTarget(NumX,NumY, SSize)
             folder = values['-FOLDER-']
             file_list = os.listdir(folder) 
             fnames = [f for f in file_list if os.path.isfile(
