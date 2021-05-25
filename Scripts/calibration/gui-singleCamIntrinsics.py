@@ -235,6 +235,7 @@ layout = [[sg.Frame(layout=[
                 [sg.Text('Num Squares Y  ', size=(15, 1)), sg.InputText(key='NY', size=(3,1), default_text=str(NumY))],
                 [sg.Text('Square Size(mm)', size=(15, 1)), sg.InputText(key='SS', size=(3,1), default_text=str(SSize))],\
                 [sg.Button(button_text='Find Calibration Target (selected image)', key='-B-FINDTARGET-')],
+                [sg.Button(button_text='Find ALL Targets (all images)', key='-B-FINDTARGET-ALL-')],
             ], title='Calibration Target Info',title_color='white', relief=sg.RELIEF_SUNKEN)],
 
             [sg.Multiline(key='-TOUTPUT-'+sg.WRITE_ONLY_KEY,size=(200,25))]]
@@ -288,6 +289,20 @@ while True:
                 imgThumbnail = getThumbnail(img,400)
                 imgbytes = cv2.imencode('.png',imgThumbnail)[1].tobytes()
                 window['-IMAGE-'].update(data=imgbytes)  
+        elif event == '-B-FINDTARGET-ALL-':
+            NumX = int(values['NX'])
+            NumY = int(values['NY'])
+            SSize = int(values['SS'])
+            calibrator.setCalibrationTarget(NumX,NumY, SSize)
+            folder = values['-FOLDER-']
+            file_list = os.listdir(folder) 
+            fnames = [f for f in file_list if os.path.isfile(
+                os.path.join(folder, f)) and f.lower().endswith((".png", ".jpg", "jpeg", ".tiff", ".bmp"))]
+            for f in fnames:
+                 filename = os.path.join(values['-FOLDER-'],f)
+                 print(filename)
+                 calibrator.addImage(filename)
+                 calibrator.findChessBoard(filename)
         elif event == '-B-CALIBRATE-':
             NumX = int(values['NX'])
             NumY = int(values['NY'])

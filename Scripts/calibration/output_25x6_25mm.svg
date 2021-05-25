@@ -1,0 +1,375 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+
+<svg width="650mm" height="175mm" viewBox="0 0 650 175" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" style="stroke:black; fill:none; stroke-width:0.5pt; stroke-linejoin:round; text-anchor:middle" font-family="Helvetica, Arial, FreeSans, Sans, sans, sans-serif">
+
+<g>
+
+<circle cx="12.5" cy="12.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="12.5" cy="37.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="12.5" cy="62.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="12.5" cy="87.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="12.5" cy="112.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="12.5" cy="137.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="12.5" cy="162.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="37.5" cy="12.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="37.5" cy="37.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="37.5" cy="62.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="37.5" cy="87.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="37.5" cy="112.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="37.5" cy="137.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="37.5" cy="162.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="62.5" cy="12.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="62.5" cy="37.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="62.5" cy="62.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="62.5" cy="87.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="62.5" cy="112.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="62.5" cy="137.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="62.5" cy="162.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="87.5" cy="12.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="87.5" cy="37.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="87.5" cy="62.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="87.5" cy="87.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="87.5" cy="112.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="87.5" cy="137.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="87.5" cy="162.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="112.5" cy="12.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="112.5" cy="37.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="112.5" cy="62.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="112.5" cy="87.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="112.5" cy="112.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="112.5" cy="137.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="112.5" cy="162.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="137.5" cy="12.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="137.5" cy="37.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="137.5" cy="62.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="137.5" cy="87.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="137.5" cy="112.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="137.5" cy="137.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="137.5" cy="162.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="162.5" cy="12.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="162.5" cy="37.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="162.5" cy="62.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="162.5" cy="87.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="162.5" cy="112.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="162.5" cy="137.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="162.5" cy="162.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="187.5" cy="12.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="187.5" cy="37.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="187.5" cy="62.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="187.5" cy="87.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="187.5" cy="112.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="187.5" cy="137.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="187.5" cy="162.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="212.5" cy="12.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="212.5" cy="37.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="212.5" cy="62.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="212.5" cy="87.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="212.5" cy="112.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="212.5" cy="137.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="212.5" cy="162.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="237.5" cy="12.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="237.5" cy="37.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="237.5" cy="62.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="237.5" cy="87.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="237.5" cy="112.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="237.5" cy="137.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="237.5" cy="162.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="262.5" cy="12.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="262.5" cy="37.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="262.5" cy="62.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="262.5" cy="87.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="262.5" cy="112.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="262.5" cy="137.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="262.5" cy="162.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="287.5" cy="12.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="287.5" cy="37.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="287.5" cy="62.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="287.5" cy="87.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="287.5" cy="112.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="287.5" cy="137.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="287.5" cy="162.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="312.5" cy="12.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="312.5" cy="37.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="312.5" cy="62.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="312.5" cy="87.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="312.5" cy="112.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="312.5" cy="137.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="312.5" cy="162.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="337.5" cy="12.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="337.5" cy="37.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="337.5" cy="62.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="337.5" cy="87.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="337.5" cy="112.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="337.5" cy="137.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="337.5" cy="162.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="362.5" cy="12.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="362.5" cy="37.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="362.5" cy="62.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="362.5" cy="87.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="362.5" cy="112.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="362.5" cy="137.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="362.5" cy="162.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="387.5" cy="12.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="387.5" cy="37.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="387.5" cy="62.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="387.5" cy="87.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="387.5" cy="112.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="387.5" cy="137.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="387.5" cy="162.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="412.5" cy="12.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="412.5" cy="37.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="412.5" cy="62.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="412.5" cy="87.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="412.5" cy="112.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="412.5" cy="137.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="412.5" cy="162.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="437.5" cy="12.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="437.5" cy="37.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="437.5" cy="62.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="437.5" cy="87.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="437.5" cy="112.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="437.5" cy="137.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="437.5" cy="162.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="462.5" cy="12.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="462.5" cy="37.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="462.5" cy="62.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="462.5" cy="87.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="462.5" cy="112.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="462.5" cy="137.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="462.5" cy="162.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="487.5" cy="12.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="487.5" cy="37.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="487.5" cy="62.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="487.5" cy="87.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="487.5" cy="112.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="487.5" cy="137.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="487.5" cy="162.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="512.5" cy="12.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="512.5" cy="37.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="512.5" cy="62.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="512.5" cy="87.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="512.5" cy="112.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="512.5" cy="137.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="512.5" cy="162.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="537.5" cy="12.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="537.5" cy="37.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="537.5" cy="62.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="537.5" cy="87.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="537.5" cy="112.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="537.5" cy="137.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="537.5" cy="162.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="562.5" cy="12.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="562.5" cy="37.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="562.5" cy="62.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="562.5" cy="87.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="562.5" cy="112.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="562.5" cy="137.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="562.5" cy="162.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="587.5" cy="12.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="587.5" cy="37.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="587.5" cy="62.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="587.5" cy="87.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="587.5" cy="112.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="587.5" cy="137.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="587.5" cy="162.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="612.5" cy="12.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="612.5" cy="37.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="612.5" cy="62.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="612.5" cy="87.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="612.5" cy="112.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="612.5" cy="137.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="612.5" cy="162.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="637.5" cy="12.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="637.5" cy="37.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="637.5" cy="62.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="637.5" cy="87.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="637.5" cy="112.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="637.5" cy="137.5" r="5.0" fill="black" stroke="none" />
+
+<circle cx="637.5" cy="162.5" r="5.0" fill="black" stroke="none" />
+
+</g>
+
+</svg>
+
