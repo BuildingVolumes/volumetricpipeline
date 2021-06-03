@@ -6,6 +6,7 @@ import cv2
 import glob
 import numpy as np
 import PIL.Image
+from cairosvg import svg2png
 
 ########################################
 ## CalibrationTargetInfo
@@ -73,31 +74,36 @@ NumY = 6
 SSize = 25
 W = 20
 H = 20
+RADRATE = 5
 
 left_col = [[sg.Text('Folder'), sg.In(size=(25,1), enable_events=True ,key='-FOLDER-'), sg.FolderBrowse(initial_folder='.')],
             [sg.Listbox(values=[], enable_events=True, size=(40,20),key='-FILE LIST-')]]
 
 # For now will only show the name of the file that was chosen
-images_col = [[sg.Text('You choose from the list:')],
+images_col = [[sg.Text('Calibration Target Preview')],
               [sg.Text(size=(40,1), key='-TOUT-')],
-              [sg.Image(key='-IMAGE-', size=(800,400),data=convert_to_bytes("temp.png"))]]
+              [sg.Image(key='-IMAGE-', size=(800,400),data=convert_to_bytes("temp.png", resize=(800,400)))]]
+Col_W=20
+target_info = [[sg.Frame(layout=[
+                [sg.Text('Output Prefix ', size=(Col_W, 1)), sg.InputText(key='FILENAME',size=(Col_W,1),default_text='output')],
+                [sg.Text('Num Corners X  ', size=(Col_W, 1)), sg.InputText(key='NX',size=(3,1),default_text=str(NumX))],
+                [sg.Text('Num Corners Y  ', size=(Col_W, 1)), sg.InputText(key='NY', size=(3,1), default_text=str(NumY))],
+                [sg.Text('Square Size', size=(Col_W, 1)), sg.InputText(key='SS', size=(3,1), default_text=str(SSize))],
+                [sg.Text('Radius Rate', size=(Col_W, 1)), sg.InputText(key='-RRATE', size=(3,1), default_text=str(RADRATE))],
+                [sg.Combo(['checkerboard','circles','acircles'] , default_value='checkerboard', size=(Col_W,1), key='-TYPE')],
+                [sg.Combo(['mm','inches','px','m'] , default_value='mm', size=(Col_W,1), key='-UNIT')],
+                [sg.Button(button_text='Create Target', key='-B-TARGET')]
+            ], title='Calibration Target Info',title_color='white', relief=sg.RELIEF_SUNKEN)]]
 
 # ----- Full layout -----
-layout = [[sg.Frame(layout=[
-                    [ sg.Column(images_col)],
-                    ],title='Settings',title_color='white', relief=sg.RELIEF_SUNKEN)],
-            [sg.Frame(layout=[
-                [sg.Text('Output Prefix ', size=(15, 1)), sg.InputText(key='FILENAME',size=(30,1),default_text='output')],
-                [sg.Text('Num Corners X  ', size=(15, 1)), sg.InputText(key='NX',size=(3,1),default_text=str(NumX))],
-                [sg.Text('Num Corners Y  ', size=(15, 1)), sg.InputText(key='NY', size=(3,1), default_text=str(NumY))],
-                [sg.Text('Square Size(mm)', size=(15, 1)), sg.InputText(key='SS', size=(3,1), default_text=str(SSize))],
-                [sg.Combo(['checkerboard','circles','acircles'] , default_value='checkerboard', size=(15,1), key='-TYPE')],
-                [sg.Combo(['mm','inches','px','m'] , default_value='mm', size=(15,1), key='-UNIT')],
-                [sg.Button(button_text='Create Target', key='-B-TARGET')]
-            ], title='Calibration Target Info',title_color='white', relief=sg.RELIEF_SUNKEN)],
-
+layout = [[sg.Column(target_info, vertical_alignment='top'), sg.Column(images_col)],
+            [sg.Text('Command Output:')],
             [sg.Multiline(key='-TOUTPUT-'+sg.WRITE_ONLY_KEY,size=(200,25))]]
-            
+# layout = [[sg.Frame(layout=[
+#                    [ sg.Column(images_col)],
+#                    ],title='Settings',title_color='white', relief=sg.RELIEF_SUNKEN)],
+#            [sg.Multiline(key='-TOUTPUT-'+sg.WRITE_ONLY_KEY,size=(200,25))]]
+#
 # --------------------------------- Create Window ---------------------------------
 window = sg.Window('Image Viewer', layout)
 
@@ -108,8 +114,8 @@ def mprint(*args, **kwargs):
 
 print = mprint
 
-from cairosvg import svg2png
-svg2png(open("temp.svg", 'rb').read(), write_to=open("temp.png", 'wb'))
+
+#svg2png(open("temp.svg", 'rb').read(), write_to=open("temp.png", 'wb'))
 
 
 
@@ -136,12 +142,13 @@ while True:
             NumY = " --columns " + str(int(values['NX'])+1)
             SS = " --square_size " + values['SS']
             TYPE = " --type " +values['-TYPE']
-            ARGS = " " + OUTPUT + NumX + NumY + SS + TYPE + Width + Height +UNIT
-            
+            RADRATE = " --radius_rate "+values['-RRATE']
+            ARGS = " " + OUTPUT + NumX + NumY + SS + TYPE + Width + Height +UNIT + RADRATE
+            FNAMEPNG=FNAME+".png"
             print("running: "+CMD + ARGS)
             os.system(CMD + ARGS)
-            svg2png(open(FNAME, 'rb').read(), write_to=open("temp.png", 'wb'))
-            window['-IMAGE-'].update(data=convert_to_bytes("temp.png",resize=(800,400)))
+            svg2png(open(FNAME, 'rb').read(), write_to=open(FNAMEPNG, 'wb'))
+            window['-IMAGE-'].update(data=convert_to_bytes(FNAMEPNG,resize=(800,400)))
 
         window['-TOUTPUT-'+sg.WRITE_ONLY_KEY].expand(True,True)
     except Exception as e:
