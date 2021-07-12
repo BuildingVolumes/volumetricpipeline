@@ -2612,3 +2612,14 @@ Unity/TestPCX/Library/StateCache/SceneView/5b69e8-mainStage.json
 Unity/TestPCX/Library/Style.catalog
 Unity/TestPCX/Library/UIElements/EditorWindows/UnityEditor.PackageManager.UI.PackageManagerWindow.pref
 Unity/TestPCX/Assets/Scenes/richmond-azaelias.ply
+CalibrationTools/CalibrationTools/.vs/CalibrationTools/v16/.suo
+*.db
+*.db-shm
+*.db-wal
+*.opendb
+*.ipch
+images/
+*.tlog
+*.pdb
+*.idb
+Debug/
