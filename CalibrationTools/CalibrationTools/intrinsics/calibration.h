@@ -1,9 +1,17 @@
 #pragma once
+// system headers
 #include <string>
 #include <vector>
 #include <iostream>
-#include <opencv2/opencv.hpp>
 #include <filesystem>
+
+// opencv headers
+#include <opencv2/opencv.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/calib3d.hpp>
+#include <opencv2/aruco.hpp>
+#include <opencv2/imgproc.hpp>
+
 
 enum {
 	TARGET_CHESSBOARD = 0,
@@ -72,6 +80,62 @@ public:
 	cv::Size targetSize;
 	cv::Size targetSizeW;
 	int type;
+};
+class TargetAruco : public Target {
+public:
+	TargetAruco(cv::Size rc, cv::Size sz, int type, cv::Ptr<cv::aruco::Dictionary> _dictionary, cv::Ptr<cv::aruco::DetectorParameters> _detectorParams)
+		: Target(rc,sz,type)
+	{
+		int markersX = rc.width;
+		int markersY = rc.height;
+		float markerLength = sz.width; // marker length
+		float markerSeparation = sz.height; // marker separation
+		dictionary = _dictionary;
+		detectorParams = _detectorParams;
+		gridboard =cv::aruco::GridBoard::create(markersX, markersY, markerLength, markerSeparation, _dictionary);
+	}
+	TargetAruco(cv::Size rc = cv::Size(9, 6), cv::Size sz = cv::Size(1, 1), int type = 0)
+		: Target(rc, sz, type)
+	{
+		int markersX = rc.width;
+		int markersY = rc.height;
+		float markerLength = sz.width; // marker length
+		float markerSeparation = sz.height; // marker separation
+		dictionary =
+			cv::aruco::getPredefinedDictionary(cv::aruco::PREDEFINED_DICTIONARY_NAME(cv::aruco::DICT_ARUCO_ORIGINAL));
+		gridboard = cv::aruco::GridBoard::create(markersX, markersY, markerLength, markerSeparation,dictionary);
+	}
+	~TargetAruco(){}
+	virtual void calculateObjectPoints() {
+
+	}
+	virtual bool detect(cv::Mat img, std::vector<cv::Point2f>& outputBuffer) {
+		// use other one or call it from here somehow
+		return false;
+	}
+	bool detect(cv::Mat img, std::vector<std::vector<cv::Point2f>>& outputBuffer, std::vector< int > &idBuffer, std::vector<std::vector<cv::Point2f>>& rejectedBuffer)
+	{
+		cv::Ptr<cv::aruco::Board> board = gridboard.staticCast<cv::aruco::Board>();
+
+		cv::aruco::detectMarkers(img, dictionary, outputBuffer,idBuffer, detectorParams, rejectedBuffer);
+		cv::aruco::refineDetectedMarkers(img, board, outputBuffer, idBuffer, rejectedBuffer);
+		return true;
+	}
+	virtual void draw(cv::Mat img, const std::vector<cv::Point2f>& points) {
+		// not used, each type is going to need its own interface.... uggggh... should get rid of the generic one then
+	}
+	void draw(cv::Mat img, const std::vector<std::vector<cv::Point2f>>& points, std::vector< int >& idBuffer) {
+		if(idBuffer.size() > 0) cv::aruco::drawDetectedMarkers(img, points, idBuffer);
+		else {
+			std::cout << "ARUCO: draw: no ids to draw" << std::endl;
+		}
+	}
+
+	// members 
+	cv::Ptr<cv::aruco::Dictionary> dictionary;
+	cv::Ptr<cv::aruco::GridBoard> gridboard;
+	cv::Ptr<cv::aruco::DetectorParameters> detectorParams;
+
 };
 
 class TargetStandardOpenCV : public Target {
@@ -203,6 +267,150 @@ public:
 	Target *model;
 };
 
+class CalibratorAruco : public Calibrator {
+public:
+	CalibratorAruco() {}
+	~CalibratorAruco() {}
+
+	/**
+ */
+	static bool readDetectorParameters(std::string filename, cv::Ptr<cv::aruco::DetectorParameters>& params) {
+		cv::FileStorage fs(filename, cv::FileStorage::READ);
+		if (!fs.isOpened())
+			return false;
+		fs["adaptiveThreshWinSizeMin"] >> params->adaptiveThreshWinSizeMin;
+		fs["adaptiveThreshWinSizeMax"] >> params->adaptiveThreshWinSizeMax;
+		fs["adaptiveThreshWinSizeStep"] >> params->adaptiveThreshWinSizeStep;
+		fs["adaptiveThreshConstant"] >> params->adaptiveThreshConstant;
+		fs["minMarkerPerimeterRate"] >> params->minMarkerPerimeterRate;
+		fs["maxMarkerPerimeterRate"] >> params->maxMarkerPerimeterRate;
+		fs["polygonalApproxAccuracyRate"] >> params->polygonalApproxAccuracyRate;
+		fs["minCornerDistanceRate"] >> params->minCornerDistanceRate;
+		fs["minDistanceToBorder"] >> params->minDistanceToBorder;
+		fs["minMarkerDistanceRate"] >> params->minMarkerDistanceRate;
+		fs["cornerRefinementMethod"] >> params->cornerRefinementMethod;
+		fs["cornerRefinementWinSize"] >> params->cornerRefinementWinSize;
+		fs["cornerRefinementMaxIterations"] >> params->cornerRefinementMaxIterations;
+		fs["cornerRefinementMinAccuracy"] >> params->cornerRefinementMinAccuracy;
+		fs["markerBorderBits"] >> params->markerBorderBits;
+		fs["perspectiveRemovePixelPerCell"] >> params->perspectiveRemovePixelPerCell;
+		fs["perspectiveRemoveIgnoredMarginPerCell"] >> params->perspectiveRemoveIgnoredMarginPerCell;
+		fs["maxErroneousBitsInBorderRate"] >> params->maxErroneousBitsInBorderRate;
+		fs["minOtsuStdDev"] >> params->minOtsuStdDev;
+		fs["errorCorrectionRate"] >> params->errorCorrectionRate;
+		return true;
+	}
+
+	virtual bool DetectTargets() {
+		std::cout << "DETECT TARGETS" << std::endl;
+		int numFound = 0;
+		TargetAruco* theTarget = (TargetAruco*)model;
+		for (int i = 0; i < this->inputFilenames.size(); i++) {
+			std::cout << inputFilenames[i].string() << std::endl;
+			cv::Mat img = cv::imread(inputFilenames[i].string());
+			if (i == 0) {
+				// get size from first image
+				cameraToCalibrate.setImageSize(cv::Size(img.cols, img.rows));
+			}
+			std::vector< int > ids;
+			std::vector< std::vector<cv::Point2f >> pointsBuffer, rejected;
+			
+			bool found = theTarget->detect(img, pointsBuffer, ids, rejected);
+			if (found) {
+				theTarget->draw(img, pointsBuffer, ids);
+				allCorners.push_back(pointsBuffer);
+				allIds.push_back(ids);
+				selectedImages.push_back(img);
+				selectedFilenames.push_back(inputFilenames[i]);
+				numFound++;
+			}
+		}
+
+
+		if (numFound == 0) {
+			std::cout << "NO targets found" << std::endl;
+			return false;
+		}
+		std::cout << "Num Targets Found:" << numFound << std::endl;
+		return true;
+		return false;
+	}
+	virtual bool RunCalibration() {
+		TargetAruco* theTarget = (TargetAruco*)model;
+		std::vector< std::vector< cv::Point2f > > allCornersConcatenated;
+		std::vector< int > allIdsConcatenated;
+		std::vector< int > markerCounterPerFrame;
+		markerCounterPerFrame.reserve(allCorners.size());
+		for (unsigned int i = 0; i < allCorners.size(); i++) {
+			markerCounterPerFrame.push_back((int)allCorners[i].size());
+			for (unsigned int j = 0; j < allCorners[i].size(); j++) {
+				allCornersConcatenated.push_back(allCorners[i][j]);
+				allIdsConcatenated.push_back(allIds[i][j]);
+			}
+		}
+		// might have to pass these in as before in the parent
+		int calibrationFlags = 0;
+
+		// calibrate camera
+		cv::Ptr<cv::aruco::Board> board = theTarget->gridboard.staticCast<cv::aruco::Board>();
+		double repError = cv::aruco::calibrateCameraAruco(
+					allCornersConcatenated, 
+					allIdsConcatenated,
+					markerCounterPerFrame, 
+					board,
+					cameraToCalibrate.imageSize, 
+					cameraToCalibrate.cameraMatrix,
+					cameraToCalibrate.distCoeffs,
+					cameraToCalibrate.rvecs, 
+					cameraToCalibrate.tvecs, 
+					calibrationFlags);
+
+		std::cout << "ARUCO: repError = " << repError << std::endl;
+		return false;
+	}
+	virtual double ComputeAverageReprojectionError() {
+		return -1;
+	}
+	virtual bool setTargetInfo(cv::Size rc, cv::Size sz, std::string type) {
+		return this->setTargetInfo(rc, sz, type, "detector.params");
+	}
+	bool setTargetInfo(cv::Size rc, cv::Size sz, std::string type, std::string detectorParamsFile = "detector.params") {
+
+		if (type.compare("aruco") == 0) {
+			std::cout << "Target type: " << type << std::endl;
+			detectorParams = cv::aruco::DetectorParameters::create();
+			bool readOk = readDetectorParameters(detectorParamsFile, detectorParams);
+			if (!readOk) {
+				std::cerr << "ARUCO: Invalid detector parameters file" << std::endl;
+				return 0;
+			}
+
+			// make this a parameter
+			int dictionaryId = cv::aruco::DICT_6X6_250;
+			dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::PREDEFINED_DICTIONARY_NAME(dictionaryId));
+			// do stuff here
+			/* create the board */
+			model = new TargetAruco(rc,sz,TARGET_ARUCO, dictionary, detectorParams);
+
+		}
+		else if (type.compare("charuco") == 0) {
+			std::cout << "Target type: " << type << " : not supported YET" << std::endl;
+		}
+		else {
+
+		}
+		return true;
+	}
+	cv::Ptr<cv::aruco::DetectorParameters> detectorParams;
+	cv::Ptr<cv::aruco::Dictionary> dictionary;
+
+	// collected frames for calibration
+	std::vector< std::vector< std::vector< cv::Point2f > > > allCorners;
+	std::vector< std::vector< int > > allIds;
+
+};
+
+
 class CalibratorStandardOpenCV : public Calibrator {
 public :
 
@@ -302,18 +510,6 @@ public :
 		}
 		else if (type.compare("asymmetric_circles")==0) {
 			model = new TargetStandardOpenCV(rc, sz, TARGET_ACIRCLES);
-		}
-		else if (type.compare("aruco")==0) {
-			std::cout << "Target type: " << type << " : not supported YET" << std::endl;
-		}
-		else if (type.compare("charuco")==0) {
-			std::cout << "Target type: " << type << " : not supported YET" << std::endl;
-		}
-		else if (type.compare("livescan")==0) {
-			std::cout << "Target type: " << type << " : not supported YET" << std::endl;
-		}
-		else if(type.compare("apriltags")==0){
-			std::cout << "Target type: " << type << " : not supported YET" << std::endl;
 		}
 		else {
 			std::cout << "Target type: " << type << " : not supported" << std::endl;

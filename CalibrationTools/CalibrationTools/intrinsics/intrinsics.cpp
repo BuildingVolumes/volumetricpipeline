@@ -63,22 +63,25 @@ int main(int argc, char **argv)
     auto result = parse(argc, argv);
     auto arguments = result.arguments();
    
-    CalibratorStandardOpenCV calibrator;
-    
-    calibrator.setInputDir(ioptions.inputDir);
-    calibrator.setSelectionDir(ioptions.selectionDir);
-    calibrator.setTargetInfo(cv::Size(ioptions.target_cols, ioptions.target_rows), cv::Size(ioptions.target_width, ioptions.target_height), ioptions.target_type);
-  
-    if (calibrator.DetectTargets()) 
+   // CalibratorStandardOpenCV calibrator;
+    CalibratorAruco* arucoCalib = new CalibratorAruco();
+  //  arucoCalib->readDetectorParameters();
+    arucoCalib->setInputDir(ioptions.inputDir);
+    arucoCalib->setSelectionDir(ioptions.selectionDir);
+    arucoCalib->setTargetInfo(cv::Size(ioptions.target_cols, ioptions.target_rows), cv::Size(ioptions.target_width, ioptions.target_height), ioptions.target_type, "../aruco_test/detector_params.yml");
+
+    Calibrator* calibrator;
+    calibrator = arucoCalib;
+    if (calibrator->DetectTargets()) 
     {
-        calibrator.RunCalibration();
-        double rms = calibrator.ComputeAverageReprojectionError();
+        calibrator->RunCalibration();
+        double rms = calibrator->ComputeAverageReprojectionError();
         std::cout << "RMS ERROR: " << rms << std::endl;
 
-        calibrator.Save(ioptions.outputFilename);
+        calibrator->Save(ioptions.outputFilename);
         //  save 
         if (ioptions.saveSelected) {
-            calibrator.SaveSelectedImages(ioptions.selectionDir);
+            calibrator->SaveSelectedImages(ioptions.selectionDir);
         }
     }
 }
