@@ -74,7 +74,7 @@ int main(int argc, char **argv)
     calibrator = arucoCalib;
     if (calibrator->DetectTargets()) 
     {
-        //calibrator->RunCalibration();
+        calibrator->RunCalibration();
         //double rms = calibrator->ComputeAverageReprojectionError();
         //std::cout << "RMS ERROR: " << rms << std::endl;
 

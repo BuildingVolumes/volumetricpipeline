@@ -428,10 +428,10 @@ public:
 				allCharucoIds.push_back(currentCharucoIds);
 				filteredImages.push_back(selectedImages[i]);
 			}
-			if (allCharucoCorners.size() < 4) {
+			/*if (allCharucoCorners.size() < 4) {
 				std::cerr << "Not enough corners for calibration" << std::endl;
 				return 0;
-			}
+			}*/
 			repError =
 				cv::aruco::calibrateCameraCharuco(allCharucoCorners, allCharucoIds, 
 												  theTarget->charucoBoard, 
