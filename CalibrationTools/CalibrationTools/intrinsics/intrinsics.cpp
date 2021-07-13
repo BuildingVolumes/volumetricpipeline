@@ -14,7 +14,10 @@ struct _ioptions{
     std::string selectionDir;
     int target_width;
     int target_height;
+    int target_rows;
+    int target_cols;
     std::string target_type;
+    bool saveSelected;
 }ioptions;
 
 cxxopts::ParseResult parse(int argc, char* argv[])
@@ -26,10 +29,13 @@ cxxopts::ParseResult parse(int argc, char* argv[])
         options
             .add_options()
             ("i,inputDir", "input image directory", cxxopts::value<std::string>(ioptions.inputDir)->default_value("./input/"))
-            ("o,output", "output file (json)", cxxopts::value<std::string>(ioptions.outputFilename)->default_value("./calibration.json"))
+            ("o,output", "output file (yml)", cxxopts::value<std::string>(ioptions.outputFilename)->default_value("./calibration.yml"))
             ("s,selectDir", "selection dir (selected images go here)", cxxopts::value<std::string>(ioptions.selectionDir)->default_value("./selected/"))
-            ("W,width", "target width (num cols)", cxxopts::value<int>(ioptions.target_width)->default_value("9"))
-            ("H,height", "target height (num rows)", cxxopts::value<int>(ioptions.target_height)->default_value("6"))
+            ("saveSelected", "", cxxopts::value <bool>(ioptions.saveSelected)->default_value("false") )
+            ("r,rows", "num internal target rows", cxxopts::value<int>(ioptions.target_rows)->default_value("6"))
+            ("c,cols", "num internal target columns", cxxopts::value<int>(ioptions.target_cols)->default_value("9"))
+            ("W,width", "target width (mm)", cxxopts::value<int>(ioptions.target_width)->default_value("10"))
+            ("H,height", "target height (mm)", cxxopts::value<int>(ioptions.target_height)->default_value("10"))
             ("t,type", "target type {chessboard, circles, asymmetric_circles, aruco, charuco, livescan, apriltags}", cxxopts::value<std::string>(ioptions.target_type)->default_value("chessboard"))
             ("h,help", "print usage")
             ;
@@ -61,14 +67,19 @@ int main(int argc, char **argv)
     
     calibrator.setInputDir(ioptions.inputDir);
     calibrator.setSelectionDir(ioptions.selectionDir);
-    calibrator.setTargetInfo(cv::Size(ioptions.target_width, ioptions.target_height), ioptions.target_type);
+    calibrator.setTargetInfo(cv::Size(ioptions.target_cols, ioptions.target_rows), cv::Size(ioptions.target_width, ioptions.target_height), ioptions.target_type);
   
-    calibrator.DetectTargets();
-    calibrator.RunCalibration();
-    double rms =  calibrator.ComputeAverageReprojectionError();
-    std::cout << "RMS ERROR: " << rms << std::endl;
+    if (calibrator.DetectTargets()) 
+    {
+        calibrator.RunCalibration();
+        double rms = calibrator.ComputeAverageReprojectionError();
+        std::cout << "RMS ERROR: " << rms << std::endl;
 
-    calibrator.Save(ioptions.outputFilename);
-    //  save 
+        calibrator.Save(ioptions.outputFilename);
+        //  save 
+        if (ioptions.saveSelected) {
+            calibrator.SaveSelectedImages(ioptions.selectionDir);
+        }
+    }
 }
 
