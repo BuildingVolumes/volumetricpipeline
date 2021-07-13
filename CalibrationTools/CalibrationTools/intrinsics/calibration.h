@@ -10,6 +10,7 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/calib3d.hpp>
 #include <opencv2/aruco.hpp>
+#include <opencv2/aruco/charuco.hpp>
 #include <opencv2/imgproc.hpp>
 
 
@@ -92,7 +93,16 @@ public:
 		float markerSeparation = sz.height; // marker separation
 		dictionary = _dictionary;
 		detectorParams = _detectorParams;
-		gridboard =cv::aruco::GridBoard::create(markersX, markersY, markerLength, markerSeparation, _dictionary);
+
+		if (type == TARGET_ARUCO) {
+			gridboard = cv::aruco::GridBoard::create(markersX, markersY, markerLength, markerSeparation, dictionary);
+			board = gridboard.staticCast<cv::aruco::Board>();
+		}
+		else if (type == TARGET_CHARUCO) {
+			this->charucoBoard = cv::aruco::CharucoBoard::create(5, 7, 0.04f, 0.02f, dictionary);
+			board = charucoBoard.staticCast<cv::aruco::Board>();
+			// FIXME: set parameters properly
+		}
 	}
 	TargetAruco(cv::Size rc = cv::Size(9, 6), cv::Size sz = cv::Size(1, 1), int type = 0)
 		: Target(rc, sz, type)
@@ -101,9 +111,17 @@ public:
 		int markersY = rc.height;
 		float markerLength = sz.width; // marker length
 		float markerSeparation = sz.height; // marker separation
-		dictionary =
-			cv::aruco::getPredefinedDictionary(cv::aruco::PREDEFINED_DICTIONARY_NAME(cv::aruco::DICT_ARUCO_ORIGINAL));
-		gridboard = cv::aruco::GridBoard::create(markersX, markersY, markerLength, markerSeparation,dictionary);
+		dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::PREDEFINED_DICTIONARY_NAME(cv::aruco::DICT_ARUCO_ORIGINAL));
+
+		if (type == TARGET_ARUCO) {
+			gridboard = cv::aruco::GridBoard::create(markersX, markersY, markerLength, markerSeparation, dictionary);
+			board = gridboard.staticCast<cv::aruco::Board>();
+		}
+		else if (type == TARGET_CHARUCO) {
+			this->charucoBoard = cv::aruco::CharucoBoard::create(5, 7, 0.04f, 0.02f, dictionary);
+			board = charucoBoard.staticCast<cv::aruco::Board>();
+			// FIXME: set parameters properly
+		}
 	}
 	~TargetAruco(){}
 	virtual void calculateObjectPoints() {
@@ -115,9 +133,9 @@ public:
 	}
 	bool detect(cv::Mat img, std::vector<std::vector<cv::Point2f>>& outputBuffer, std::vector< int > &idBuffer, std::vector<std::vector<cv::Point2f>>& rejectedBuffer)
 	{
-		cv::Ptr<cv::aruco::Board> board = gridboard.staticCast<cv::aruco::Board>();
+		//cv::Ptr<cv::aruco::Board> board = gridboard.staticCast<cv::aruco::Board>();
 
-		cv::aruco::detectMarkers(img, dictionary, outputBuffer,idBuffer, detectorParams, rejectedBuffer);
+		cv::aruco::detectMarkers(img, board->dictionary, outputBuffer,idBuffer, detectorParams, rejectedBuffer);
 		cv::aruco::refineDetectedMarkers(img, board, outputBuffer, idBuffer, rejectedBuffer);
 		return true;
 	}
@@ -133,8 +151,10 @@ public:
 
 	// members 
 	cv::Ptr<cv::aruco::Dictionary> dictionary;
-	cv::Ptr<cv::aruco::GridBoard> gridboard;
 	cv::Ptr<cv::aruco::DetectorParameters> detectorParams;
+	cv::Ptr<cv::aruco::Board> board;
+	cv::Ptr<cv::aruco::GridBoard> gridboard;       // regular aruco
+	cv::Ptr<cv::aruco::CharucoBoard> charucoBoard; // for charuco
 
 };
 
@@ -316,12 +336,28 @@ public:
 			std::vector< std::vector<cv::Point2f >> pointsBuffer, rejected;
 			
 			bool found = theTarget->detect(img, pointsBuffer, ids, rejected);
+
+
 			if (found) {
-				theTarget->draw(img, pointsBuffer, ids);
+
+				if (theTarget->type == TARGET_CHARUCO) {
+					// interpolate charuco corners
+					cv::Mat currentCharucoCorners, currentCharucoIds;
+					if (ids.size() > 0)
+						cv::aruco::interpolateCornersCharuco(pointsBuffer, ids, img, theTarget->charucoBoard, currentCharucoCorners, currentCharucoIds);
+
+					if (currentCharucoCorners.total() > 0)
+						cv::aruco::drawDetectedCornersCharuco(img, currentCharucoCorners, currentCharucoIds);
+				}
+				else {
+					theTarget->draw(img, pointsBuffer, ids);
+				}
 				allCorners.push_back(pointsBuffer);
 				allIds.push_back(ids);
 				selectedImages.push_back(img);
 				selectedFilenames.push_back(inputFilenames[i]);
+				//cv::imshow("charuco", img);
+				//cv::waitKey();
 				numFound++;
 			}
 		}
@@ -352,18 +388,62 @@ public:
 		int calibrationFlags = 0;
 
 		// calibrate camera
-		cv::Ptr<cv::aruco::Board> board = theTarget->gridboard.staticCast<cv::aruco::Board>();
-		double repError = cv::aruco::calibrateCameraAruco(
-					allCornersConcatenated, 
-					allIdsConcatenated,
-					markerCounterPerFrame, 
-					board,
-					cameraToCalibrate.imageSize, 
-					cameraToCalibrate.cameraMatrix,
-					cameraToCalibrate.distCoeffs,
-					cameraToCalibrate.rvecs, 
-					cameraToCalibrate.tvecs, 
-					calibrationFlags);
+		cv::Ptr<cv::aruco::Board> board = theTarget->board;
+		double repError = -1;
+	
+		repError = cv::aruco::calibrateCameraAruco(
+							allCornersConcatenated,
+							allIdsConcatenated,
+							markerCounterPerFrame,
+							board,
+							cameraToCalibrate.imageSize,
+							cameraToCalibrate.cameraMatrix,
+							cameraToCalibrate.distCoeffs,
+							cameraToCalibrate.rvecs,
+							cameraToCalibrate.tvecs,
+							calibrationFlags);
+		if (theTarget->type == TARGET_CHARUCO)
+		{
+			// prepare data for charuco calibration
+			int nFrames = (int)allCorners.size();
+			std::vector< cv::Mat > allCharucoCorners;
+			std::vector< cv::Mat > allCharucoIds;
+			std::vector< cv::Mat > filteredImages;
+			allCharucoCorners.reserve(nFrames);
+			allCharucoIds.reserve(nFrames);
+			for (int i = 0; i < nFrames; i++) {
+				// interpolate using camera parameters
+				cv::Mat currentCharucoCorners, currentCharucoIds;
+				cv::aruco::interpolateCornersCharuco(
+							allCorners[i], 
+							allIds[i], 
+							selectedImages[i], 
+							theTarget->charucoBoard,
+							currentCharucoCorners, 
+							currentCharucoIds, 
+							cameraToCalibrate.cameraMatrix,
+							cameraToCalibrate.distCoeffs);
+
+				allCharucoCorners.push_back(currentCharucoCorners);
+				allCharucoIds.push_back(currentCharucoIds);
+				filteredImages.push_back(selectedImages[i]);
+			}
+			if (allCharucoCorners.size() < 4) {
+				std::cerr << "Not enough corners for calibration" << std::endl;
+				return 0;
+			}
+			repError =
+				cv::aruco::calibrateCameraCharuco(allCharucoCorners, allCharucoIds, 
+												  theTarget->charucoBoard, 
+												  cameraToCalibrate.imageSize,
+												  cameraToCalibrate.cameraMatrix, 
+												  cameraToCalibrate.distCoeffs, 
+												  cameraToCalibrate.rvecs, 
+												  cameraToCalibrate.tvecs, 
+												  calibrationFlags);
+		}
+		
+		
 
 		std::cout << "ARUCO: repError = " << repError << std::endl;
 		return false;
@@ -394,7 +474,21 @@ public:
 
 		}
 		else if (type.compare("charuco") == 0) {
-			std::cout << "Target type: " << type << " : not supported YET" << std::endl;
+			std::cout << "Target type: " << type << std::endl;
+			detectorParams = cv::aruco::DetectorParameters::create();
+			bool readOk = readDetectorParameters(detectorParamsFile, detectorParams);
+			if (!readOk) {
+				std::cerr << "CHARUCO: Invalid detector parameters file" << std::endl;
+				return 0;
+			}
+
+			// make this a parameter
+			int dictionaryId = cv::aruco::DICT_6X6_250;
+			dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::PREDEFINED_DICTIONARY_NAME(dictionaryId));
+			// do stuff here
+			/* create the board */
+			model = new TargetAruco(rc, sz, TARGET_CHARUCO, dictionary, detectorParams);
+
 		}
 		else {
 
