@@ -25,7 +25,9 @@ MarkerDetector::MarkerDetector()
 	dApproxPolyCoef = 0.12;
 
 	dMarkerFrame = 0.4;
+
 	nMarkerCorners = 5;
+	// this is 5 because of the triangle point in the middle
 
 	bDraw = true;
 

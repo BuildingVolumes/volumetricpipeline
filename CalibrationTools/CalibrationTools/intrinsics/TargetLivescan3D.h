@@ -15,7 +15,8 @@ public:
 	virtual void draw(cv::Mat img, const std::vector<cv::Point2f>& points);
 	void draw(cv::Mat img, const std::vector<std::vector<cv::Point2f>>& points, std::vector< int >& idBuffer);
 
-
+	MarkerInfo marker;
+	std::vector<cv::Point3f> objectPoints; // canonical marker points (5 corners)
 	MarkerDetector detector;
 };
 
