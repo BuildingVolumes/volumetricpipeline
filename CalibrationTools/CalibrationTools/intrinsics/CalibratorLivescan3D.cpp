@@ -7,7 +7,7 @@ bool CalibratorLivescan3D::DetectTargetsInImage(cv::Mat img) {
 	std::vector<cv::Point2f> corners;
 	theTarget->calculateObjectPoints(); // do this once only
 
-	if (theTarget->detect(img, corners))
+	if (theTarget->detect(img, corners, drawTarget))
 	{
 		allCorners.push_back(corners);
 		allObjectPoints.push_back(theTarget->objectPoints);
@@ -36,8 +36,6 @@ bool CalibratorLivescan3D::RunCalibration()
 		this->cameraToCalibrate.tvecs,
 		newObjPoints,
 		calibrationFlags | cv::CALIB_FIX_K3 | cv::CALIB_USE_LU);
-	printf("RMS error reported by calibrateCamera: %g\n", rms);
-
 	return false;
 }
 double CalibratorLivescan3D::ComputeAverageReprojectionError()
@@ -50,9 +48,8 @@ bool CalibratorLivescan3D::setTargetInfo(cv::Size rc, cv::Size sz, std::string t
 		model = new TargetLivescan3D(rc, sz, TARGET_LIVESCAN);
 	}
 	else {
-		std::cout << "TargetType: " << type << ": not supported" << std::endl;
+		std::cout << __FILE__ <<": TargetType :" << type << ": not supported" << std::endl;
 	}
 	return false;
 }
-
 

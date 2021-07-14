@@ -44,20 +44,22 @@ void TargetLivescan3D::calculateObjectPoints()
 	this->objectPoints.push_back(topRight);
 
 }
-
 bool TargetLivescan3D::detect(cv::Mat img, std::vector<cv::Point2f>& outputBuffer)
 {
-	bool found = this->detector.GetMarker(img, marker);
-
-	std::cout << "detect:marker num corners: " << marker.corners.size() << std::endl;
-
+	bool found = this->detector.GetMarker(img, marker, false);
 	outputBuffer = marker.corners;
 	return found;
 }
-bool detect(cv::Mat img, std::vector<std::vector<cv::Point2f>>& outputBuffer, std::vector< int >& idBuffer, std::vector<std::vector<cv::Point2f>>& rejectedBuffer)
+bool TargetLivescan3D::detect(cv::Mat img, std::vector<cv::Point2f>& outputBuffer, bool drawTarget)
 {
-	return false;
+	bool found = this->detector.GetMarker(img, marker, drawTarget);
+	outputBuffer = marker.corners;
+	return found;
 }
+//bool TargetLivescan3D::detect(cv::Mat img, std::vector<std::vector<cv::Point2f>>& outputBuffer, std::vector< int >& idBuffer, std::vector<std::vector<cv::Point2f>>& rejectedBuffer)
+//{
+//	return false;
+//}
 
 void TargetLivescan3D::draw(cv::Mat img, const std::vector<cv::Point2f>& points)
 {

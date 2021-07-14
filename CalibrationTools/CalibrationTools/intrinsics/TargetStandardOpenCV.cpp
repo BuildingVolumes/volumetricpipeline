@@ -25,6 +25,7 @@ bool TargetStandardOpenCV::detect(cv::Mat img, std::vector<cv::Point2f>& outputB
 	return found;
 }
 void TargetStandardOpenCV::draw(cv::Mat img, const std::vector<cv::Point2f>& points) {
+	
 	drawChessboardCorners(img, targetSize, cv::Mat(points), true);
 }
 

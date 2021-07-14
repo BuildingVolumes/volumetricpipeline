@@ -10,7 +10,8 @@ public:
 
 	virtual void calculateObjectPoints();
 	virtual bool detect(cv::Mat img, std::vector<cv::Point2f>& outputBuffer);
-	bool detect(cv::Mat img, std::vector<std::vector<cv::Point2f>>& outputBuffer, std::vector< int >& idBuffer, std::vector<std::vector<cv::Point2f>>& rejectedBuffer);
+	virtual bool detect(cv::Mat img, std::vector<cv::Point2f>& outputBuffer, bool drawTarget);
+	//virtual bool detect(cv::Mat img, std::vector<std::vector<cv::Point2f>>& outputBuffer, std::vector< int >& idBuffer, std::vector<std::vector<cv::Point2f>>& rejectedBuffer);
 
 	virtual void draw(cv::Mat img, const std::vector<cv::Point2f>& points);
 	void draw(cv::Mat img, const std::vector<std::vector<cv::Point2f>>& points, std::vector< int >& idBuffer);

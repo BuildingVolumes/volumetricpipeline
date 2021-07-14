@@ -64,9 +64,15 @@ void TargetAruco::draw(cv::Mat img, const std::vector<cv::Point2f>& points) {
 	// not used, each type is going to need its own interface.... uggggh... should get rid of the generic one then
 }
 
-void TargetAruco::draw(cv::Mat img, const std::vector<std::vector<cv::Point2f>>& points, std::vector< int >& idBuffer) {
+void TargetAruco::draw(cv::Mat img, const cv::Mat& points,cv::Mat& idBuffer) 
+{
+	cv::aruco::drawDetectedCornersCharuco(img, points, idBuffer);
+
+}
+void TargetAruco::draw(cv::Mat img, const std::vector<std::vector<cv::Point2f>>& points, std::vector< int >& idBuffer) 
+{
 	if (idBuffer.size() > 0) cv::aruco::drawDetectedMarkers(img, points, idBuffer);
 	else {
 		std::cout << "ARUCO: draw: no ids to draw" << std::endl;
-	}
+	}	
 }

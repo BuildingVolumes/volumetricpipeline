@@ -46,5 +46,5 @@ public:
 	IMarker() {};
 
 	//znajduje wszystkie markery w obrazie i zapisuje je w zmiennej markers
-	virtual bool GetMarker(RGB *img, int height, int width, MarkerInfo &marker) = 0;
+	virtual bool GetMarker(RGB *img, int height, int width, MarkerInfo &marker, bool drawTarget) = 0;
 };

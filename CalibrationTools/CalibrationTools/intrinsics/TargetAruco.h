@@ -13,6 +13,7 @@ public:
 	
 	virtual void draw(cv::Mat img, const std::vector<cv::Point2f>& points);
 	void draw(cv::Mat img, const std::vector<std::vector<cv::Point2f>>& points, std::vector< int >& idBuffer);
+	void draw(cv::Mat img, const cv::Mat& points, cv::Mat& idBuffer); // charuco 
 
 	// members 
 	cv::Ptr<cv::aruco::Dictionary> dictionary;

@@ -34,7 +34,7 @@ MarkerDetector::MarkerDetector()
 	GetMarkerPointsForWarp(vPts);
 }
 
-bool MarkerDetector::GetMarker(cv::Mat &img, MarkerInfo &marker)
+bool MarkerDetector::GetMarker(cv::Mat &img, MarkerInfo &marker, bool drawTarget)
 {
 	vector<MarkerInfo> markers;
 	cv::Mat img2, img3;
@@ -95,7 +95,7 @@ bool MarkerDetector::GetMarker(cv::Mat &img, MarkerInfo &marker)
 			markers.push_back(MarkerInfo(code, cornersFloat2, points3D));
 
 			// always draw if marker found
-			//if (bDraw)
+			if (drawTarget)
 			{
 				for (unsigned int j = 0; j < corners.size(); j++)
 				{
@@ -121,8 +121,7 @@ bool MarkerDetector::GetMarker(cv::Mat &img, MarkerInfo &marker)
 		}
 
 		marker = markers[maxInd];
-		// always draw
-		//if (bDraw)
+		if (drawTarget)
 		{
 			for (int j = 0; j < nMarkerCorners; j++)
 			{
@@ -138,7 +137,7 @@ bool MarkerDetector::GetMarker(cv::Mat &img, MarkerInfo &marker)
 		return false;
 }
 
-bool MarkerDetector::GetMarker(RGB *img, int height, int width, MarkerInfo &marker)
+bool MarkerDetector::GetMarker(RGB *img, int height, int width, MarkerInfo &marker, bool drawTarget)
 {
 	cv::Mat cvImg(height, width, CV_8UC3);
 
@@ -152,7 +151,7 @@ bool MarkerDetector::GetMarker(RGB *img, int height, int width, MarkerInfo &mark
 		}
 	}
 
-	bool res = GetMarker(cvImg, marker);
+	bool res = GetMarker(cvImg, marker, drawTarget);
 	// at this point we have a marker 
 
 	for (int i = 0; i < height; i++)

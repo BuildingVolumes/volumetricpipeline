@@ -8,10 +8,18 @@ Calibrator::Calibrator() : isCalibrated(false), model(NULL) {
 
 }
 Calibrator::~Calibrator() {}
-
+void Calibrator::PrintResults()
+{
+	std::cout << "Calibrator: Results" << std::endl;
+	cameraToCalibrate.Print();
+}
 bool Calibrator::setInputDir(std::string dir) {
-	std::cout << "setInputDir" << std::endl;
 	inputDirectory = dir;
+	
+	if (!fs::exists(fs::directory_entry(dir))) {
+		std::cerr << "DIRECTORY DOES NOT EXIST: " << dir << std::endl;
+		return false;
+	}
 	// list all files in the directory and add them to the inputFilenames list
 	for (const auto& entry : fs::directory_iterator(dir)) {
 		inputFilenames.push_back(entry.path());
@@ -19,23 +27,22 @@ bool Calibrator::setInputDir(std::string dir) {
 	return true;
 }
 bool Calibrator::setSelectionDir(std::string dir) {
-	std::cout << "setSelectionDir" << std::endl;
-
 	selectionDir = dir;
+	if (!fs::exists(fs::directory_entry(dir))) {
+		std::cerr << "DIRECTORY DOES NOT EXIST: " << dir << std::endl;
+		return false;
+	}
 	return true;
 }
 
 bool Calibrator::Save(std::string fname) {
-	std::cout << "SAVE" << std::endl;
 	cameraToCalibrate.Save(fname);
 	return true;
 }
 void Calibrator::SaveSelectedImages(std::string dirName) {
-	std::cout << "saving selected images to: " << dirName << std::endl;
 	for (int i = 0; i < selectedImages.size(); i++) {
 		std::string fname;
 		fname = dirName + "/" + selectedFilenames[i].filename().string();
-		std::cout << "SAVING:" << fname << std::endl;
 		cv::imwrite(fname, selectedImages[i]);
 	}
 }
@@ -43,7 +50,6 @@ void Calibrator::SaveSelectedImages(std::string dirName) {
 
 bool Calibrator::DetectTargets()
 {
-	std::cout << "DETECT TARGETS" << std::endl;
 	int numFound = 0;
 
 	for (int i = 0; i < this->inputFilenames.size(); i++)
@@ -70,6 +76,6 @@ bool Calibrator::DetectTargets()
 		std::cout << "NO targets found" << std::endl;
 		return false;
 	}
-	std::cout << "Num Targets Found:" << numFound << std::endl;
+	std::cout << "NUM TARGETS FOUND: "<< numFound << std::endl;
 	return true;
 }

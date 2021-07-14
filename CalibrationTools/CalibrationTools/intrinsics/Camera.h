@@ -35,6 +35,14 @@ public:
 		fs << "camera_matrix" << cameraMatrix;
 		fs << "dist_coeffs" << distCoeffs;
 	}
+	void Print() {
+		std::cout << "---------------------------------------------------------------" << std::endl;
+		std::cout << "image_width" << imageSize.width << std::endl;
+		std::cout << "image_height" << imageSize.height << std::endl;
+		std::cout << "camera_matrix" << cameraMatrix << std::endl;
+		std::cout << "dist_coeffs" << distCoeffs << std::endl;
+		std::cout << "---------------------------------------------------------------" << std::endl;
+	}
 	//members
 	cv::Mat cameraMatrix;
 	cv::Mat distCoeffs;

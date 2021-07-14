@@ -18,8 +18,15 @@ struct _ioptions{
     int target_cols;
     std::string target_type;
     bool saveSelected;
+    std::string aruco_dict;
+    bool drawTarget;
 }ioptions;
 
+/*
+Samples command arguments:
+-i ../chessboardsb_test\images -s ../selected --saveSelected -t chessboardSB -r 9 -c 14 -W 10 -H 10 -o ../chessboardsb_test/calibration.yaml
+-i ../aruco_test/images -s ../selected --saveSelected -t aruco -r 7 -c 5 -W 10 -H 10 -o ../aruco_test/calibration.yaml
+*/
 cxxopts::ParseResult parse(int argc, char* argv[])
 {
     try
@@ -37,10 +44,14 @@ cxxopts::ParseResult parse(int argc, char* argv[])
             ("W,width", "target width (mm)", cxxopts::value<int>(ioptions.target_width)->default_value("10"))
             ("H,height", "target height (mm)", cxxopts::value<int>(ioptions.target_height)->default_value("10"))
             ("t,type", "target type {chessboard, chessboardSB, circles, asymmetric_circles, aruco, charuco, livescan, apriltags}", cxxopts::value<std::string>(ioptions.target_type)->default_value("chessboard"))
+            ("drawTarget", "Draw Target boolean", cxxopts::value <bool>(ioptions.drawTarget)->default_value("false"))
             ("h,help", "print usage")
             ;
-           auto result = options.parse(argc, argv);
+        options.add_options("Aruco")
+            ("dict", "Aruco Dictionary: 4x4_50, 4x4_100, 4x4_250, 4x4_1000, etc... ", cxxopts::value<std::string>(ioptions.aruco_dict)->default_value("ORIGINAL"));
 
+        auto result = options.parse(argc, argv);
+        
         if (result.count("help") || result.arguments().size() == 0)
         {
             std::cout << options.help() << std::endl;
@@ -61,29 +72,38 @@ Calibrator* CreateCalibrator() {
     std::cout << "Creating Calibrator type=" << ioptions.target_type << std::endl;
     if (ioptions.target_type.compare("chessboard") == 0)
     {
-        return new CalibratorStandardOpenCV();
+        CalibratorStandardOpenCV *calibrator = new CalibratorStandardOpenCV();
+        calibrator->setTargetInfo(cv::Size(ioptions.target_cols, ioptions.target_rows), cv::Size(ioptions.target_width, ioptions.target_height), ioptions.target_type);
+        return calibrator;
     }
     else if (ioptions.target_type.compare("chessboardSB") == 0) {
-        return new CalibratorStandardOpenCV();
-
+        CalibratorStandardOpenCV* calibrator = new CalibratorStandardOpenCV();
+        calibrator->setTargetInfo(cv::Size(ioptions.target_cols, ioptions.target_rows), cv::Size(ioptions.target_width, ioptions.target_height), ioptions.target_type);
+        return calibrator;
     }
     else if (ioptions.target_type.compare("circles") == 0) {
-        return new CalibratorStandardOpenCV();
-
+        CalibratorStandardOpenCV* calibrator = new CalibratorStandardOpenCV();
+        calibrator->setTargetInfo(cv::Size(ioptions.target_cols, ioptions.target_rows), cv::Size(ioptions.target_width, ioptions.target_height), ioptions.target_type);
+        return calibrator;
     }
     else if (ioptions.target_type.compare("asymmetric_circles") == 0) {
-        return new CalibratorStandardOpenCV();
+        CalibratorStandardOpenCV* calibrator = new CalibratorStandardOpenCV();
+        calibrator->setTargetInfo(cv::Size(ioptions.target_cols, ioptions.target_rows), cv::Size(ioptions.target_width, ioptions.target_height), ioptions.target_type);
+        return calibrator;
     }
     else if (ioptions.target_type.compare("aruco") == 0) {
-        return new CalibratorAruco();
+        CalibratorAruco* arucoCalib = new CalibratorAruco();
+        arucoCalib->setTargetInfo(cv::Size(ioptions.target_cols, ioptions.target_rows), cv::Size(ioptions.target_width, ioptions.target_height), ioptions.target_type, "../aruco_test/detector_params.yml");
+        return arucoCalib;
     }
     else if (ioptions.target_type.compare("charuco") == 0) {
-            CalibratorAruco* arucoCalib = new CalibratorAruco();
-            arucoCalib->setTargetInfo(cv::Size(ioptions.target_cols, ioptions.target_rows), cv::Size(ioptions.target_width, ioptions.target_height), ioptions.target_type, "../aruco_test/detector_params.yml");
-            return arucoCalib;
+        CalibratorAruco* arucoCalib = new CalibratorAruco();
+        arucoCalib->setTargetInfo(cv::Size(ioptions.target_cols, ioptions.target_rows), cv::Size(ioptions.target_width, ioptions.target_height), ioptions.target_type, "../aruco_test/detector_params.yml");
+        return arucoCalib;
     }
     else if (ioptions.target_type.compare("livescan") == 0) {
-       return new CalibratorLivescan3D();
+        CalibratorLivescan3D* calibrator = new CalibratorLivescan3D();
+        return calibrator;
     }
     else if (ioptions.target_type.compare("apriltags") == 0) {
         return NULL;
@@ -93,41 +113,56 @@ Calibrator* CreateCalibrator() {
     }
 }
 
+void PrintOptionsSelected() {
+    std::cout << "===============================================================" << std::endl;
+    std::cout << "Intrinsics Calibrator:" << std::endl;
+    std::cout << "---------------------------------------------------------------" << std::endl;
+    std::cout << "Running with Options:" << std::endl;
+    std::cout << left<<setw(25)<< "- InputDir: " << ioptions.inputDir << std::endl;
+    std::cout << left<<setw(25)<<"- OutputFilename:" << ioptions.outputFilename << std::endl;
+    std::cout << left<<setw(25)<<"- SelectionDir: " << ioptions.selectionDir << std::endl;
+    std::cout << left<<setw(25)<<"- Target (WxH): " << "(" << ioptions.target_width << " x " << ioptions.target_height << ")" << std::endl;
+    std::cout << left<<setw(25)<<"- Target (RxC): " << "(" << ioptions.target_rows << " x " << ioptions.target_cols << ")" << std::endl;
+    std::cout << left<<setw(25)<<"- Target Type: " << ioptions.target_type << std::endl;
+    std::cout << left<<setw(25)<<"- saveSelected: " << ioptions.saveSelected << std::endl;
+    std::cout << "===============================================================" << std::endl;
+}
 int main(int argc, char **argv)
 {
     auto result = parse(argc, argv);
     auto arguments = result.arguments();
-
+    PrintOptionsSelected();
+    std::cout << "===============================================================" << std::endl;
     Calibrator* calibrator = CreateCalibrator();
     if (calibrator == NULL) {
         std::cout << "Creating the Calibrator failed" << std::endl;
         return 1;
     }
-  // 
-  // // CalibratorStandardOpenCV calibrator;
-  //  CalibratorAruco* arucoCalib = new CalibratorAruco();
-  ////  arucoCalib->readDetectorParameters();
-  //  arucoCalib->setInputDir(ioptions.inputDir);
-  //  arucoCalib->setSelectionDir(ioptions.selectionDir);
-  //  arucoCalib->setTargetInfo(cv::Size(ioptions.target_cols, ioptions.target_rows), cv::Size(ioptions.target_width, ioptions.target_height), ioptions.target_type, "../aruco_test/detector_params.yml");
-    
-    //CalibratorLivescan3D* livescan3Dcalib = new CalibratorLivescan3D();
+    std::cout << "STAGE: SETTING GENERIC CALIBRATOR OPTIONS" << std::endl;
+    // set generic calibrator options
+    if (!calibrator->setInputDir(ioptions.inputDir)) return 1;
 
-    calibrator->setInputDir(ioptions.inputDir);
-    calibrator->setSelectionDir(ioptions.selectionDir);
-    calibrator->setTargetInfo(cv::Size(ioptions.target_cols, ioptions.target_rows), cv::Size(ioptions.target_width, ioptions.target_height), ioptions.target_type);
+    if (!calibrator->setSelectionDir(ioptions.selectionDir)) return 1;
 
+    calibrator->setDrawTarget(ioptions.drawTarget);
+
+    std::cout << "STAGE: DETECTING TARGETS" << std::endl;
     if (calibrator->DetectTargets()) 
     {
-        calibrator->RunCalibration();
-        //double rms = calibrator->ComputeAverageReprojectionError();
-        //std::cout << "RMS ERROR: " << rms << std::endl;
-
-        calibrator->Save(ioptions.outputFilename);
-        //  save 
+        std::cout << "STAGE: RUNNING CALIBRATION" << std::endl;
+        if (calibrator->RunCalibration())
+        {
+            calibrator->PrintResults();
+            //double rms = calibrator->ComputeAverageReprojectionError();
+            //std::cout << "RMS ERROR: " << rms << std::endl;
+            std::cout << "STAGE: SAVING" << std::endl;
+            calibrator->Save(ioptions.outputFilename);
+        }
         if (ioptions.saveSelected) {
+            std::cout << "STAGE: SAVING SELECTED IMAGES" << std::endl;
             calibrator->SaveSelectedImages(ioptions.selectionDir);
         }
     }
+    std::cout << "===============================================================" << std::endl;
 }
 

@@ -11,7 +11,7 @@ bool CalibratorStandardOpenCV::DetectTargetsInImage(cv::Mat img) {
 	bool found = model->detect(img, pointsBuffer);
 	if (found) {
 		allImagePoints.push_back(pointsBuffer);
-		model->draw(img, pointsBuffer);
+		if(drawTarget) model->draw(img, pointsBuffer);
 		return true;
 	}
 
@@ -19,7 +19,6 @@ bool CalibratorStandardOpenCV::DetectTargetsInImage(cv::Mat img) {
 }
 
 bool CalibratorStandardOpenCV::RunCalibration() {
-	std::cout << "RunCalibration::" << std::endl;
 	std::vector<cv::Point3f> newObjPoints;
 	TargetStandardOpenCV* theTarget = (TargetStandardOpenCV*)model;
 	theTarget->calculateObjectPoints();
@@ -37,12 +36,9 @@ bool CalibratorStandardOpenCV::RunCalibration() {
 		this->cameraToCalibrate.tvecs,
 		newObjPoints,
 		calibrationFlags | cv::CALIB_FIX_K3 | cv::CALIB_USE_LU);
-	printf("RMS error reported by calibrateCamera: %g\n", rms);
-
 	return true;
 }
 double CalibratorStandardOpenCV::ComputeAverageReprojectionError() {
-	std::cout << "ComputeAverageReprojectionError::" << std::endl;
 	/* project each point using the intrinsics */
 	std::vector<cv::Point2f> projectedPoints;
 	double err;
@@ -64,7 +60,6 @@ double CalibratorStandardOpenCV::ComputeAverageReprojectionError() {
 }
 
 bool CalibratorStandardOpenCV::setTargetInfo(cv::Size rc, cv::Size sz, std::string type) {
-	//   ("t,type", "target type {chessboard, circles, asymmetric_circles, aruco, charuco, livescan, apriltags}
 	if (type.compare("chessboard") == 0)
 	{
 		model = new TargetStandardOpenCV(rc, sz, TARGET_CHESSBOARD);
@@ -79,10 +74,7 @@ bool CalibratorStandardOpenCV::setTargetInfo(cv::Size rc, cv::Size sz, std::stri
 		model = new TargetStandardOpenCV(rc, sz, TARGET_ACIRCLES);
 	}
 	else {
-		std::cout << "Target type: " << type << " : not supported" << std::endl;
+		std::cout << __FILE__<< ": Target type: " << type << " : not supported" << std::endl;
 	}
-
-
-
 	return true;
 }

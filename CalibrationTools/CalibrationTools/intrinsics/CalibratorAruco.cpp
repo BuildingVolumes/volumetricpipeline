@@ -99,10 +99,7 @@ bool CalibratorAruco::RunCalibration()
 			allCharucoIds.push_back(currentCharucoIds);
 			filteredImages.push_back(selectedImages[i]);
 		}
-		/*if (allCharucoCorners.size() < 4) {
-			std::cerr << "Not enough corners for calibration" << std::endl;
-			return 0;
-		}*/
+		
 		repError =
 			cv::aruco::calibrateCameraCharuco(allCharucoCorners, allCharucoIds,
 											  theTarget->charucoBoard,
@@ -116,7 +113,7 @@ bool CalibratorAruco::RunCalibration()
 
 
 
-	std::cout << "ARUCO: Calibrator: repError = " << repError << std::endl;
+	std::cout << __FILE__ << "repError = " << repError << std::endl;
 	return false;
 }
 double CalibratorAruco::ComputeAverageReprojectionError()
@@ -131,14 +128,13 @@ bool CalibratorAruco::setTargetInfo(cv::Size rc, cv::Size sz, std::string type) 
 bool CalibratorAruco::setTargetInfo(cv::Size rc, cv::Size sz, std::string type, std::string detectorParamsFile = "detector.params") 
 {
 	if (type.compare("aruco") == 0) {
-		std::cout << "Target type: " << type << std::endl;
 		detectorParams = cv::aruco::DetectorParameters::create();
 		bool readOk = readDetectorParameters(detectorParamsFile, detectorParams);
 		if (!readOk) {
-			std::cerr << "ARUCO: Invalid detector parameters file" << std::endl;
+			std::cerr << __FILE__<<": ARUCO: Invalid detector parameters file" << std::endl;
+			std::cerr << detectorParamsFile << std::endl;
 			return 0;
 		}
-
 		// make this a parameter
 		int dictionaryId = cv::aruco::DICT_6X6_250;
 		dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::PREDEFINED_DICTIONARY_NAME(dictionaryId));
@@ -148,7 +144,6 @@ bool CalibratorAruco::setTargetInfo(cv::Size rc, cv::Size sz, std::string type, 
 
 	}
 	else if (type.compare("charuco") == 0) {
-		std::cout << "Target type: " << type << std::endl;
 		detectorParams = cv::aruco::DetectorParameters::create();
 		bool readOk = readDetectorParameters(detectorParamsFile, detectorParams);
 		if (!readOk) {
@@ -159,13 +154,12 @@ bool CalibratorAruco::setTargetInfo(cv::Size rc, cv::Size sz, std::string type, 
 		// make this a parameter
 		int dictionaryId = cv::aruco::DICT_6X6_250;
 		dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::PREDEFINED_DICTIONARY_NAME(dictionaryId));
-		// do stuff here
+		
 		/* create the board */
 		model = new TargetAruco(rc, sz, TARGET_CHARUCO, dictionary, detectorParams);
-
 	}
 	else {
-		std::cout << "Target type:" << type << " : not supported" << std::endl;
+		std::cout << __FILE__<<": Target type:" << type << " : not supported" << std::endl;
 		return false;
 	}
 	return true;

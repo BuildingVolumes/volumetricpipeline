@@ -40,14 +40,15 @@ public:
 	virtual bool RunCalibration() = 0;
 	virtual double ComputeAverageReprojectionError() = 0;
 	virtual bool setTargetInfo(cv::Size rc, cv::Size sz, std::string type) = 0;
-
+	
 	// base generic functionality
+	void PrintResults();
 	bool DetectTargets(); 
 	bool setInputDir(std::string dir);
 	bool setSelectionDir(std::string dir);
 	bool Save(std::string fname);
 	void SaveSelectedImages(std::string dirName);
-
+	void setDrawTarget(bool _drawTarget) { drawTarget = _drawTarget; }
 
 	// things most calibrators need:
 	std::string inputDirectory;
@@ -59,6 +60,7 @@ public:
 	// calibration- intrinsics
 	Camera cameraToCalibrate;
 	bool isCalibrated;
+	bool drawTarget;
 	std::vector< cv::Mat> selectedImages;
 	std::vector<fs::path> selectedFilenames;
 	Target* model;

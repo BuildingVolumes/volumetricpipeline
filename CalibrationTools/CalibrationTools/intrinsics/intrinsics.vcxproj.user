@@ -4,4 +4,8 @@
     <LocalDebuggerCommandArguments>-i ../chessboardsb_test\images -s ../selected --saveSelected -t chessboardSB -r 9 -c 14 -W 10 -H 10 -o ../chessboardsb_test/calibration.yaml</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LocalDebuggerCommandArguments>-i ../aruco_test/images -s ../selected --saveSelected -t aruco -r 7 -c 5 -W 10 -H 10 -o ../aruco_test/calibration.yaml</LocalDebuggerCommandArguments>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
 </Project>
