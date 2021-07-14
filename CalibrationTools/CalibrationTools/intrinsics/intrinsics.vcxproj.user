@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>-i ../livescan3d_test\images -s ../selected --saveSelected -t livescan -W 10 -H 10 -o ../livescan3d_test/calibration.yaml</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-i ../chessboardsb_test\images -s ../selected --saveSelected -t chessboardSB -r 9 -c 14 -W 10 -H 10 -o ../chessboardsb_test/calibration.yaml</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>

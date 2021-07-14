@@ -69,6 +69,9 @@ bool CalibratorStandardOpenCV::setTargetInfo(cv::Size rc, cv::Size sz, std::stri
 	{
 		model = new TargetStandardOpenCV(rc, sz, TARGET_CHESSBOARD);
 	}
+	else if (type.compare("chessboardSB") == 0) {
+		model = new TargetStandardOpenCV(rc, sz, TARGET_CHESSBOARD_SB);
+	}
 	else if (type.compare("circles") == 0) {
 		model = new TargetStandardOpenCV(rc, sz, TARGET_CIRCLES);
 	}

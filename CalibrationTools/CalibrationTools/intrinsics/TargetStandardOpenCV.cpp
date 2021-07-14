@@ -15,6 +15,9 @@ bool TargetStandardOpenCV::detect(cv::Mat img, std::vector<cv::Point2f>& outputB
 	case TARGET_CHESSBOARD:
 		found = findChessboardCorners(img, targetSize, outputBuffer, cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_FAST_CHECK | cv::CALIB_CB_NORMALIZE_IMAGE);
 		break;
+	case TARGET_CHESSBOARD_SB:
+		found = findChessboardCornersSB(img, targetSize, outputBuffer, cv::CALIB_CB_ACCURACY | cv::CALIB_CB_MARKER | cv::CALIB_CB_NORMALIZE_IMAGE);
+		break;
 	case TARGET_ACIRCLES:
 		found = findCirclesGrid(img, targetSize, outputBuffer, cv::CALIB_CB_ASYMMETRIC_GRID);
 		break;
@@ -31,6 +34,7 @@ void TargetStandardOpenCV::calculateObjectPoints() {
 	switch (type) {
 	case TARGET_CIRCLES:
 	case TARGET_CHESSBOARD:
+	case TARGET_CHESSBOARD_SB:
 		for (int i = 0; i < targetSize.height; i++)
 			for (int j = 0; j < targetSize.width; j++)
 				objectPoints.push_back(cv::Point3f(float(j * targetSizeW.width),

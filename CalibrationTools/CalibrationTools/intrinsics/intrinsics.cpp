@@ -36,7 +36,7 @@ cxxopts::ParseResult parse(int argc, char* argv[])
             ("c,cols", "num internal target columns", cxxopts::value<int>(ioptions.target_cols)->default_value("9"))
             ("W,width", "target width (mm)", cxxopts::value<int>(ioptions.target_width)->default_value("10"))
             ("H,height", "target height (mm)", cxxopts::value<int>(ioptions.target_height)->default_value("10"))
-            ("t,type", "target type {chessboard, circles, asymmetric_circles, aruco, charuco, livescan, apriltags}", cxxopts::value<std::string>(ioptions.target_type)->default_value("chessboard"))
+            ("t,type", "target type {chessboard, chessboardSB, circles, asymmetric_circles, aruco, charuco, livescan, apriltags}", cxxopts::value<std::string>(ioptions.target_type)->default_value("chessboard"))
             ("h,help", "print usage")
             ;
            auto result = options.parse(argc, argv);
@@ -57,11 +57,52 @@ cxxopts::ParseResult parse(int argc, char* argv[])
         exit(1);
     }
 }
+Calibrator* CreateCalibrator() {
+    std::cout << "Creating Calibrator type=" << ioptions.target_type << std::endl;
+    if (ioptions.target_type.compare("chessboard") == 0)
+    {
+        return new CalibratorStandardOpenCV();
+    }
+    else if (ioptions.target_type.compare("chessboardSB") == 0) {
+        return new CalibratorStandardOpenCV();
+
+    }
+    else if (ioptions.target_type.compare("circles") == 0) {
+        return new CalibratorStandardOpenCV();
+
+    }
+    else if (ioptions.target_type.compare("asymmetric_circles") == 0) {
+        return new CalibratorStandardOpenCV();
+    }
+    else if (ioptions.target_type.compare("aruco") == 0) {
+        return new CalibratorAruco();
+    }
+    else if (ioptions.target_type.compare("charuco") == 0) {
+            CalibratorAruco* arucoCalib = new CalibratorAruco();
+            arucoCalib->setTargetInfo(cv::Size(ioptions.target_cols, ioptions.target_rows), cv::Size(ioptions.target_width, ioptions.target_height), ioptions.target_type, "../aruco_test/detector_params.yml");
+            return arucoCalib;
+    }
+    else if (ioptions.target_type.compare("livescan") == 0) {
+       return new CalibratorLivescan3D();
+    }
+    else if (ioptions.target_type.compare("apriltags") == 0) {
+        return NULL;
+    }
+    else {
+        return NULL;
+    }
+}
 
 int main(int argc, char **argv)
 {
     auto result = parse(argc, argv);
     auto arguments = result.arguments();
+
+    Calibrator* calibrator = CreateCalibrator();
+    if (calibrator == NULL) {
+        std::cout << "Creating the Calibrator failed" << std::endl;
+        return 1;
+    }
   // 
   // // CalibratorStandardOpenCV calibrator;
   //  CalibratorAruco* arucoCalib = new CalibratorAruco();
@@ -70,12 +111,7 @@ int main(int argc, char **argv)
   //  arucoCalib->setSelectionDir(ioptions.selectionDir);
   //  arucoCalib->setTargetInfo(cv::Size(ioptions.target_cols, ioptions.target_rows), cv::Size(ioptions.target_width, ioptions.target_height), ioptions.target_type, "../aruco_test/detector_params.yml");
     
-    CalibratorLivescan3D* livescan3Dcalib = new CalibratorLivescan3D();
-
-
-
-    Calibrator* calibrator;
-    calibrator = livescan3Dcalib;
+    //CalibratorLivescan3D* livescan3Dcalib = new CalibratorLivescan3D();
 
     calibrator->setInputDir(ioptions.inputDir);
     calibrator->setSelectionDir(ioptions.selectionDir);
