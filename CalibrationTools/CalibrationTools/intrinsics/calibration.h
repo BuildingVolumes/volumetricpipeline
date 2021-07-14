@@ -15,3 +15,4 @@
 
 #include "CalibratorStandardOpenCV.h"
 #include "CalibratorAruco.h"
+#include "CalibratorLivescan3D.h"

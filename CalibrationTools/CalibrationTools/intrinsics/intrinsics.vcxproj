@@ -151,10 +151,12 @@
     <ClCompile Include="..\3rdparty\livescan3d\utils.cpp" />
     <ClCompile Include="Calibrator.cpp" />
     <ClCompile Include="CalibratorAruco.cpp" />
+    <ClCompile Include="CalibratorLivescan3D.cpp" />
     <ClCompile Include="CalibratorStandardOpenCV.cpp" />
     <ClCompile Include="intrinsics.cpp" />
     <ClCompile Include="Target.cpp" />
     <ClCompile Include="TargetAruco.cpp" />
+    <ClCompile Include="TargetLivescan3D.cpp" />
     <ClCompile Include="TargetStandardOpenCV.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -164,10 +166,12 @@
     <ClInclude Include="calibration.h" />
     <ClInclude Include="Calibrator.h" />
     <ClInclude Include="CalibratorAruco.h" />
+    <ClInclude Include="CalibratorLivescan3D.h" />
     <ClInclude Include="CalibratorStandardOpenCV.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Target.h" />
     <ClInclude Include="TargetAruco.h" />
+    <ClInclude Include="TargetLivescan3D.h" />
     <ClInclude Include="TargetStandardOpenCV.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

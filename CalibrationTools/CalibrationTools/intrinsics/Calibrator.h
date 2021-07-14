@@ -36,6 +36,7 @@ public:
 
 	// override these for each type of calibrator
 	virtual bool DetectTargets() = 0;
+	virtual bool DetectTargetsInImage(cv::Mat img)=0;
 	virtual bool RunCalibration() = 0;
 	virtual double ComputeAverageReprojectionError() = 0;
 	virtual bool setTargetInfo(cv::Size rc, cv::Size sz, std::string type) = 0;

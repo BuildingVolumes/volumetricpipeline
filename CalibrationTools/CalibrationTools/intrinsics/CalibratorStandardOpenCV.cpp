@@ -6,6 +6,9 @@ CalibratorStandardOpenCV::CalibratorStandardOpenCV() : Calibrator() {
 CalibratorStandardOpenCV::~CalibratorStandardOpenCV() {
 
 }
+bool CalibratorStandardOpenCV::DetectTargetsInImage(cv::Mat img) {
+	return false;
+}
 bool CalibratorStandardOpenCV::DetectTargets() {
 
 	std::cout << "DETECT TARGETS" << std::endl;

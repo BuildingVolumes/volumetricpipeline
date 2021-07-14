@@ -36,10 +36,12 @@ public:
 	}
 
 	virtual bool DetectTargets();
+	virtual bool DetectTargetsInImage(cv::Mat img);
 	virtual bool RunCalibration();
 	virtual double ComputeAverageReprojectionError();
 	virtual bool setTargetInfo(cv::Size rc, cv::Size sz, std::string type);
 	bool setTargetInfo(cv::Size rc, cv::Size sz, std::string type, std::string detectorParamsFile);
+
 	cv::Ptr<cv::aruco::DetectorParameters> detectorParams;
 	cv::Ptr<cv::aruco::Dictionary> dictionary;
 

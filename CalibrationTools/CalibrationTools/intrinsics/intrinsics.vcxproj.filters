@@ -19,6 +19,18 @@
     <Filter Include="Source Files\LiveScan3D">
       <UniqueIdentifier>{36280dbd-a374-4a86-bf6e-18f747c66132}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Calibrators">
+      <UniqueIdentifier>{40a4d8d2-de97-48d2-adb2-ee62bb8a2b0a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Targets">
+      <UniqueIdentifier>{5da0b8ad-8fa1-4a58-a9b9-17a2562cbb43}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Calibrators">
+      <UniqueIdentifier>{089aa700-19a8-4b29-8b30-c2585ed4b594}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Targets">
+      <UniqueIdentifier>{4867c710-0a48-40ff-a5fd-3de93a6aecbe}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="intrinsics.cpp">
@@ -33,23 +45,29 @@
     <ClCompile Include="..\3rdparty\livescan3d\utils.cpp">
       <Filter>Source Files\LiveScan3D</Filter>
     </ClCompile>
-    <ClCompile Include="Target.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TargetStandardOpenCV.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TargetAruco.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="CalibratorStandardOpenCV.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CalibratorAruco.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Calibrators</Filter>
     </ClCompile>
     <ClCompile Include="Calibrator.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Calibrators</Filter>
+    </ClCompile>
+    <ClCompile Include="CalibratorAruco.cpp">
+      <Filter>Source Files\Calibrators</Filter>
+    </ClCompile>
+    <ClCompile Include="CalibratorLivescan3D.cpp">
+      <Filter>Source Files\Calibrators</Filter>
+    </ClCompile>
+    <ClCompile Include="Target.cpp">
+      <Filter>Source Files\Targets</Filter>
+    </ClCompile>
+    <ClCompile Include="TargetAruco.cpp">
+      <Filter>Source Files\Targets</Filter>
+    </ClCompile>
+    <ClCompile Include="TargetLivescan3D.cpp">
+      <Filter>Source Files\Targets</Filter>
+    </ClCompile>
+    <ClCompile Include="TargetStandardOpenCV.cpp">
+      <Filter>Source Files\Targets</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -65,26 +83,32 @@
     <ClInclude Include="..\3rdparty\livescan3d\iMarker.h">
       <Filter>Header Files\LiveScan3D</Filter>
     </ClInclude>
-    <ClInclude Include="Target.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TargetAruco.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TargetStandardOpenCV.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Calibrator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Calibrator.h">
+      <Filter>Header Files\Calibrators</Filter>
+    </ClInclude>
     <ClInclude Include="CalibratorAruco.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Calibrators</Filter>
+    </ClInclude>
+    <ClInclude Include="CalibratorLivescan3D.h">
+      <Filter>Header Files\Calibrators</Filter>
     </ClInclude>
     <ClInclude Include="CalibratorStandardOpenCV.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Calibrators</Filter>
+    </ClInclude>
+    <ClInclude Include="Target.h">
+      <Filter>Header Files\Targets</Filter>
+    </ClInclude>
+    <ClInclude Include="TargetAruco.h">
+      <Filter>Header Files\Targets</Filter>
+    </ClInclude>
+    <ClInclude Include="TargetLivescan3D.h">
+      <Filter>Header Files\Targets</Filter>
+    </ClInclude>
+    <ClInclude Include="TargetStandardOpenCV.h">
+      <Filter>Header Files\Targets</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

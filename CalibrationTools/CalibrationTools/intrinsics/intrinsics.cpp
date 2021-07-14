@@ -62,16 +62,20 @@ int main(int argc, char **argv)
 {
     auto result = parse(argc, argv);
     auto arguments = result.arguments();
-   
-   // CalibratorStandardOpenCV calibrator;
-    CalibratorAruco* arucoCalib = new CalibratorAruco();
-  //  arucoCalib->readDetectorParameters();
-    arucoCalib->setInputDir(ioptions.inputDir);
-    arucoCalib->setSelectionDir(ioptions.selectionDir);
-    arucoCalib->setTargetInfo(cv::Size(ioptions.target_cols, ioptions.target_rows), cv::Size(ioptions.target_width, ioptions.target_height), ioptions.target_type, "../aruco_test/detector_params.yml");
+  // 
+  // // CalibratorStandardOpenCV calibrator;
+  //  CalibratorAruco* arucoCalib = new CalibratorAruco();
+  ////  arucoCalib->readDetectorParameters();
+  //  arucoCalib->setInputDir(ioptions.inputDir);
+  //  arucoCalib->setSelectionDir(ioptions.selectionDir);
+  //  arucoCalib->setTargetInfo(cv::Size(ioptions.target_cols, ioptions.target_rows), cv::Size(ioptions.target_width, ioptions.target_height), ioptions.target_type, "../aruco_test/detector_params.yml");
+    
+    CalibratorLivescan3D* livescan3Dcalib = new CalibratorLivescan3D();
+
+
 
     Calibrator* calibrator;
-    calibrator = arucoCalib;
+    calibrator = livescan3Dcalib;
     if (calibrator->DetectTargets()) 
     {
         calibrator->RunCalibration();
