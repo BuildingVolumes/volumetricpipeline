@@ -35,7 +35,7 @@ public:
 		return true;
 	}
 
-	virtual bool DetectTargets();
+	
 	virtual bool DetectTargetsInImage(cv::Mat img);
 	virtual bool RunCalibration();
 	virtual double ComputeAverageReprojectionError();

@@ -40,3 +40,36 @@ void Calibrator::SaveSelectedImages(std::string dirName) {
 	}
 }
 
+
+bool Calibrator::DetectTargets()
+{
+	std::cout << "DETECT TARGETS" << std::endl;
+	int numFound = 0;
+
+	for (int i = 0; i < this->inputFilenames.size(); i++)
+	{
+		std::cout << inputFilenames[i].string() << std::endl;
+		cv::Mat img = cv::imread(inputFilenames[i].string());
+		if (i == 0)
+		{
+			// get size from first image
+			cameraToCalibrate.setImageSize(cv::Size(img.cols, img.rows));
+		}
+		bool found = this->DetectTargetsInImage(img);
+		
+		if (found)
+		{
+			selectedImages.push_back(img);
+			selectedFilenames.push_back(inputFilenames[i]);
+			numFound++;
+		}
+	}
+
+	if (numFound == 0)
+	{
+		std::cout << "NO targets found" << std::endl;
+		return false;
+	}
+	std::cout << "Num Targets Found:" << numFound << std::endl;
+	return true;
+}

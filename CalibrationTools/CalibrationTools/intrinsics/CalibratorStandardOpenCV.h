@@ -7,7 +7,7 @@ public:
 
 	CalibratorStandardOpenCV();
 	~CalibratorStandardOpenCV();
-	virtual bool DetectTargets();
+	
 	virtual bool RunCalibration();
 	virtual double ComputeAverageReprojectionError();
 	virtual bool DetectTargetsInImage(cv::Mat img);

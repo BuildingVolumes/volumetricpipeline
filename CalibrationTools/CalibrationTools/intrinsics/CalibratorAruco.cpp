@@ -40,59 +40,7 @@ bool CalibratorAruco::DetectTargetsInImage(cv::Mat img)
 	}
 	return false;
 }
-bool CalibratorAruco::DetectTargets() 
-{
-	std::cout << "DETECT TARGETS" << std::endl;
-	int numFound = 0;
-	//TargetAruco* theTarget = (TargetAruco*)model;
-	for (int i = 0; i < this->inputFilenames.size(); i++) 
-	{
-		std::cout << inputFilenames[i].string() << std::endl;
-		cv::Mat img = cv::imread(inputFilenames[i].string());
-		if (i == 0) 
-		{
-			// get size from first image
-			cameraToCalibrate.setImageSize(cv::Size(img.cols, img.rows));
-		}
-		bool found = this->DetectTargetsInImage(img);
-		//std::vector< int > ids;
-		//std::vector< std::vector<cv::Point2f >> pointsBuffer, rejected;
 
-		//bool found = theTarget->detect(img, pointsBuffer, ids, rejected);
-		if (found)
-		{
-			selectedImages.push_back(img);
-			selectedFilenames.push_back(inputFilenames[i]);
-			numFound++;
-			//if (theTarget->type == TARGET_CHARUCO) {
-			//	// interpolate charuco corners
-			//	cv::Mat currentCharucoCorners, currentCharucoIds;
-			//	if (ids.size() > 0)
-			//		cv::aruco::interpolateCornersCharuco(pointsBuffer, ids, img, theTarget->charucoBoard, currentCharucoCorners, currentCharucoIds);
-
-			//	if (currentCharucoCorners.total() > 0)
-			//		cv::aruco::drawDetectedCornersCharuco(img, currentCharucoCorners, currentCharucoIds);
-			//}
-			//else {
-			//	theTarget->draw(img, pointsBuffer, ids);
-			//}
-			//allCorners.push_back(pointsBuffer);
-			//allIds.push_back(ids);
-			//selectedImages.push_back(img);
-			//selectedFilenames.push_back(inputFilenames[i]);
-			////cv::imshow("charuco", img);
-			////cv::waitKey();
-			numFound++;
-		}
-	}
-	if (numFound == 0) 
-	{
-		std::cout << "NO targets found" << std::endl;
-		return false;
-	}
-	std::cout << "Num Targets Found:" << numFound << std::endl;
-	return true;
-}
 bool CalibratorAruco::RunCalibration()
 {
 	TargetAruco* theTarget = (TargetAruco*)model;

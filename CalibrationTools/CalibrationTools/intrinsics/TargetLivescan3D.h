@@ -1,11 +1,12 @@
 #pragma once
 #include "Target.h"
+#include "marker.h"
 
 class TargetLivescan3D : public Target
 {
 public:
-	TargetLivescan3D(cv::Size rc, cv::Size sz, int type) :Target(rc,sz,type) { }
-	~TargetLivescan3D() {}
+	TargetLivescan3D(cv::Size rc, cv::Size sz, int type);
+	~TargetLivescan3D();
 
 	virtual void calculateObjectPoints();
 	virtual bool detect(cv::Mat img, std::vector<cv::Point2f>& outputBuffer);
@@ -13,5 +14,8 @@ public:
 
 	virtual void draw(cv::Mat img, const std::vector<cv::Point2f>& points);
 	void draw(cv::Mat img, const std::vector<std::vector<cv::Point2f>>& points, std::vector< int >& idBuffer);
+
+
+	MarkerDetector detector;
 };
 

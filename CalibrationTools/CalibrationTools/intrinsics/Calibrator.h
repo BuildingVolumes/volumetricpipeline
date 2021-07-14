@@ -35,13 +35,14 @@ public:
 	~Calibrator();
 
 	// override these for each type of calibrator
-	virtual bool DetectTargets() = 0;
+	
 	virtual bool DetectTargetsInImage(cv::Mat img)=0;
 	virtual bool RunCalibration() = 0;
 	virtual double ComputeAverageReprojectionError() = 0;
 	virtual bool setTargetInfo(cv::Size rc, cv::Size sz, std::string type) = 0;
 
 	// base generic functionality
+	bool DetectTargets(); 
 	bool setInputDir(std::string dir);
 	bool setSelectionDir(std::string dir);
 	bool Save(std::string fname);

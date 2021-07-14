@@ -9,7 +9,6 @@ public:
 	CalibratorLivescan3D();
 	~CalibratorLivescan3D();
 
-	virtual bool DetectTargets();
 	virtual bool DetectTargetsInImage(cv::Mat img);
 	virtual bool RunCalibration();
 	virtual double ComputeAverageReprojectionError();

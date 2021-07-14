@@ -27,7 +27,7 @@ public:
 	MarkerDetector();
 
 	bool GetMarker(RGB *img, int height, int width, MarkerInfo &marker);
-private:
+
 	int nMarkerCorners;
 	vector<cv::Point2f> vPts;
 

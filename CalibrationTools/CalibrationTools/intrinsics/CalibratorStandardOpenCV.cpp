@@ -7,42 +7,17 @@ CalibratorStandardOpenCV::~CalibratorStandardOpenCV() {
 
 }
 bool CalibratorStandardOpenCV::DetectTargetsInImage(cv::Mat img) {
+	std::vector<cv::Point2f> pointsBuffer;
+	bool found = model->detect(img, pointsBuffer);
+	if (found) {
+		allImagePoints.push_back(pointsBuffer);
+		model->draw(img, pointsBuffer);
+		return true;
+	}
+
 	return false;
 }
-bool CalibratorStandardOpenCV::DetectTargets() {
 
-	std::cout << "DETECT TARGETS" << std::endl;
-	int numFound = 0;
-	for (int i = 0; i < this->inputFilenames.size(); i++) {
-		std::cout << inputFilenames[i].string() << std::endl;
-		cv::Mat img = cv::imread(inputFilenames[i].string());
-		if (i == 0) {
-			// get size from first image
-			cameraToCalibrate.setImageSize(cv::Size(img.cols, img.rows));
-		}
-		std::vector<cv::Point2f> pointsBuffer;
-
-		bool found = model->detect(img, pointsBuffer);
-		//bool found = findChessboardCorners(img, model->targetSize, pointsBuffer, cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_FAST_CHECK | cv::CALIB_CB_NORMALIZE_IMAGE);
-		if (found) {
-
-			allImagePoints.push_back(pointsBuffer);
-			selectedImages.push_back(img);
-			selectedFilenames.push_back(inputFilenames[i]);
-			//drawChessboardCorners(img, model->targetSize,cv::Mat(pointsBuffer), found);
-			model->draw(img, pointsBuffer);
-			numFound++;
-		}
-	}
-
-
-	if (numFound == 0) {
-		std::cout << "NO targets found" << std::endl;
-		return false;
-	}
-	std::cout << "Num Targets Found:" << numFound << std::endl;
-	return true;
-}
 bool CalibratorStandardOpenCV::RunCalibration() {
 	std::cout << "RunCalibration::" << std::endl;
 	std::vector<cv::Point3f> newObjPoints;

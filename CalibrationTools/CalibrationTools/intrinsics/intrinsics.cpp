@@ -76,6 +76,11 @@ int main(int argc, char **argv)
 
     Calibrator* calibrator;
     calibrator = livescan3Dcalib;
+
+    calibrator->setInputDir(ioptions.inputDir);
+    calibrator->setSelectionDir(ioptions.selectionDir);
+    calibrator->setTargetInfo(cv::Size(ioptions.target_cols, ioptions.target_rows), cv::Size(ioptions.target_width, ioptions.target_height), ioptions.target_type);
+
     if (calibrator->DetectTargets()) 
     {
         calibrator->RunCalibration();
