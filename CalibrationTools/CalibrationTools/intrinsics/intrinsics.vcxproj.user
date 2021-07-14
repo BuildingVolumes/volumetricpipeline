@@ -5,7 +5,7 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>-i ../aruco_test/images -s ../selected --saveSelected -t aruco -r 7 -c 5 -W 10 -H 10 -o ../aruco_test/calibration.yaml</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-i ../aruco_test/images -s ../selected --saveSelected --drawTarget -t aruco -r 7 -c 5 -W 10 -H 10 --dict 6x6_50 --params ../aruco_test/detector_params.yml -o ../aruco_test/calibration.yaml</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>

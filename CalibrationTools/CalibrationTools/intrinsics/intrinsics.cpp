@@ -9,23 +9,31 @@
 #include "calibration.h"
 
 struct _ioptions{
+    // file options 
     std::string inputDir;
     std::string outputFilename;
     std::string selectionDir;
+
+    // toggles
+    bool saveSelected;
+    bool drawTarget;
+
+    // target options 
     int target_width;
     int target_height;
     int target_rows;
     int target_cols;
+       
     std::string target_type;
-    bool saveSelected;
     std::string aruco_dict;
-    bool drawTarget;
+    std::string aruco_detector_params;
 }ioptions;
 
 /*
 Samples command arguments:
 -i ../chessboardsb_test\images -s ../selected --saveSelected -t chessboardSB -r 9 -c 14 -W 10 -H 10 -o ../chessboardsb_test/calibration.yaml
--i ../aruco_test/images -s ../selected --saveSelected -t aruco -r 7 -c 5 -W 10 -H 10 -o ../aruco_test/calibration.yaml
+-i ../aruco_test/images -s ../selected --saveSelected --drawTarget -t aruco -r 7 -c 5 -W 10 -H 10 --dict 6x6_50 --params ../aruco_test/detector_params.yml -o ../aruco_test/calibration.yaml
+
 */
 cxxopts::ParseResult parse(int argc, char* argv[])
 {
@@ -48,6 +56,7 @@ cxxopts::ParseResult parse(int argc, char* argv[])
             ("h,help", "print usage")
             ;
         options.add_options("Aruco")
+            ("params", "Aruco Detector Parameters File (yml)", cxxopts::value<std::string>(ioptions.aruco_detector_params)->default_value("detectorDefaults.yml"))
             ("dict", "Aruco Dictionary: 4x4_50, 4x4_100, 4x4_250, 4x4_1000, etc... ", cxxopts::value<std::string>(ioptions.aruco_dict)->default_value("ORIGINAL"));
 
         auto result = options.parse(argc, argv);
@@ -93,12 +102,14 @@ Calibrator* CreateCalibrator() {
     }
     else if (ioptions.target_type.compare("aruco") == 0) {
         CalibratorAruco* arucoCalib = new CalibratorAruco();
-        arucoCalib->setTargetInfo(cv::Size(ioptions.target_cols, ioptions.target_rows), cv::Size(ioptions.target_width, ioptions.target_height), ioptions.target_type, "../aruco_test/detector_params.yml");
+        arucoCalib->setDictionary(ioptions.aruco_dict);
+        arucoCalib->setTargetInfo(cv::Size(ioptions.target_cols, ioptions.target_rows), cv::Size(ioptions.target_width, ioptions.target_height), ioptions.target_type, ioptions.aruco_detector_params);
         return arucoCalib;
     }
     else if (ioptions.target_type.compare("charuco") == 0) {
         CalibratorAruco* arucoCalib = new CalibratorAruco();
-        arucoCalib->setTargetInfo(cv::Size(ioptions.target_cols, ioptions.target_rows), cv::Size(ioptions.target_width, ioptions.target_height), ioptions.target_type, "../aruco_test/detector_params.yml");
+        arucoCalib->setDictionary(ioptions.aruco_dict);
+        arucoCalib->setTargetInfo(cv::Size(ioptions.target_cols, ioptions.target_rows), cv::Size(ioptions.target_width, ioptions.target_height), ioptions.target_type, ioptions.aruco_detector_params);// "../aruco_test/detector_params.yml");
         return arucoCalib;
     }
     else if (ioptions.target_type.compare("livescan") == 0) {
@@ -121,18 +132,24 @@ void PrintOptionsSelected() {
     std::cout << left<<setw(25)<< "- InputDir: " << ioptions.inputDir << std::endl;
     std::cout << left<<setw(25)<<"- OutputFilename:" << ioptions.outputFilename << std::endl;
     std::cout << left<<setw(25)<<"- SelectionDir: " << ioptions.selectionDir << std::endl;
+    std::cout << left << setw(25) << "- saveSelected: " << ioptions.saveSelected << std::endl;
+    std::cout << left << setw(25) << "- drawTarget: " << ioptions.drawTarget << std::endl;
     std::cout << left<<setw(25)<<"- Target (WxH): " << "(" << ioptions.target_width << " x " << ioptions.target_height << ")" << std::endl;
     std::cout << left<<setw(25)<<"- Target (RxC): " << "(" << ioptions.target_rows << " x " << ioptions.target_cols << ")" << std::endl;
     std::cout << left<<setw(25)<<"- Target Type: " << ioptions.target_type << std::endl;
-    std::cout << left<<setw(25)<<"- saveSelected: " << ioptions.saveSelected << std::endl;
+    std::cout << left << setw(25) << "- Aruco Dict: " << ioptions.aruco_dict << std::endl;
+    std::cout << left << setw(25) << "- Aruco Detector Params: " << ioptions.aruco_detector_params << std::endl;
     std::cout << "===============================================================" << std::endl;
 }
+
+
 int main(int argc, char **argv)
 {
     auto result = parse(argc, argv);
     auto arguments = result.arguments();
     PrintOptionsSelected();
     std::cout << "===============================================================" << std::endl;
+   
     Calibrator* calibrator = CreateCalibrator();
     if (calibrator == NULL) {
         std::cout << "Creating the Calibrator failed" << std::endl;
@@ -141,7 +158,6 @@ int main(int argc, char **argv)
     std::cout << "STAGE: SETTING GENERIC CALIBRATOR OPTIONS" << std::endl;
     // set generic calibrator options
     if (!calibrator->setInputDir(ioptions.inputDir)) return 1;
-
     if (!calibrator->setSelectionDir(ioptions.selectionDir)) return 1;
 
     calibrator->setDrawTarget(ioptions.drawTarget);
@@ -153,8 +169,6 @@ int main(int argc, char **argv)
         if (calibrator->RunCalibration())
         {
             calibrator->PrintResults();
-            //double rms = calibrator->ComputeAverageReprojectionError();
-            //std::cout << "RMS ERROR: " << rms << std::endl;
             std::cout << "STAGE: SAVING" << std::endl;
             calibrator->Save(ioptions.outputFilename);
         }

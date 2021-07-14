@@ -41,6 +41,7 @@ public:
 	virtual double ComputeAverageReprojectionError();
 	virtual bool setTargetInfo(cv::Size rc, cv::Size sz, std::string type);
 	bool setTargetInfo(cv::Size rc, cv::Size sz, std::string type, std::string detectorParamsFile);
+	void setDictionary(std::string dictname);
 
 	cv::Ptr<cv::aruco::DetectorParameters> detectorParams;
 	cv::Ptr<cv::aruco::Dictionary> dictionary;
@@ -48,5 +49,7 @@ public:
 	// collected frames for calibration
 	std::vector< std::vector< std::vector< cv::Point2f > > > allCorners;
 	std::vector< std::vector< int > > allIds;
+	int m_dictionaryId;
+
 
 };

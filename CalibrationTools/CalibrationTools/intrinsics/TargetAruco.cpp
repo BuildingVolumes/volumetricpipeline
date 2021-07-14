@@ -56,7 +56,9 @@ bool TargetAruco::detect(cv::Mat img, std::vector<std::vector<cv::Point2f>>& out
 	//cv::Ptr<cv::aruco::Board> board = gridboard.staticCast<cv::aruco::Board>();
 
 	cv::aruco::detectMarkers(img, board->dictionary, outputBuffer, idBuffer, detectorParams, rejectedBuffer);
+	if (outputBuffer.size() == 0) return false;
 	cv::aruco::refineDetectedMarkers(img, board, outputBuffer, idBuffer, rejectedBuffer);
+	if (idBuffer.size() == 0) return false;
 	return true;
 }
 

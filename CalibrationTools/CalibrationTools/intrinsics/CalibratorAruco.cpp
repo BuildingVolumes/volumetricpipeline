@@ -2,6 +2,7 @@
 
 CalibratorAruco::CalibratorAruco() 
 {
+	m_dictionaryId = -1;
 }
 
 CalibratorAruco::~CalibratorAruco() 
@@ -33,9 +34,7 @@ bool CalibratorAruco::DetectTargetsInImage(cv::Mat img)
 
 		allCorners.push_back(pointsBuffer);
 		allIds.push_back(ids);
-		
-		//cv::imshow("charuco", img);
-		//cv::waitKey();
+	
 		return true;
 	}
 	return false;
@@ -113,7 +112,7 @@ bool CalibratorAruco::RunCalibration()
 
 
 
-	std::cout << __FILE__ << "repError = " << repError << std::endl;
+	std::cout << "repError = " << repError << std::endl;
 	return false;
 }
 double CalibratorAruco::ComputeAverageReprojectionError()
@@ -124,6 +123,75 @@ double CalibratorAruco::ComputeAverageReprojectionError()
 bool CalibratorAruco::setTargetInfo(cv::Size rc, cv::Size sz, std::string type) {
 	return this->setTargetInfo(rc, sz, type, "detector.params");
 }
+void CalibratorAruco::setDictionary(std::string dictname) 
+{
+	if (dictname.compare("ORIGINAL") == 0) {
+		m_dictionaryId = cv::aruco::DICT_ARUCO_ORIGINAL;
+	}
+	else if (dictname.compare("4x4_50") == 0) {
+		m_dictionaryId = cv::aruco::DICT_4X4_50;
+	}
+	else if (dictname.compare("4x4_100") == 0) {
+		m_dictionaryId = cv::aruco::DICT_4X4_100;
+	}
+	else if (dictname.compare("4x4_250") == 0) {
+		m_dictionaryId = cv::aruco::DICT_4X4_250;
+	}
+	else if (dictname.compare("4x4_1000") == 0) {
+		m_dictionaryId = cv::aruco::DICT_4X4_1000;
+	}
+	else if (dictname.compare("5x5_50") == 0) {
+		m_dictionaryId = cv::aruco::DICT_5X5_50;
+	}
+	else if (dictname.compare("5x5_100") == 0) {
+		m_dictionaryId = cv::aruco::DICT_5X5_100;
+	}
+	else if (dictname.compare("5x5_250") == 0) {
+		m_dictionaryId = cv::aruco::DICT_5X5_250;
+	}
+	else if (dictname.compare("5x5_1000") == 0) {
+		m_dictionaryId = cv::aruco::DICT_5X5_1000;
+	}
+	else if (dictname.compare("6x6_50") == 0) {
+		m_dictionaryId = cv::aruco::DICT_6X6_50;
+	}
+	else if (dictname.compare("6x6_100") == 0) {
+		m_dictionaryId = cv::aruco::DICT_6X6_100;
+	}
+	else if (dictname.compare("6x6_250") == 0) {
+		m_dictionaryId = cv::aruco::DICT_6X6_250;
+	}
+	else if (dictname.compare("6x6_1000") == 0) {
+		m_dictionaryId = cv::aruco::DICT_6X6_1000;
+	}
+	else if (dictname.compare("7x7_50") == 0) {
+		m_dictionaryId = cv::aruco::DICT_7X7_50;
+	}
+	else if (dictname.compare("7x7_100") == 0) {
+		m_dictionaryId = cv::aruco::DICT_7X7_100;
+	}
+	else if (dictname.compare("7x7_250") == 0) {
+		m_dictionaryId = cv::aruco::DICT_7X7_250;
+	}
+	else if (dictname.compare("7x7_1000") == 0) {
+		m_dictionaryId = cv::aruco::DICT_7X7_1000;
+	}
+	else if (dictname.compare("APRILTAG_16h5") == 0) {
+		m_dictionaryId = cv::aruco::DICT_APRILTAG_16h5;
+	}
+	else if (dictname.compare("APRILTAG_25h9") == 0) {
+		m_dictionaryId = cv::aruco::DICT_APRILTAG_25h9;
+	}
+	else if (dictname.compare("APRILTAG_36h10") == 0) {
+		m_dictionaryId = cv::aruco::DICT_APRILTAG_36h10;
+	}
+	else if (dictname.compare("APRILTAG_36h11") == 0) {
+		m_dictionaryId = cv::aruco::DICT_APRILTAG_36h11;
+	}
+	else {
+		m_dictionaryId = -1;
+	}
+}
 
 bool CalibratorAruco::setTargetInfo(cv::Size rc, cv::Size sz, std::string type, std::string detectorParamsFile = "detector.params") 
 {
@@ -131,14 +199,11 @@ bool CalibratorAruco::setTargetInfo(cv::Size rc, cv::Size sz, std::string type, 
 		detectorParams = cv::aruco::DetectorParameters::create();
 		bool readOk = readDetectorParameters(detectorParamsFile, detectorParams);
 		if (!readOk) {
-			std::cerr << __FILE__<<": ARUCO: Invalid detector parameters file" << std::endl;
+			std::cerr << ": ARUCO: Invalid detector parameters file" << std::endl;
 			std::cerr << detectorParamsFile << std::endl;
 			return 0;
 		}
-		// make this a parameter
-		int dictionaryId = cv::aruco::DICT_6X6_250;
-		dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::PREDEFINED_DICTIONARY_NAME(dictionaryId));
-		// do stuff here
+		dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::PREDEFINED_DICTIONARY_NAME(m_dictionaryId));
 		/* create the board */
 		model = new TargetAruco(rc, sz, TARGET_ARUCO, dictionary, detectorParams);
 

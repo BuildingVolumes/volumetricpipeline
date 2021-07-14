@@ -56,16 +56,12 @@ bool TargetLivescan3D::detect(cv::Mat img, std::vector<cv::Point2f>& outputBuffe
 	outputBuffer = marker.corners;
 	return found;
 }
-//bool TargetLivescan3D::detect(cv::Mat img, std::vector<std::vector<cv::Point2f>>& outputBuffer, std::vector< int >& idBuffer, std::vector<std::vector<cv::Point2f>>& rejectedBuffer)
-//{
-//	return false;
-//}
 
 void TargetLivescan3D::draw(cv::Mat img, const std::vector<cv::Point2f>& points)
 {
-
+	// handled in the get marker 
 }
 void TargetLivescan3D::draw(cv::Mat img, const std::vector<std::vector<cv::Point2f>>& points, std::vector< int >& idBuffer) 
 {
-
+	// handled in the get marker....
 }
