@@ -2624,3 +2624,4 @@ images/
 *.idb
 Debug/
 *.jpg
+*.pth
