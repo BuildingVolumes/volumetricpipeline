@@ -1,6 +1,6 @@
 # example usage:
 # python .\ProcessDirectoryImages.py INPUT_DIR MODELFILE
-# python .\ProcessDirectoryImages.py C:\Users\hogue\Desktop\DATA\july15-bg_1\july15-bg_1\ .\Models\torchscript_resnet50_fp32.pth       
+# python .\ProcessDirectoryImages.py C:\Users\hogue\Desktop\DATA\july15-bg_1\july15-bg_1\ --model .\Models\torchscript_resnet50_fp32.pth       
 #
 # Requirements: must have torchvision with cuda, model must be torchscript type
 # this will process all .jpg files in a directory structure and will process them recurcively
@@ -30,12 +30,14 @@ import argparse
 
 parser = argparse.ArgumentParser(description='BackgroundMattingV2 wrapper')
 parser.add_argument('inputDir', type=str, help='Directory of Images to Process')
-parser.add_argument('model', type=str, help='the resnet model')
+parser.add_argument('--model', type=str, help='the resnet model')
 parser.add_argument("--bgDir", type=str, help='optional bg reference dir (same structure as inputDir) ')
 
 args = parser.parse_args()
 inputDir = args.inputDir
-model = args.model
+model = ".\\Models\\torchscript_resnet50_fp32.pth"
+if args.model:
+	model = args.model
 
 BGProvided = False
 if args.bgDir :
