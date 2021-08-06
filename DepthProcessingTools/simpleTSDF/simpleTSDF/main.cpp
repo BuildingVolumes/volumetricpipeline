@@ -10,6 +10,9 @@
 #include "Eigen/Geometry"
 #include "TSDFVolume.h"
 
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+
 #include <opencv2/opencv.hpp>
 
 #include <k4a/k4a.h>
@@ -21,14 +24,17 @@ Viewer viewer;
 std::map<int, Eigen::Matrix4d> extrinsics;
 std::map<int, Eigen::Matrix3d> intrinsics;
 std::map<int, k4a_calibration_t> k4aCalibrations;
-
+int VOXRES = 256;
+int VOXSMOOTH = 1;
 
 void AddVolumeToViewer(TSDFVolume *v) {
-    double isolevel = 0.0;
+    theVolume->Smooth(VOXSMOOTH);
+    double isolevel = 1.0f/theVolume->res[0];
     std::vector<TRIANGLE> tris;
-    int n = v->Polygonise(isolevel, tris);
+    int n = v->PolygoniseMC(isolevel, tris);
     // * Triangle mesh: single color
     Points verts(3 * n, 3);
+    Points colors(3 * n, 3);
     for (int i = 0, ind=0; i < n; i++, ind+=3)
     {
         verts(ind+0, 0) = tris[i].p[0][0]; 
@@ -42,6 +48,19 @@ void AddVolumeToViewer(TSDFVolume *v) {
         verts(ind + 2, 0) = tris[i].p[2][0];
         verts(ind + 2, 1) = tris[i].p[2][1];
         verts(ind + 2, 2) = tris[i].p[2][2];
+
+        colors(ind + 0, 0) = tris[i].c[0];
+        colors(ind + 0, 1) = tris[i].c[1];
+        colors(ind + 0, 2) = tris[i].c[2];
+  
+        colors(ind + 1, 0) = tris[i].c[0];
+        colors(ind + 1, 1) = tris[i].c[1];
+        colors(ind + 1, 2) = tris[i].c[2];
+        
+        colors(ind + 2, 0) = tris[i].c[0];
+        colors(ind + 2, 1) = tris[i].c[1];
+        colors(ind + 2, 2) = tris[i].c[2];
+        
     }
 
     auto& pyra = viewer
@@ -49,8 +68,9 @@ void AddVolumeToViewer(TSDFVolume *v) {
                   /* Triangle indices (unsigned fx3) here; pass
                      empty to use: 0 1 2, 3 4 5 etc */
                   Triangles(),
-                  /*r,g,b*/ 0.f, 1.0f, 1.0f)
-        .translate(Vector3f(0.f, 0.f, 0.f))
+                    colors
+        )
+        .translate(Vector3f(0,0,0))
         .set_shininess(32.f);
 
     /*
@@ -62,18 +82,29 @@ void AddVolumeToViewer(TSDFVolume *v) {
         .set_shininess(32.f)
         ;
         */
+
+
     //for (int k = 0; k < v->res[2]; k++) {
     //    for (int j = 0; j < v->res[1]; j++) {
     //        for (int i = 0; i < v->res[0]; i++) {
     //            Voxel vx = v->get(i, j, k);
-    //            if (vx.flag == 1 && fabs(vx.sdf) < 0.03/* && vx.weight >= 6*/) {
+    //            if (vx.flag == VOXEL_UNSEEN) {
     //                float r, g, b;
     //                r = vx.r/255.f;
-    //                g = vx.g/255.f;
+    //                g = 1;// vx.g / 255.f;
     //                b = vx.b/255.f;
 
     //                viewer.add_cube(Eigen::Vector3f(vx.c(0), vx.c(1), vx.c(2)), v->vSize[0], Eigen::Vector3f(r, g, b));
     //            }
+    //            if (vx.flag == VOXEL_FULL) {
+    //                float r, g, b;
+    //                r = vx.r / 255.f;
+    //                g = vx.g / 255.f;
+    //                b = vx.b / 255.f;
+
+    //                viewer.add_cube(Eigen::Vector3f(vx.c(0), vx.c(1), vx.c(2)), v->vSize[0], Eigen::Vector3f(r, g, b));
+    //            }
+
     //        }
     //    }
     //}
@@ -147,10 +178,31 @@ void LoadExtrinsics(std::string fname) {
         count++;
     }
 }
-void CarveWithSilhouette(TSDFVolume *v, Eigen::Matrix3d &in, Eigen::Matrix4d &ex, cv::Mat &imRGB, cv::Mat &imMATTE, cv::Mat &imDepth) {
+Eigen::Vector3d ProjectPoint(Eigen::Vector3d &p, Eigen::Matrix3d &intrin, Eigen::Matrix4d &exInv, Eigen::Vector4d &cc) {
+    /* c is center in world coordinates */
+                    // convert to camera coordinates
+    cc = exInv * Eigen::Vector4d(p(0), p(1), p(2), 1);
+
+    /* project the center of the voxel onto the images */
+    Eigen::Vector3d pp;
+    float invz = 1.0f / cc(2);
+    float fx, fy, cx, cy;
+    fx = intrin(0, 0);
+    fy = intrin(1, 1);
+    cx = intrin(0, 2);
+    cy = intrin(1, 2);
+    pp(0) = cc(0) * fx * invz + cx;
+    pp(1) = cc(1) * fy * invz + cy;
+    pp(2) = cc(2);
+
+    return pp;
+}
+
+void CarveWithSilhouette(TSDFVolume *vol, Eigen::Matrix3d &in, Eigen::Matrix4d &ex, cv::Mat &imRGB, cv::Mat &imMATTE, cv::Mat &imDepth) {
     /* ok, so the standard simplest way  */
     /* for each voxel */
-   
+    //v->makeSphereSDF(0.75f);
+    //return;
     std::cout << "extrinsics:" << std::endl;
     std::cout << ex << std::endl;
 
@@ -172,88 +224,84 @@ void CarveWithSilhouette(TSDFVolume *v, Eigen::Matrix3d &in, Eigen::Matrix4d &ex
     std::cout << "Ex:" << ex << std::endl;
     std::cout << "R:" << R << std::endl;
     std::cout << "T:" << T << std::endl;
-
     std::cout << "ExInv:" << ExInv << std::endl;
 
-
-
-
-    for (int k = 0; k < v->res[2]; k++) {
-        for (int j = 0; j < v->res[1]; j++) {
-            for (int i = 0; i < v->res[0]; i++) {
-                Voxel& vx = v->get(i, j, k);
-                /* if we haven't carved it already */
-                //if (!vx.flag) // if the voxel is currently zero
+    for (int k = 0; k < vol->res[2]; k++) {
+        for (int j = 0; j < vol->res[1]; j++) {
+            for (int i = 0; i < vol->res[0]; i++) {
+                Voxel& vx = vol->get(i, j, k);
+                // if the current voxel is already carved in any image then it should be empty for sure
+                if (vx.flag != VOXEL_EMPTY)
                 {
-                    /* get the center coordinates */
                     Eigen::Vector3d c;
-                    v->GetVoxelCoordsFromIndex(i, j, k, c);
-                    /* c is center in world coordinates */
-                    // convert to camera coordinates
-                    Eigen::Vector4d cc = ExInv* Eigen::Vector4d(c(0), c(1), c(2),1);
+                    vol->GetVoxelCoordsFromIndex(i, j, k, c);
 
-                    /* project the center of the voxel onto the images */
-                    Eigen::Vector2d p;
-                    float invz = 1.0f / cc(2);
-                    float fx, fy, cx, cy;
-                    fx = in(0, 0);
-                    fy = in(1, 1);
-                    cx = in(0, 2);
-                    cy = in(1, 2);
-                    p(0) = cc(0) * fx * invz + cx;
-                    p(1) = cc(1) * fy * invz + cy;
+                    // project voxel center on to image
+                    Eigen::Vector4d pRotExInv;
+                    Eigen::Vector3d proj = ProjectPoint(c, in, ExInv, pRotExInv);
                     
                     /* now look in image */
                     int u, v;
-                    u = (int)p(0);// floor(p(0) + 0.5f);
-                    v = (int)p(1);// floor(p(1) + 0.5f);
-                    //std::cout << "(u,v)=(" << u << "," << v << ")" << std::endl;
-                    if (u > 0 && u < 1280 && v > 0 && v < 720) {
-                       // std::cout << "here!" << std::endl;
-                       
-                        cv::Vec3b m = imMATTE.at<cv::Vec3b>(v,u); 
-                        cv::Vec3b col = imRGB.at<cv::Vec3b>(v, u);
+                    u = (int)proj(0);
+                    v = (int)proj(1);
+                    float uvz = proj(2);
 
-                        ushort depth = imDepth.at<ushort>(v, u);
-                        float depthf = (float)depth / 1000.f; // convert to m
+                    if (u > 0 && u < 1280 && v > 0 && v < 720) { // is the projected voxel center in the image?
+                        cv::Vec3b m   = imMATTE.at<cv::Vec3b>(v,u);  // get matte pixel value
+                        cv::Vec3b col = imRGB.at<cv::Vec3b>(v, u); // get colour
+                        ushort depth  = imDepth.at<ushort>(v, u); // get depth image value            
+                        float depthf  = (float)depth / 1000.f; // convert to meters
 
-                       // if(u > 700) std::cout << "("<<u<<","<<v<<")="<< m << std::endl;
-                        // imMATTE.at<uint8_t>(v, u) = 100;
-                        if (m[0] > 0) 
-                        {
-                            /* in the MATTE */
-                            /* projected depth is */
-                           float voxelDepthProjected = cc(2);
-                            // surface is at "depth" sample
-                           // absolute distance 
-                          // float absDist = fabs(depthf - voxelDepthProjected);
-                           float trunc = 0.1;
-                           float distFromVoxelToSurfaceSample =  depthf -voxelDepthProjected;
-                           float distsdf = fmin(1.0f, distFromVoxelToSurfaceSample / trunc);
-                            float oldweight = vx.weight;
-                            float newweight = vx.weight + 1;
+                        if (m[0] > 0 && depthf > 0) // does it have a depth value and is it in the foreground?
+                        {                          
+                           float voxelDepthProjected = uvz;
+                           //float trunc = 1.0f/vol->res[0];
+                          // std::cout << "depthf:" << depthf << std::endl;
+                          // std::cout << "voxelDepthProjected:" << voxelDepthProjected << std::endl;
 
-                            vx.sdf = distFromVoxelToSurfaceSample;// (vx.sdf * oldweight + distsdf) / newweight;
-                            vx.weight = newweight;
+                           float distFromVoxelToSurfaceSample =  depthf - voxelDepthProjected;
+                           float distsdf = distFromVoxelToSurfaceSample * sqrtf(1.f + (pRotExInv(0)/pRotExInv(2))* (pRotExInv(0) / pRotExInv(2)) + (pRotExInv(1)/pRotExInv(2))* (pRotExInv(1) / pRotExInv(2)));
+                          // std::cout << "distsdf:" << distsdf << std::endl;
+                           // at this point we know:
+                           //  - that the voxel has a valid depth and matte value (valid pixel)
+                           //  - voxel is either UNSEEN or FULL (definitely not EMPTY/carved yet)
+                           float mu = 0.1;// *15;
+                           float sdf = fminf(1.f, distsdf / mu);
+                           if (distsdf > -mu)
+                           {
 
-                            //keep voxel 
-                           // std::cout << "here" << std::endl;
-                            vx.flag = 1;
-                            vx.r = col[2];// 255;// 0.5 * (vx.r + col[2]);
-                            vx.g = col[1];// 0;// 0.5 * (vx.g + col[1]);
-                            vx.b = col[0];// 0;// 0.5 * (vx.b + col[0]);
 
+                               float oldweight = vx.weight;
+                               float newweight = oldweight + 1;
+                               float weightSum = oldweight + newweight;
+
+                               float d_old = vx.sdf;
+                               float d_new = sdf;
+                               float d = (d_old * oldweight + d_new * newweight) / weightSum;
+                               // std::cout << "d:" << d << std::endl;
+
+                               vx.sdf = (d < -1) ? -1 : (d > 1) ? 1 : d;// d_old + (1.0 / weightSum) * (d_new - d_old);// fmin(d_old, d_new);// d;
+                               vx.weight = newweight;
+
+                               vx.r = (oldweight * vx.r + newweight * col[2]) / weightSum;
+                               vx.g = (oldweight * vx.g + newweight * col[1]) / weightSum;
+                               vx.b = (oldweight * vx.b + newweight * col[0]) / weightSum;
+                               vx.flag = VOXEL_FULL;
+                           }
+                           
                         }
                         else {
-                            vx.weight--;
-                            vx.flag = 0;  // carve voxel
+                            // the voxel projected to a pixel that didn't have a valid depth OR matte 
+                            vx.weight = 0;
+                            vx.sdf = VOXEL_MAXDIST;
+                            vx.flag = VOXEL_EMPTY;  // carve voxel
                         }
                     }
                 }
             }
         }
     }
-
+  
 }
 
 void TransformDepth(cv::Mat old_depth, cv::Mat new_depth, k4a_calibration_t& calibration) {
@@ -308,12 +356,13 @@ int main(int argc, char** argv) {
     Eigen::Vector3d theCenter(0, 0, 0);
     float sz =2;
     Eigen::Vector3d theSize(sz,sz,sz);
-    int res = 128;
+    int res = VOXRES;
     theVolume = new TSDFVolume(res,res,res, theCenter, theSize);
-    theVolume->SetAllVoxels(0, 0, 1);
+    theVolume->SetAllVoxels(VOXEL_UNSEEN, VOXEL_MAXDIST, 0);
     theVolume->ComputeAllVoxelCenters();   
 
     viewer.draw_axes = true;
+    viewer.light_pos = Vector3f(3,3,0);
     // Adjust camera
     viewer.camera.dist_to_center = 5.f;
    
@@ -323,39 +372,39 @@ int main(int argc, char** argv) {
 
     std::string fnameExtrinsics = path+"Extrinsics_Open3D.log";
 
-    std::string fnameRGB0 = "client_0\\Color_100.jpg";
-    std::string fnameMATTE0 = "client_0\\Color_100.matte.png";
-    std::string fnameDEPTH0 = "client_0\\Depth_100.tiff";// 
+    std::string fnameRGB0 = "client_0\\Color_130.jpg";
+    std::string fnameMATTE0 = "client_0\\Color_130.matte.png";
+    std::string fnameDEPTH0 = "client_0\\Depth_130.tiff";// 
     std::string fnameIntrinsics0 = "client_0\\Intrinsics_Calib_0.json";
     int camID0 = 0;
 
-    std::string fnameRGB1 = "client_1\\Color_100.jpg";
-    std::string fnameMATTE1 = "client_1\\Color_100.matte.png";
-    std::string fnameDEPTH1 = "client_1\\Depth_100.tiff";// 
+    std::string fnameRGB1 = "client_1\\Color_130.jpg";
+    std::string fnameMATTE1 = "client_1\\Color_130.matte.png";
+    std::string fnameDEPTH1 = "client_1\\Depth_130.tiff";// 
     std::string fnameIntrinsics1 = "client_1\\Intrinsics_Calib_1.json";
     int camID1 = 1;
 
-    std::string fnameRGB2 = "client_2\\Color_100.jpg";
-    std::string fnameMATTE2 = "client_2\\Color_100.matte.png";
-    std::string fnameDEPTH2 = "client_2\\Depth_100.tiff";// 
+    std::string fnameRGB2 = "client_2\\Color_130.jpg";
+    std::string fnameMATTE2 = "client_2\\Color_130.matte.png";
+    std::string fnameDEPTH2 = "client_2\\Depth_130.tiff";// 
     std::string fnameIntrinsics2 = "client_2\\Intrinsics_Calib_2.json";
     int camID2 = 2;
 
-    std::string fnameRGB3 = "client_3\\Color_100.jpg";
-    std::string fnameMATTE3 = "client_3\\Color_100.matte.png";
-    std::string fnameDEPTH3 = "client_3\\Depth_100.tiff";// 
+    std::string fnameRGB3 = "client_3\\Color_130.jpg";
+    std::string fnameMATTE3 = "client_3\\Color_130.matte.png";
+    std::string fnameDEPTH3 = "client_3\\Depth_130.tiff";// 
     std::string fnameIntrinsics3 = "client_3\\Intrinsics_Calib_3.json";
     int camID3 = 3;
 
-    std::string fnameRGB4 = "client_4\\Color_100.jpg";
-    std::string fnameMATTE4 = "client_4\\Color_100.matte.png";
-    std::string fnameDEPTH4 = "client_4\\Depth_100.tiff";// 
+    std::string fnameRGB4 = "client_4\\Color_130.jpg";
+    std::string fnameMATTE4 = "client_4\\Color_130.matte.png";
+    std::string fnameDEPTH4 = "client_4\\Depth_130.tiff";// 
     std::string fnameIntrinsics4 = "client_4\\Intrinsics_Calib_4.json";
     int camID4 = 4;
 
-    std::string fnameRGB5 = "client_5\\Color_100.jpg";
-    std::string fnameMATTE5 = "client_5\\Color_100.matte.png";
-    std::string fnameDEPTH5 = "client_5\\Depth_100.tiff";// 
+    std::string fnameRGB5 = "client_5\\Color_130.jpg";
+    std::string fnameMATTE5 = "client_5\\Color_130.matte.png";
+    std::string fnameDEPTH5 = "client_5\\Depth_130.tiff";// 
     std::string fnameIntrinsics5 = "client_5\\Intrinsics_Calib_5.json";
     int camID5 = 5;
 
@@ -368,7 +417,7 @@ int main(int argc, char** argv) {
     std::vector<std::string> pathsINTRINSICS;
     std::vector<int>cameraIDS;
 
-    pathsRGB.push_back(path + fnameRGB0);
+   pathsRGB.push_back(path + fnameRGB0);
     pathsMATTE.push_back(path + fnameMATTE0);
     pathsDEPTH.push_back(path + fnameDEPTH0);
     pathsINTRINSICS.push_back(path + fnameIntrinsics0);
@@ -385,14 +434,14 @@ int main(int argc, char** argv) {
     pathsDEPTH.push_back(path + fnameDEPTH2);
     pathsINTRINSICS.push_back(path + fnameIntrinsics2);
     cameraIDS.push_back(camID2);
-    
+
     
     pathsRGB.push_back(path + fnameRGB3);
     pathsMATTE.push_back(path + fnameMATTE3);
     pathsDEPTH.push_back(path + fnameDEPTH3);
     pathsINTRINSICS.push_back(path + fnameIntrinsics3);
     cameraIDS.push_back(camID3);
-  
+ 
     pathsRGB.push_back(path + fnameRGB4);
     pathsMATTE.push_back(path + fnameMATTE4);
     pathsDEPTH.push_back(path + fnameDEPTH4);
@@ -405,7 +454,7 @@ int main(int argc, char** argv) {
     pathsDEPTH.push_back(path + fnameDEPTH5);
     pathsINTRINSICS.push_back(path + fnameIntrinsics5);
     cameraIDS.push_back(camID5);
-  //
+  
     LoadExtrinsics(fnameExtrinsics);
 
     /* load in all of the files */
@@ -496,17 +545,19 @@ int main(int argc, char** argv) {
        
     }
     AddVolumeToViewer(theVolume);
-    viewer.cull_face = false;
+   // viewer.cull_face = false;
+    
   
    // glDisable(GL_CULL_FACE);
     // * Events: key handler
     viewer.on_key = [&](int button, input::Action action, int mods) -> bool {
         if (action != input::Action::release) {
-            if (button == 'D') {
-              
+            if (button == 'd') {
+               
             }
-            else if (button == 'E') {
+            else if (button == 'e') {
                 
+
             }
         }
         return true;  // Don't prevent default
