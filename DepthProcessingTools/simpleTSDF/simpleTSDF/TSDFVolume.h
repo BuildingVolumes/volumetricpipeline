@@ -164,7 +164,27 @@ public:
 		vCenter[2] = ((((float)(k) / (float)res[2])-0.5f) * sz[2]) + vSize[2]/2 + center[2];
 		//std::cout << "("<<vCenter[0]<<","<<vCenter[1]<<","<<vCenter[2]<<")" << std::endl;
 	}
+	void GetVoxelCornersFromIndex(int i, int j, int k, std::vector<Eigen::Vector3d> &corners) {
+		// get center 
+		Eigen::Vector3d c;
+		GetVoxelCoordsFromIndex(i, j, k, c);
+		float sX = this->vSize[0]/2.f;
+		float sY = this->vSize[1]/2.f;
+		float sZ = this->vSize[2]/2.f;
 
+		// the center
+		corners.push_back(Eigen::Vector3d(c[0], c[1], c[2]));
+		corners.push_back(Eigen::Vector3d(c[0]-sX, c[1]-sY, c[2]-sZ));
+		corners.push_back(Eigen::Vector3d(c[0]+sX, c[1]-sY, c[2]-sZ));
+		corners.push_back(Eigen::Vector3d(c[0]+sX, c[1]-sY, c[2]+sZ));
+		corners.push_back(Eigen::Vector3d(c[0]-sX, c[1]-sY, c[2]+sZ));
+		corners.push_back(Eigen::Vector3d(c[0] - sX, c[1] + sY, c[2] - sZ));
+		corners.push_back(Eigen::Vector3d(c[0] + sX, c[1] + sY, c[2] - sZ));
+		corners.push_back(Eigen::Vector3d(c[0] + sX, c[1] + sY, c[2] + sZ));
+		corners.push_back(Eigen::Vector3d(c[0] - sX, c[1] + sY, c[2] + sZ));
+
+
+	}
 	Voxel& get(int i, int j, int k) {
 		int ind = IND2LINEAR(i, j, k, res[0], res[1], res[2]);
 		return this->grid[ind];
