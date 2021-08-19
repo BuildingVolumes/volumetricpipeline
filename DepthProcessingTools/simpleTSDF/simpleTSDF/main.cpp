@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <filesystem>
 
 #include "meshview/meshview.hpp"
 #include "meshview/meshview_imgui.hpp"
@@ -18,48 +19,175 @@
 #include <k4a/k4a.h>
 
 using namespace meshview;
+#define _VOXEL_CARVE 1
+
+//#define _VOXEL_TRUNC 6;
+//int VOXRES = 512;
+//int VOXSMOOTH = 2;
+//
+//#define _VOXEL_TRUNC 5;
+//int VOXRES = 256;
+//int VOXSMOOTH = 2;
+////
+//#define _VOXEL_TRUNC 4;
+//int VOXRES = 128;
+
+#define _VOXEL_TRUNC 3;
+int VOXRES = 64;
+
+//#define _VOXEL_TRUNC 2;
+//int VOXRES = 32;
+
+int VOXSMOOTH = 1;
 
 TSDFVolume *theVolume;
 Viewer viewer;
 std::map<int, Eigen::Matrix4d> extrinsics;
 std::map<int, Eigen::Matrix3d> intrinsics;
 std::map<int, k4a_calibration_t> k4aCalibrations;
-int VOXRES = 256;
-int VOXSMOOTH = 1;
+
+std::vector<TRIANGLE> g_tris;
+void WriteOBJ(std::string filename, std::string filepath, std::vector<TRIANGLE> mesh)
+{
+    std::ofstream writer;
+
+    if (filepath != "")
+    {
+        std::filesystem::create_directories(filepath);
+
+        writer.open(filepath + "/" + filename);
+    }
+    else
+    {
+        writer.open(filename);
+    }
+    int numVerts = mesh.size() * 3;
+    int numTris = mesh.size();
+
+    for (int i = 0; i < numTris; ++i)
+    {
+//        auto vert = mesh->vertices_[i];
+        auto TRI = mesh[i];
+        auto v0 = TRI.p[0];
+        auto v1 = TRI.p[1];
+        auto v2 = TRI.p[2];
+
+        writer << "v " << v0.x() << " " << v0.y() << " " << v0.z() << "\n";
+        writer << "v " << v1.x() << " " << v1.y() << " " << v1.z() << "\n";
+        writer << "v " << v2.x() << " " << v2.y() << " " << v2.z() << "\n";
+    }
+
+   /* for (int i = 0; i < mesh->triangle_uvs_.size(); ++i)
+    {
+        auto uv = mesh->triangle_uvs_[i];
+
+        writer << "vt " << uv.x() << " " << uv.y() << "\n";
+    }
+
+    for (int i = 0; i < mesh->vertex_normals_.size(); ++i)
+    {
+        auto norm = mesh->vertex_normals_[i];
+
+        writer << "vn " << norm.x() << " " << norm.y() << " " << norm.z() << "\n";
+    }*/
+
+    for (int i = 0; i < numTris; ++i)
+    {
+        auto TRI = mesh[i];
+        int i0 = 3 * i + 0;
+        int i1 = 3 * i + 1;
+        int i2 = 3 * i + 2;
+
+        //auto tri = mesh->triangles_[i];
+
+        writer << "f " <<
+            (i0+ 1) << " " <<
+            (i1+ 1) << " " <<
+            (i2+ 1) << "\n";
+    }
+
+    writer.close();
+}
+
+void AddMeshToViewer() {
+    int n;
+    n = g_tris.size();
+    std::cout << "numTris:" << n << std::endl;
+
+    Points verts(3 * n, 3);
+    Points colors(3 * n, 3);
+    for (int i = 0, ind = 0; i < n; i++, ind += 3)
+    {
+        verts(ind + 0, 0) = g_tris[i].p[0][0];
+        verts(ind + 0, 1) = g_tris[i].p[0][1];
+        verts(ind + 0, 2) = g_tris[i].p[0][2];
+
+        verts(ind + 1, 0) = g_tris[i].p[1][0];
+        verts(ind + 1, 1) = g_tris[i].p[1][1];
+        verts(ind + 1, 2) = g_tris[i].p[1][2];
+
+        verts(ind + 2, 0) = g_tris[i].p[2][0];
+        verts(ind + 2, 1) = g_tris[i].p[2][1];
+        verts(ind + 2, 2) = g_tris[i].p[2][2];
+
+        colors(ind + 0, 0) = g_tris[i].c[0];
+        colors(ind + 0, 1) = g_tris[i].c[1];
+        colors(ind + 0, 2) = g_tris[i].c[2];
+
+        colors(ind + 1, 0) = g_tris[i].c[0];
+        colors(ind + 1, 1) = g_tris[i].c[1];
+        colors(ind + 1, 2) = g_tris[i].c[2];
+
+        colors(ind + 2, 0) = g_tris[i].c[0];
+        colors(ind + 2, 1) = g_tris[i].c[1];
+        colors(ind + 2, 2) = g_tris[i].c[2];
+
+    }
+
+    auto& pyra = viewer
+        .add_mesh(verts,
+                  /* Triangle indices (unsigned fx3) here; pass
+                     empty to use: 0 1 2, 3 4 5 etc */
+                  Triangles(),
+                  colors
+        )
+        .translate(Vector3f(0, 0, 0))
+        .set_shininess(32.f);
+}
 
 void AddVolumeToViewer(TSDFVolume *v) {
-   // theVolume->Smooth(VOXSMOOTH);
+    theVolume->Smooth(VOXSMOOTH);
     double isolevel = 1.0f/theVolume->res[0]/2;
-    std::vector<TRIANGLE> tris;
-    int n = v->PolygoniseMC(isolevel, tris);
+//    std::vector<TRIANGLE> tris;
+    int n = v->PolygoniseMC(isolevel, g_tris);
     // * Triangle mesh: single color
     Points verts(3 * n, 3);
     Points colors(3 * n, 3);
     for (int i = 0, ind=0; i < n; i++, ind+=3)
     {
-        verts(ind+0, 0) = tris[i].p[0][0]; 
-        verts(ind+0, 1) = tris[i].p[0][1];
-        verts(ind+0, 2) = tris[i].p[0][2];
+        verts(ind+0, 0) = g_tris[i].p[0][0]; 
+        verts(ind+0, 1) = g_tris[i].p[0][1];
+        verts(ind+0, 2) = g_tris[i].p[0][2];
 
-        verts(ind + 1, 0) = tris[i].p[1][0];
-        verts(ind + 1, 1) = tris[i].p[1][1];
-        verts(ind + 1, 2) = tris[i].p[1][2];
+        verts(ind + 1, 0) = g_tris[i].p[1][0];
+        verts(ind + 1, 1) = g_tris[i].p[1][1];
+        verts(ind + 1, 2) = g_tris[i].p[1][2];
         
-        verts(ind + 2, 0) = tris[i].p[2][0];
-        verts(ind + 2, 1) = tris[i].p[2][1];
-        verts(ind + 2, 2) = tris[i].p[2][2];
+        verts(ind + 2, 0) = g_tris[i].p[2][0];
+        verts(ind + 2, 1) = g_tris[i].p[2][1];
+        verts(ind + 2, 2) = g_tris[i].p[2][2];
 
-        colors(ind + 0, 0) = tris[i].c[0];
-        colors(ind + 0, 1) = tris[i].c[1];
-        colors(ind + 0, 2) = tris[i].c[2];
+        colors(ind + 0, 0) = g_tris[i].c[0];
+        colors(ind + 0, 1) = g_tris[i].c[1];
+        colors(ind + 0, 2) = g_tris[i].c[2];
   
-        colors(ind + 1, 0) = tris[i].c[0];
-        colors(ind + 1, 1) = tris[i].c[1];
-        colors(ind + 1, 2) = tris[i].c[2];
+        colors(ind + 1, 0) = g_tris[i].c[0];
+        colors(ind + 1, 1) = g_tris[i].c[1];
+        colors(ind + 1, 2) = g_tris[i].c[2];
         
-        colors(ind + 2, 0) = tris[i].c[0];
-        colors(ind + 2, 1) = tris[i].c[1];
-        colors(ind + 2, 2) = tris[i].c[2];
+        colors(ind + 2, 0) = g_tris[i].c[0];
+        colors(ind + 2, 1) = g_tris[i].c[1];
+        colors(ind + 2, 2) = g_tris[i].c[2];
         
     }
 
@@ -233,6 +361,96 @@ void ProjectAllPoints(std::vector<Eigen::Vector3d>& pts, Eigen::Matrix3d& intrin
         ccOut.push_back(cc);
     }
 }
+void CreateAndAddMesh(Eigen::Matrix3d& in, Eigen::Matrix4d& ex, cv::Mat& imRGB, cv::Mat& imMATTE, cv::Mat& imDepth, k4a_image_t& k4a_pointcloud) {
+    // go through and make a triangle mesh from the passed in point cloud
+#define IND_IM(i,j,w,h) (((j)*(w)) + (i))
+    int w, h;
+    w = imMATTE.cols;
+    h = imMATTE.rows;
+    int16_t* pcData = (int16_t*)k4a_image_get_buffer(k4a_pointcloud);
+    for (int j = 1; j < imMATTE.rows; j++) {
+        for (int i = 0; i < imMATTE.cols-1; i++) {
+            int ind[4];
+            int offsets[4][2] = {
+                {0,0},
+                {0,-1},
+                {1,-1},
+                {1,0}
+            };
+            ind[0] = IND_IM(i, j, w, h);
+            ind[1] = IND_IM(i, j-1, w, h);
+            ind[2] = IND_IM(i+1, j-1, w, h);
+            ind[3] = IND_IM(i + 1, j, w, h);
+            
+            int matte[4];
+            ushort depth[4];
+            cv::Vec3b col[4];
+            Eigen::Vector3d colf[4];
+            Eigen::Vector3d pts[4];
+            Eigen::Vector3d pts2[4];
+            for (int mm = 0; mm < 4; mm++) {
+                cv::Vec3b m = imMATTE.at<cv::Vec3b>(j+offsets[mm][1], i+offsets[mm][0]);  // get matte pixel value
+                matte[mm] = (int) m[0];
+                col[mm] = imRGB.at<cv::Vec3b>(j+offsets[mm][1], i + offsets[mm][0]); // get colour
+                colf[mm][0] = col[mm][2];
+                colf[mm][1] = col[mm][1]; 
+                colf[mm][2] = col[mm][0];
+
+                depth[mm] = imDepth.at<ushort>(j+ offsets[mm][1], i + offsets[mm][0]); // get depth image value   
+                int pcIndex = 3 * ((i + offsets[mm][0]) + (j+offsets[mm][1]) * imRGB.cols);
+                float PCX = (float)(pcData[pcIndex + 0]) / 1000.f;
+                float PCY = (float)(pcData[pcIndex + 1]) / 1000.f;
+                float PCZ = (float)(pcData[pcIndex + 2]) / 1000.f;
+                pts[mm][0] = PCX;
+                pts[mm][1] = PCY;
+                pts[mm][2] = PCZ;
+                Eigen::Vector4d v = ex * Eigen::Vector4d(PCX, PCY, PCZ, 1);
+                pts2[mm][0] = v[0];
+                pts2[mm][1] = v[1];
+                pts2[mm][2] = v[2];
+
+            }
+                       
+            // make 2 triangles
+            // triangle 1: index: 0,1,2
+            TRIANGLE t0;
+            t0.c = (0.3333f/255.f)*(colf[0] + colf[1] + colf[2]);
+            t0.p[0] = pts2[2];
+            t0.p[1] = pts2[1];
+            t0.p[2] = pts2[0];
+            float d1 = (t0.p[0] - t0.p[1]).norm();
+            float d2 = (t0.p[0] - t0.p[2]).norm();
+            //e1.norm();
+
+
+            // triangle 2: index: 0,2,3
+            TRIANGLE t1;
+            t1.c = (0.3333f/255.f) * (colf[0] + colf[2] + colf[3]);
+            t1.p[0] = pts2[3];
+            t1.p[1] = pts2[2];
+            t1.p[2] = pts2[0];
+            float d3 = (t1.p[0] - t1.p[1]).norm();
+            float d4 = (t1.p[0] - t1.p[2]).norm();
+
+#define VCHECK(m, i,j,k, v) ((m)[i]>(v)) && ((m)[j]>(v)) && ((m)[k]>(v)) 
+#define VCHECK2(m, i,j,k, v) ((m)[i]<(v)) && ((m)[j]<(v)) && ((m)[k]<(v)) 
+            // add triangle to viewer list
+           // if(VCHECK(matte,0,1,2,250))
+            float thresh = 0.05;
+            
+            
+                if (d1 < thresh && d2 < thresh)
+                if (VCHECK(depth, 0, 1, 2, 200) && VCHECK2(depth, 0, 1, 2, 3000))
+                    g_tris.push_back(t0);
+            //if (VCHECK(matte, 0, 2, 3, 250))
+                if (d3 < thresh && d4 < thresh)
+                if (VCHECK(depth, 0, 2, 3, 200) && VCHECK2(depth, 0, 1, 2, 3000))
+                    g_tris.push_back(t1);
+        }
+    }
+    
+}
+
 void CarveWithSilhouette(TSDFVolume *vol, Eigen::Matrix3d &in, Eigen::Matrix4d &ex, cv::Mat &imRGB, cv::Mat &imMATTE, cv::Mat &imDepth, k4a_image_t &k4a_pointcloud) {
     /* ok, so the standard simplest way  */
     /* for each voxel */
@@ -260,7 +478,7 @@ void CarveWithSilhouette(TSDFVolume *vol, Eigen::Matrix3d &in, Eigen::Matrix4d &
     std::cout << "R:" << R << std::endl;
     std::cout << "T:" << T << std::endl;
     std::cout << "ExInv:" << ExInv << std::endl;
-    float trunc_margin = vol->vSize[0]*5;
+    float trunc_margin = vol->vSize[0]* _VOXEL_TRUNC;// vol->vSize[0] * 6;
     for (int k = 0; k < vol->res[2]; k++) {
         for (int j = 0; j < vol->res[1]; j++) {
             for (int i = 0; i < vol->res[0]; i++) {
@@ -415,43 +633,45 @@ int main(int argc, char** argv) {
    
     /* carve */
     // load in a matte, rgb, and depth image
-    std::string path = "C:\\Users\\hogue\\Desktop\\DATA\\July20-calib_3\\";
+    std::string path = "C:\\Users\\hogue\\Desktop\\DATA\\aug19_maddie-rawsync_0\\";
 
     std::string fnameExtrinsics = path+"Extrinsics_Open3D.log";
+    std::string obj_prefix = "frame_";
+    std::string obj_filepath = path + "obj\\";
 
-    std::string fnameRGB0 = "client_0\\Color_130.jpg";
-    std::string fnameMATTE0 = "client_0\\Color_130.matte.png";
-    std::string fnameDEPTH0 = "client_0\\Depth_130.tiff";// 
+    std::string fnameRGB0 = "client_0\\Color_160.jpg";
+    std::string fnameMATTE0 = "client_0\\Color_160.matte.png";
+    std::string fnameDEPTH0 = "client_0\\Depth_160.tiff";// 
     std::string fnameIntrinsics0 = "client_0\\Intrinsics_Calib_0.json";
     int camID0 = 0;
 
-    std::string fnameRGB1 = "client_1\\Color_130.jpg";
-    std::string fnameMATTE1 = "client_1\\Color_130.matte.png";
-    std::string fnameDEPTH1 = "client_1\\Depth_130.tiff";// 
+    std::string fnameRGB1 = "client_1\\Color_160.jpg";
+    std::string fnameMATTE1 = "client_1\\Color_160.matte.png";
+    std::string fnameDEPTH1 = "client_1\\Depth_160.tiff";// 
     std::string fnameIntrinsics1 = "client_1\\Intrinsics_Calib_1.json";
     int camID1 = 1;
 
-    std::string fnameRGB2 = "client_2\\Color_130.jpg";
-    std::string fnameMATTE2 = "client_2\\Color_130.matte.png";
-    std::string fnameDEPTH2 = "client_2\\Depth_130.tiff";// 
+    std::string fnameRGB2 = "client_2\\Color_160.jpg";
+    std::string fnameMATTE2 = "client_2\\Color_160.matte.png";
+    std::string fnameDEPTH2 = "client_2\\Depth_160.tiff";// 
     std::string fnameIntrinsics2 = "client_2\\Intrinsics_Calib_2.json";
     int camID2 = 2;
 
-    std::string fnameRGB3 = "client_3\\Color_130.jpg";
-    std::string fnameMATTE3 = "client_3\\Color_130.matte.png";
-    std::string fnameDEPTH3 = "client_3\\Depth_130.tiff";// 
+    std::string fnameRGB3 = "client_3\\Color_160.jpg";
+    std::string fnameMATTE3 = "client_3\\Color_160.matte.png";
+    std::string fnameDEPTH3 = "client_3\\Depth_160.tiff";// 
     std::string fnameIntrinsics3 = "client_3\\Intrinsics_Calib_3.json";
     int camID3 = 3;
 
-    std::string fnameRGB4 = "client_4\\Color_130.jpg";
-    std::string fnameMATTE4 = "client_4\\Color_130.matte.png";
-    std::string fnameDEPTH4 = "client_4\\Depth_130.tiff";// 
+    std::string fnameRGB4 = "client_4\\Color_160.jpg";
+    std::string fnameMATTE4 = "client_4\\Color_160.matte.png";
+    std::string fnameDEPTH4 = "client_4\\Depth_160.tiff";// 
     std::string fnameIntrinsics4 = "client_4\\Intrinsics_Calib_4.json";
     int camID4 = 4;
 
-    std::string fnameRGB5 = "client_5\\Color_130.jpg";
-    std::string fnameMATTE5 = "client_5\\Color_130.matte.png";
-    std::string fnameDEPTH5 = "client_5\\Depth_130.tiff";// 
+    std::string fnameRGB5 = "client_5\\Color_160.jpg";
+    std::string fnameMATTE5 = "client_5\\Color_160.matte.png";
+    std::string fnameDEPTH5 = "client_5\\Depth_160.tiff";// 
     std::string fnameIntrinsics5 = "client_5\\Intrinsics_Calib_5.json";
     int camID5 = 5;
 
@@ -593,11 +813,22 @@ int main(int argc, char** argv) {
        // cv::imshow("rgb2", rgb2);
         //cv::waitKey();
        // int camera = cameraIDS[CAMERA];
-       
+#ifdef _VOXEL_CARVE       
         CarveWithSilhouette(theVolume, intrinsics[CID], extrinsics[CID], imRGB, imMATTE, imDEPTH16_transformed, k4a_pc);
+#else
+        // testing a different approach
+        // let's create a simple mesh from each depth map and add them to the viewer
+        CreateAndAddMesh(intrinsics[CID], extrinsics[CID], imRGB, imMATTE, imDEPTH16_transformed, k4a_pc);
+#endif
        
     }
+#ifdef _VOXEL_CARVE 
     AddVolumeToViewer(theVolume);
+#else
+    AddMeshToViewer();
+#endif
+    int frameNum = 0;
+    WriteOBJ(obj_prefix + "0.obj", obj_filepath, g_tris);
    // viewer.cull_face = false;
     
   
