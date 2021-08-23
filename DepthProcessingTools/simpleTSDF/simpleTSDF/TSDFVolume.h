@@ -59,7 +59,10 @@ public:
 	}
 
 	~TSDFVolume() {}
-
+	void reset() {
+		this->SetAllVoxels(VOXEL_UNSEEN, VOXEL_MAXDIST, 0);
+		this->ComputeAllVoxelCenters();
+	}
 	void makeSphereSDF(float radius) {
 		for (int k = 0; k < res[2]; k++) {
 			for (int j = 0; j < res[1]; j++) {

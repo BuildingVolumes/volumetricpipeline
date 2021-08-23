@@ -47,6 +47,89 @@ std::map<int, Eigen::Matrix3d> intrinsics;
 std::map<int, k4a_calibration_t> k4aCalibrations;
 
 std::vector<TRIANGLE> g_tris;
+
+
+void WritePLY(std::string filename, std::string filepath, std::vector<TRIANGLE> mesh)
+{
+    std::ofstream writer;
+
+    if (filepath != "")
+    {
+        std::filesystem::create_directories(filepath);
+
+        writer.open(filepath + "/" + filename);
+    }
+    else
+    {
+        writer.open(filename);
+    }
+    int numVerts = mesh.size() * 3;
+    int numTris = mesh.size();
+    // write the header
+
+    writer << "ply\n";
+    writer << "format ascii 1.0\n";
+    writer << "comment author: hogue\n";
+    writer << "element vertex " << numVerts << "\n";
+    writer << "property float x\n";
+    writer << "property float y\n";
+    writer << "property float z\n";
+    writer << "property uchar red\n";
+    writer << "property uchar green\n";
+    writer << "property uchar blue\n";
+    writer << "element face " << numTris << "\n";
+    writer << "property list uchar int vertex_indices\n";
+    //writer << "property uchar red\n";
+    //writer << "property uchar green\n";
+    //writer << "property uchar blue\n";
+    writer << "end_header\n";
+
+
+
+    // vertices
+    int numV = 0;
+    for (int i = 0; i < numTris; ++i)
+    {
+        auto TRI = mesh[i];
+        auto v0 = TRI.p[0];
+        auto v1 = TRI.p[1];
+        auto v2 = TRI.p[2];
+        auto c0 = TRI.c;
+        int  r, g, b;
+        r = (int)(255.f * c0.x());
+        g = (int)(255.f * c0.y());
+        b = (int)(255.f * c0.z());
+       writer << v0.x() << " " << v0.y() << " " << v0.z() <<  " " << r<< " " << g << " " << b << "\n";
+        writer << v1.x() << " " << v1.y() << " " << v1.z() << " " << r << " " << g << " " << b << "\n";
+        writer << v2.x() << " " << v2.y() << " " << v2.z() << " " << r << " " << g << " " << b << "\n";
+        numV += 3;
+       /* writer << "v " << v0.x() << " " << v0.y() << " " << v0.z() << "\n";
+        writer << "v " << v1.x() << " " << v1.y() << " " << v1.z() << "\n";
+        writer << "v " << v2.x() << " " << v2.y() << " " << v2.z() << "\n";*/
+    }
+    std::cout << "wrote:" << numV << " verts" << std::endl;
+    // face indices
+    int numT = 0;
+    for (int i = 0; i < numTris; ++i)
+    {
+        auto TRI = mesh[i];
+        int i0 = 3 * i + 0;
+        int i1 = 3 * i + 1;
+        int i2 = 3 * i + 2; 
+        auto c0 = TRI.c;
+        int  r, g, b;
+        r = (int)(255.f * c0.x());
+        g = (int)(255.f * c0.y());
+        b = (int)(255.f * c0.z());
+
+        writer << "3 " << (i0) << " " << (i1) << " " << (i2) << "\n";
+//        writer << "3 " << (i0) << " " << (i1) << " " << (i2) << " " << r << " " << g << " " << b << "\n";
+        numT++;
+    }
+    std::cout << "wrote: " << numT << " tris" << std::endl;
+    writer.close();
+}
+
 void WriteOBJ(std::string filename, std::string filepath, std::vector<TRIANGLE> mesh)
 {
     std::ofstream writer;
@@ -66,7 +149,6 @@ void WriteOBJ(std::string filename, std::string filepath, std::vector<TRIANGLE> 
 
     for (int i = 0; i < numTris; ++i)
     {
-//        auto vert = mesh->vertices_[i];
         auto TRI = mesh[i];
         auto v0 = TRI.p[0];
         auto v1 = TRI.p[1];
@@ -77,19 +159,7 @@ void WriteOBJ(std::string filename, std::string filepath, std::vector<TRIANGLE> 
         writer << "v " << v2.x() << " " << v2.y() << " " << v2.z() << "\n";
     }
 
-   /* for (int i = 0; i < mesh->triangle_uvs_.size(); ++i)
-    {
-        auto uv = mesh->triangle_uvs_[i];
-
-        writer << "vt " << uv.x() << " " << uv.y() << "\n";
-    }
-
-    for (int i = 0; i < mesh->vertex_normals_.size(); ++i)
-    {
-        auto norm = mesh->vertex_normals_[i];
-
-        writer << "vn " << norm.x() << " " << norm.y() << " " << norm.z() << "\n";
-    }*/
+   
 
     for (int i = 0; i < numTris; ++i)
     {
@@ -97,8 +167,6 @@ void WriteOBJ(std::string filename, std::string filepath, std::vector<TRIANGLE> 
         int i0 = 3 * i + 0;
         int i1 = 3 * i + 1;
         int i2 = 3 * i + 2;
-
-        //auto tri = mesh->triangles_[i];
 
         writer << "f " <<
             (i0+ 1) << " " <<
@@ -479,6 +547,7 @@ void CarveWithSilhouette(TSDFVolume *vol, Eigen::Matrix3d &in, Eigen::Matrix4d &
     std::cout << "T:" << T << std::endl;
     std::cout << "ExInv:" << ExInv << std::endl;
     float trunc_margin = vol->vSize[0]* _VOXEL_TRUNC;// vol->vSize[0] * 6;
+#pragma omp parallel for
     for (int k = 0; k < vol->res[2]; k++) {
         for (int j = 0; j < vol->res[1]; j++) {
             for (int i = 0; i < vol->res[0]; i++) {
@@ -566,7 +635,7 @@ void CarveWithSilhouette(TSDFVolume *vol, Eigen::Matrix3d &in, Eigen::Matrix4d &
   
 }
 
-void TransformDepth(cv::Mat old_depth, cv::Mat new_depth, k4a_calibration_t& calibration, k4a_image_t &k4a_pointcloud) {
+void TransformDepth(cv::Mat &old_depth, cv::Mat&new_depth, k4a_calibration_t& calibration, k4a_image_t &k4a_pointcloud) {
     k4a_image_t k4a_transformed_depth = nullptr;
     k4a_image_t k4a_depth = nullptr;
 //    k4a_image_t k4a_pointcloud = nullptr;
@@ -577,7 +646,6 @@ void TransformDepth(cv::Mat old_depth, cv::Mat new_depth, k4a_calibration_t& cal
         old_depth.data, old_depth.step[0]*old_depth.rows, nullptr, nullptr, &k4a_depth))
     {
         std::cout << "Transform Depth error: failed to create k4a image" << std::endl;
-        //ErrorLogger::LOG_ERROR("Failed to create a source depth image at " + std::to_string(_timestamp) + ".", true);
     }
     
     int newStride = new_depth.step[0];
@@ -587,37 +655,41 @@ void TransformDepth(cv::Mat old_depth, cv::Mat new_depth, k4a_calibration_t& cal
     int ccolh = calibration.color_camera_calibration.resolution_height;
     int old_step1 = old_depth.step1(0);
     int old_nc = old_depth.channels();
-
+   
     if (K4A_RESULT_SUCCEEDED !=
         k4a_image_create_from_buffer(k4a_image_format_t::K4A_IMAGE_FORMAT_DEPTH16, new_depth.cols, new_depth.rows, newStride,
         new_depth.data, new_depth.step[0]*new_depth.rows, nullptr, nullptr, &k4a_transformed_depth))
     {
-        //ErrorLogger::LOG_ERROR("Failed to create a destination depth image at " + std::to_string(_timestamp) + ".", true);
+        std::cout << "error k4a_image_create_from_buffer" << std::endl;
     }
+        /* k4a_image_create_from_buffer(
+            K4A_IMAGE_FORMAT_DEPTH16, new_depth.cols, new_depth.rows,
+            new_depth.step[0], new_depth.data,
+            new_depth.step[0] * new_depth.rows, NULL, NULL,
+            &k4a_transformed_depth);*/
+ 
 
-    k4a_image_create_from_buffer(
-        K4A_IMAGE_FORMAT_DEPTH16, new_depth.cols, new_depth.rows,
-        new_depth.step[0], new_depth.data,
-        new_depth.step[0]*new_depth.rows, NULL, NULL,
-        &k4a_transformed_depth);
     k4a_transformation_t transform = k4a_transformation_create(&calibration);
 
-    if (K4A_RESULT_SUCCEEDED !=
-        k4a_transformation_depth_image_to_color_camera(
-        transform, k4a_depth, k4a_transformed_depth)) 
+    if (K4A_RESULT_SUCCEEDED != k4a_transformation_depth_image_to_color_camera(transform, k4a_depth, k4a_transformed_depth)) 
     {
         std::cout << "error transforming depth to rgb" << std::endl;
-        //ErrorLogger::LOG_ERROR("Failed to transform depth frame to color frame at " + std::to_string(_timestamp) + ".", true);
     }
-    k4a_image_create(K4A_IMAGE_FORMAT_CUSTOM, new_depth.cols, new_depth.rows, new_depth.cols * 3 * (int)sizeof(int16_t), &k4a_pointcloud);
+    if (k4a_pointcloud == NULL)
+    {
+        k4a_image_create(K4A_IMAGE_FORMAT_CUSTOM, new_depth.cols, new_depth.rows, new_depth.cols * 3 * (int)sizeof(int16_t), &k4a_pointcloud);
+    }
     k4a_transformation_depth_image_to_point_cloud(transform, k4a_transformed_depth, K4A_CALIBRATION_TYPE_COLOR, k4a_pointcloud);
-
+    
+    
+    // release memory
     k4a_image_release(k4a_depth);
     k4a_image_release(k4a_transformed_depth);
+    k4a_transformation_destroy(transform);
 }
 
 int main(int argc, char** argv) {
-
+    k4a_image_t k4a_pc=nullptr;
     Eigen::Vector3d theCenter(0, 0, 0);
     float sz =2;
     Eigen::Vector3d theSize(sz,sz,sz);
@@ -633,206 +705,161 @@ int main(int argc, char** argv) {
    
     /* carve */
     // load in a matte, rgb, and depth image
-    std::string path = "C:\\Users\\hogue\\Desktop\\DATA\\aug19_maddie-rawsync_0\\";
+    std::string path = "C:\\Users\\hogue\\Desktop\\DATA\\aug19_hogue-rawsync_0\\";
 
-    std::string fnameExtrinsics = path+"Extrinsics_Open3D.log";
+    int startFRAME = 50;
+    int endFRAME = 450;
+    std::string fnameExtrinsics = path + "Extrinsics_Open3D.log";
     std::string obj_prefix = "frame_";
-    std::string obj_filepath = path + "obj\\";
-
-    std::string fnameRGB0 = "client_0\\Color_160.jpg";
-    std::string fnameMATTE0 = "client_0\\Color_160.matte.png";
-    std::string fnameDEPTH0 = "client_0\\Depth_160.tiff";// 
-    std::string fnameIntrinsics0 = "client_0\\Intrinsics_Calib_0.json";
+    std::string obj_filepath = path + "ply\\";
     int camID0 = 0;
-
-    std::string fnameRGB1 = "client_1\\Color_160.jpg";
-    std::string fnameMATTE1 = "client_1\\Color_160.matte.png";
-    std::string fnameDEPTH1 = "client_1\\Depth_160.tiff";// 
-    std::string fnameIntrinsics1 = "client_1\\Intrinsics_Calib_1.json";
     int camID1 = 1;
-
-    std::string fnameRGB2 = "client_2\\Color_160.jpg";
-    std::string fnameMATTE2 = "client_2\\Color_160.matte.png";
-    std::string fnameDEPTH2 = "client_2\\Depth_160.tiff";// 
-    std::string fnameIntrinsics2 = "client_2\\Intrinsics_Calib_2.json";
     int camID2 = 2;
-
-    std::string fnameRGB3 = "client_3\\Color_160.jpg";
-    std::string fnameMATTE3 = "client_3\\Color_160.matte.png";
-    std::string fnameDEPTH3 = "client_3\\Depth_160.tiff";// 
-    std::string fnameIntrinsics3 = "client_3\\Intrinsics_Calib_3.json";
     int camID3 = 3;
-
-    std::string fnameRGB4 = "client_4\\Color_160.jpg";
-    std::string fnameMATTE4 = "client_4\\Color_160.matte.png";
-    std::string fnameDEPTH4 = "client_4\\Depth_160.tiff";// 
-    std::string fnameIntrinsics4 = "client_4\\Intrinsics_Calib_4.json";
     int camID4 = 4;
-
-    std::string fnameRGB5 = "client_5\\Color_160.jpg";
-    std::string fnameMATTE5 = "client_5\\Color_160.matte.png";
-    std::string fnameDEPTH5 = "client_5\\Depth_160.tiff";// 
-    std::string fnameIntrinsics5 = "client_5\\Intrinsics_Calib_5.json";
     int camID5 = 5;
-
-
-
-
-    std::vector<std::string> pathsRGB;
-    std::vector<std::string> pathsMATTE;
-    std::vector<std::string> pathsDEPTH;
     std::vector<std::string> pathsINTRINSICS;
     std::vector<int>cameraIDS;
 
-       pathsRGB.push_back(path + fnameRGB0);
-  pathsMATTE.push_back(path + fnameMATTE0);
-  pathsDEPTH.push_back(path + fnameDEPTH0);
-  pathsINTRINSICS.push_back(path + fnameIntrinsics0);
-  cameraIDS.push_back(camID0);
 
-    // front side
-  pathsRGB.push_back(path + fnameRGB1);
-    pathsMATTE.push_back(path + fnameMATTE1);
-    pathsDEPTH.push_back(path + fnameDEPTH1);
+    std::string fnameIntrinsics0 = "client_0\\Intrinsics_Calib_0.json";
+    std::string fnameIntrinsics1 = "client_1\\Intrinsics_Calib_1.json";
+    std::string fnameIntrinsics2 = "client_2\\Intrinsics_Calib_2.json";
+    std::string fnameIntrinsics3 = "client_3\\Intrinsics_Calib_3.json";
+    std::string fnameIntrinsics4 = "client_4\\Intrinsics_Calib_4.json";
+    std::string fnameIntrinsics5 = "client_5\\Intrinsics_Calib_5.json";
+
+    pathsINTRINSICS.push_back(path + fnameIntrinsics0);
+    cameraIDS.push_back(camID0);
     pathsINTRINSICS.push_back(path + fnameIntrinsics1);
     cameraIDS.push_back(camID1);
-
-
- 
-    // back angle
-    pathsRGB.push_back(path + fnameRGB2);
-    pathsMATTE.push_back(path + fnameMATTE2);
-    pathsDEPTH.push_back(path + fnameDEPTH2);
     pathsINTRINSICS.push_back(path + fnameIntrinsics2);
     cameraIDS.push_back(camID2);
-
-    ////
-    pathsRGB.push_back(path + fnameRGB3);
-    pathsMATTE.push_back(path + fnameMATTE3);
-    pathsDEPTH.push_back(path + fnameDEPTH3);
     pathsINTRINSICS.push_back(path + fnameIntrinsics3);
     cameraIDS.push_back(camID3);
- 
-    pathsRGB.push_back(path + fnameRGB4);
-    pathsMATTE.push_back(path + fnameMATTE4);
-    pathsDEPTH.push_back(path + fnameDEPTH4);
     pathsINTRINSICS.push_back(path + fnameIntrinsics4);
     cameraIDS.push_back(camID4);
-
-
-        // backside
-    pathsRGB.push_back(path + fnameRGB5);
-    pathsMATTE.push_back(path + fnameMATTE5);
-    pathsDEPTH.push_back(path + fnameDEPTH5);
     pathsINTRINSICS.push_back(path + fnameIntrinsics5);
     cameraIDS.push_back(camID5);
 
+
     LoadExtrinsics(fnameExtrinsics);
-
-    /* load in all of the files */
-    for (int CAMERA = 0; CAMERA < pathsRGB.size(); CAMERA++)
-    {
-        int CID = cameraIDS[CAMERA];
-      
-
-        std::cout << "CAMERA:" << CAMERA << std::endl;
-        cv::Mat imRGB, imMATTE, imDEPTH16, imDEPTH16_transformed, imDEPTH8, imDEPTH32F;
-        imRGB = cv::imread(pathsRGB[CAMERA]);
-        imMATTE = cv::imread(pathsMATTE[CAMERA]);
-        imDEPTH16 = cv::imread(pathsDEPTH[CAMERA],cv::IMREAD_ANYDEPTH ); // 16bit short
-        //cv::Mat imDEPTH162 = cv::Mat::zeros(imDEPTH16.rows, imDEPTH16.cols, CV_16UC1);
-       // int numChannels = imDEPTH16.channels();
-//        if (imDEPTH16.channels() == 3) {
-//            for(int j=0;j<imDEPTH16.rows;j++)
-//                for (int i = 0; i < imDEPTH16.cols;i++) {
-//                    cv::Vec3w pix = imDEPTH16.at<cv::Vec3w>(j, i);
-//                    imDEPTH162.at<ushort>(j, i) = pix(0);
-//            }
-////            cv::extractChannel(imDEPTH16, imDEPTH162, 0);
-//
-////            cv::cvtColor(imDEPTH16, imDEPTH162, cv::COLOR_BGR5552GRAY);
-//        }
-//        /* transform depth to RGB size */
-        imDEPTH16_transformed = cv::Mat::zeros(imRGB.rows, imRGB.cols, CV_16UC1);
-//  // draw the camera extrinsics 
-        LoadIntrinsics(pathsINTRINSICS[CAMERA], CID);
-        k4a_image_t k4a_pc;
-        TransformDepth(imDEPTH16, imDEPTH16_transformed, k4aCalibrations[CID], k4a_pc);
-//
-        imDEPTH16_transformed.convertTo(imDEPTH8, CV_8UC1, 1.0f / 256.f); // 8bit uchar
-//
-      //  imDEPTH16_transformed.convertTo(imDEPTH32F, CV_32F);
-        //imDEPTH32F.convertTo(imDEPTH8, CV_8UC1);
-       // imDEPTH32F.convertTo(imDEPTH8, CV_8UC1, 1.0f / 256.f); // 8bit uchar
-    /*    cv::normalize(imDEPTH8, imDEPTH8, 0, 255, cv::NORM_MINMAX);
-       cv::imshow("depth", imDEPTH8);
-        cv::waitKey();*/
-                                                                          
-      
-       
-        Eigen::Matrix4d e = extrinsics[CID];
-    //    std::cout << "e:" << e << std::endl;
-        Vector3f ax(e(0, 0), e(1, 0), e(2, 0));
-        Vector3f ay(e(0, 1), e(1, 1), e(2, 1));
-        Vector3f az(e(0, 2), e(1, 2), e(2, 2));
-        Vector3f p(e(0, 3), e(1, 3), e(2, 3));
-   /*     std::cout << "ax:" << ax << std::endl;
-        std::cout << "ay:" << ay << std::endl;
-        std::cout << "az:" << az << std::endl;
-        std::cout << "p:" << p << std::endl;*/
-
-        auto& axisX = viewer.add_line(p, p+ax,Vector3f(1,0,0));
-        auto& axisY = viewer.add_line(p, p + ay, Vector3f(0, 1, 0));
-        auto& axisZ = viewer.add_line(p, p + az, Vector3f(0, 0, 1));
-        auto& axisZ2 = viewer.add_line(p, p + az*3, Vector3f(0, 0, 0.5));
-
-      //  imDepth = cv::imread(pathsDEPTH[CAMERA]);
-       // cv::Mat imMATTE2;
-       // cv::Mat rgb2;
-       // imRGB.copyTo(rgb2);
-        //imMATTE.convertTo(imMATTE2, CV_8UC1);
-        //std::cout << "num:" << imMATTE.channels() << std::endl;
-        //for (int j = 0; j < 720; j++) {
-        //    for (int i = 0; i < 1280; i++) {
-        //        cv::Vec3b m = imMATTE2.at<cv::Vec3b>(j, i);
-        //        if (m[0] > 0) {
-
-        //            //                rgb2.at<cv::Vec3b>(j, i) = imRGB.at<cv::Vec3b>(j, i);
-        //                         //   rgb2.at<uint8_t>(j, i, 1) = imRGB.at<uint8_t>(j, i, 1);
-        //                           // rgb2.at<uint8_t>(j, i, 2) = imRGB.at<uint8_t>(j, i, 2);
-        //        }
-        //        else {
-        //            cv::Vec3b& p = rgb2.at<cv::Vec3b>(j, i);
-        //            p[0] = 0;
-        //            p[1] = 0;
-        //            p[2] = 0;
-        //        }
-        //    }
-        //}
-       // cv::imshow("rgb", imRGB);
-       // cv::imshow("rgb2", rgb2);
-        //cv::waitKey();
-       // int camera = cameraIDS[CAMERA];
-#ifdef _VOXEL_CARVE       
-        CarveWithSilhouette(theVolume, intrinsics[CID], extrinsics[CID], imRGB, imMATTE, imDEPTH16_transformed, k4a_pc);
-#else
-        // testing a different approach
-        // let's create a simple mesh from each depth map and add them to the viewer
-        CreateAndAddMesh(intrinsics[CID], extrinsics[CID], imRGB, imMATTE, imDEPTH16_transformed, k4a_pc);
-#endif
-       
+    for (int i = 0; i < 6; i++) {
+        LoadIntrinsics(pathsINTRINSICS[i], i);
     }
+
+    for(int F=startFRAME;F<=endFRAME;F++){
+        // reset things for this frame
+        //g_tris.resize(0);
+        g_tris.erase(g_tris.begin(), g_tris.end());
+        g_tris.shrink_to_fit();
+
+        theVolume->reset();
+
+
+
+        std::string fnameRGB0 = "client_0\\Color_"+std::to_string(F)+".jpg";
+        std::string fnameMATTE0 = "client_0\\Color_" + std::to_string(F) + ".matte.png";
+        std::string fnameDEPTH0 = "client_0\\Depth_" + std::to_string(F) + ".tiff";// 
+
+        std::string fnameRGB1 = "client_1\\Color_" + std::to_string(F) + ".jpg";
+        std::string fnameMATTE1 = "client_1\\Color_" + std::to_string(F) + ".matte.png";
+        std::string fnameDEPTH1 = "client_1\\Depth_" + std::to_string(F) + ".tiff";// 
+       
+        std::string fnameRGB2 = "client_2\\Color_" + std::to_string(F) + ".jpg";
+        std::string fnameMATTE2 = "client_2\\Color_" + std::to_string(F) + ".matte.png";
+        std::string fnameDEPTH2 = "client_2\\Depth_" + std::to_string(F) + ".tiff";// 
+       
+        std::string fnameRGB3 = "client_3\\Color_" + std::to_string(F) + ".jpg";
+        std::string fnameMATTE3 = "client_3\\Color_" + std::to_string(F) + ".matte.png";
+        std::string fnameDEPTH3 = "client_3\\Depth_" + std::to_string(F) + ".tiff";// 
+      
+        std::string fnameRGB4 = "client_4\\Color_" + std::to_string(F) + ".jpg";
+        std::string fnameMATTE4 = "client_4\\Color_" + std::to_string(F) + ".matte.png";
+        std::string fnameDEPTH4 = "client_4\\Depth_" + std::to_string(F) + ".tiff";// 
+       
+        std::string fnameRGB5 = "client_5\\Color_" + std::to_string(F) + ".jpg";
+        std::string fnameMATTE5 = "client_5\\Color_" + std::to_string(F) + ".matte.png";
+        std::string fnameDEPTH5 = "client_5\\Depth_" + std::to_string(F) + ".tiff";// 
+      
+        std::vector<std::string> pathsRGB;
+        std::vector<std::string> pathsMATTE;
+        std::vector<std::string> pathsDEPTH;
+    
+        pathsRGB.push_back(path + fnameRGB0);
+        pathsMATTE.push_back(path + fnameMATTE0);
+        pathsDEPTH.push_back(path + fnameDEPTH0);
+      
+        // front side
+        pathsRGB.push_back(path + fnameRGB1);
+        pathsMATTE.push_back(path + fnameMATTE1);
+        pathsDEPTH.push_back(path + fnameDEPTH1);
+  
+        // back angle
+        pathsRGB.push_back(path + fnameRGB2);
+        pathsMATTE.push_back(path + fnameMATTE2);
+        pathsDEPTH.push_back(path + fnameDEPTH2);
+
+        ////
+        pathsRGB.push_back(path + fnameRGB3);
+        pathsMATTE.push_back(path + fnameMATTE3);
+        pathsDEPTH.push_back(path + fnameDEPTH3);
+ 
+        pathsRGB.push_back(path + fnameRGB4);
+        pathsMATTE.push_back(path + fnameMATTE4);
+        pathsDEPTH.push_back(path + fnameDEPTH4);
+      
+        // backside
+        pathsRGB.push_back(path + fnameRGB5);
+        pathsMATTE.push_back(path + fnameMATTE5);
+        pathsDEPTH.push_back(path + fnameDEPTH5);
+       
+        /* load in all of the files */
+        for (int CAMERA = 0; CAMERA < pathsRGB.size(); CAMERA++)
+        {
+            int CID = cameraIDS[CAMERA];
+            std::cout << "CAMERA:" << CAMERA << std::endl;
+            cv::Mat imRGB, imMATTE, imDEPTH16, imDEPTH16_transformed;
+            imRGB = cv::imread(pathsRGB[CAMERA]);
+            imMATTE = cv::imread(pathsMATTE[CAMERA]);
+            imDEPTH16 = cv::imread(pathsDEPTH[CAMERA], cv::IMREAD_ANYDEPTH); // 16bit short
+
+           /* transform depth to RGB size */
+            imDEPTH16_transformed = cv::Mat::zeros(imRGB.rows, imRGB.cols, CV_16UC1);
+          
+            TransformDepth(imDEPTH16, imDEPTH16_transformed, k4aCalibrations[CID], k4a_pc);
+
+#ifdef _VOXEL_CARVE       
+            CarveWithSilhouette(theVolume, intrinsics[CID], extrinsics[CID], imRGB, imMATTE, imDEPTH16_transformed, k4a_pc);
+#else
+            // testing a different approach
+            // let's create a simple mesh from each depth map and add them to the viewer
+            CreateAndAddMesh(intrinsics[CID], extrinsics[CID], imRGB, imMATTE, imDEPTH16_transformed, k4a_pc);
+#endif 
+            // clean up memory!!!!!!
+            imRGB.release();
+            imMATTE.release();
+            imDEPTH16.release();
+            imDEPTH16_transformed.release();
+           
+
+            //k4a_image_release(k4a_pc);
+        }
 #ifdef _VOXEL_CARVE 
-    AddVolumeToViewer(theVolume);
+        AddVolumeToViewer(theVolume);
 #else
     AddMeshToViewer();
 #endif
-    int frameNum = 0;
-    WriteOBJ(obj_prefix + "0.obj", obj_filepath, g_tris);
-   // viewer.cull_face = false;
+        int frameNum = F;
+        std::string obj_postfix = std::to_string(frameNum) + ".ply";
+
+        WritePLY(obj_prefix + obj_postfix, obj_filepath, g_tris);
+//        WriteOBJ(obj_prefix + obj_postfix, obj_filepath, g_tris);
     
-  
-   // glDisable(GL_CULL_FACE);
+    }
+    
+    // VIEWER STUFF
+
     // * Events: key handler
     viewer.on_key = [&](int button, input::Action action, int mods) -> bool {
         if (action != input::Action::release) {
