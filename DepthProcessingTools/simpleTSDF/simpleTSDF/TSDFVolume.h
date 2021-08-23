@@ -638,7 +638,7 @@ public:
 			}
 		}
 		numTris = triangles.size();
-		std::cout << "MC: NumTris:" << numTris << std::endl;
+		//std::cout << "MC: NumTris:" << numTris << std::endl;
 		return numTris;
 	}
 	int PolygoniseCellMC(float isolevel, std::vector<TRIANGLE> &triangles, int xi, int yi, int zi) {

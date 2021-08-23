@@ -47,7 +47,7 @@ std::map<int, Eigen::Matrix3d> intrinsics;
 std::map<int, k4a_calibration_t> k4aCalibrations;
 
 std::vector<TRIANGLE> g_tris;
-
+std::vector<k4a_transformation_t> g_transforms;
 
 void WritePLY(std::string filename, std::string filepath, std::vector<TRIANGLE> mesh)
 {
@@ -107,7 +107,7 @@ void WritePLY(std::string filename, std::string filepath, std::vector<TRIANGLE> 
         writer << "v " << v1.x() << " " << v1.y() << " " << v1.z() << "\n";
         writer << "v " << v2.x() << " " << v2.y() << " " << v2.z() << "\n";*/
     }
-    std::cout << "wrote:" << numV << " verts" << std::endl;
+
     // face indices
     int numT = 0;
     for (int i = 0; i < numTris; ++i)
@@ -126,8 +126,11 @@ void WritePLY(std::string filename, std::string filepath, std::vector<TRIANGLE> 
 //        writer << "3 " << (i0) << " " << (i1) << " " << (i2) << " " << r << " " << g << " " << b << "\n";
         numT++;
     }
-    std::cout << "wrote: " << numT << " tris" << std::endl;
     writer.close();
+#ifdef _VERBOSE
+    std::cout << "wrote:" << numV << " verts" << std::endl;
+    std::cout << "wrote: " << numT << " tris" << std::endl;
+#endif
 }
 
 void WriteOBJ(std::string filename, std::string filepath, std::vector<TRIANGLE> mesh)
@@ -524,9 +527,10 @@ void CarveWithSilhouette(TSDFVolume *vol, Eigen::Matrix3d &in, Eigen::Matrix4d &
     /* for each voxel */
     //v->makeSphereSDF(0.75f);
     //return;
+#ifdef _VERBOSE
     std::cout << "extrinsics:" << std::endl;
     std::cout << ex << std::endl;
-
+#endif
     /* extrinsics passed in convert from camera to wold
        - i.e. multiplying by camera origin (0,0,0) gives the position of the camera in the world to draw
        - we need the transform to convert world coordinates (voxel coords) to be relative to the camera
@@ -541,15 +545,18 @@ void CarveWithSilhouette(TSDFVolume *vol, Eigen::Matrix3d &in, Eigen::Matrix4d &
     auto T2 = -Rt * T;
     ExInv.block<3, 3>(0, 0) = Rt;
     ExInv.block<3, 1>(0, 3) = T2;
-
+#ifdef _VERBOSE
     std::cout << "Ex:" << ex << std::endl;
     std::cout << "R:" << R << std::endl;
     std::cout << "T:" << T << std::endl;
     std::cout << "ExInv:" << ExInv << std::endl;
+#endif
     float trunc_margin = vol->vSize[0]* _VOXEL_TRUNC;// vol->vSize[0] * 6;
 #pragma omp parallel for
     for (int k = 0; k < vol->res[2]; k++) {
+#pragma omp parallel for
         for (int j = 0; j < vol->res[1]; j++) {
+#pragma omp parallel for
             for (int i = 0; i < vol->res[0]; i++) {
                 Voxel& vx = vol->get(i, j, k);
                 // if the current voxel is already carved in any image then it should be empty for sure
@@ -635,7 +642,7 @@ void CarveWithSilhouette(TSDFVolume *vol, Eigen::Matrix3d &in, Eigen::Matrix4d &
   
 }
 
-void TransformDepth(cv::Mat &old_depth, cv::Mat&new_depth, k4a_calibration_t& calibration, k4a_image_t &k4a_pointcloud) {
+void TransformDepth(int cam, cv::Mat &old_depth, cv::Mat&new_depth, k4a_calibration_t& calibration, k4a_image_t &k4a_pointcloud) {
     k4a_image_t k4a_transformed_depth = nullptr;
     k4a_image_t k4a_depth = nullptr;
 //    k4a_image_t k4a_pointcloud = nullptr;
@@ -668,8 +675,12 @@ void TransformDepth(cv::Mat &old_depth, cv::Mat&new_depth, k4a_calibration_t& ca
             new_depth.step[0] * new_depth.rows, NULL, NULL,
             &k4a_transformed_depth);*/
  
-
-    k4a_transformation_t transform = k4a_transformation_create(&calibration);
+    
+    k4a_transformation_t transform = g_transforms[cam];
+    if (transform == 0) {
+        transform = k4a_transformation_create(&calibration);
+        g_transforms[cam] = transform;
+    }
 
     if (K4A_RESULT_SUCCEEDED != k4a_transformation_depth_image_to_color_camera(transform, k4a_depth, k4a_transformed_depth)) 
     {
@@ -685,7 +696,7 @@ void TransformDepth(cv::Mat &old_depth, cv::Mat&new_depth, k4a_calibration_t& ca
     // release memory
     k4a_image_release(k4a_depth);
     k4a_image_release(k4a_transformed_depth);
-    k4a_transformation_destroy(transform);
+    //k4a_transformation_destroy(transform);
 }
 
 int main(int argc, char** argv) {
@@ -742,13 +753,26 @@ int main(int argc, char** argv) {
     pathsINTRINSICS.push_back(path + fnameIntrinsics5);
     cameraIDS.push_back(camID5);
 
+    k4a_transformation_t transform1=0 ;
+    k4a_transformation_t transform2=0;
+    k4a_transformation_t transform3=0;
+    k4a_transformation_t transform4=0;
+    k4a_transformation_t transform5=0;
+
+    g_transforms.push_back(transform1);
+    g_transforms.push_back(transform2);
+    g_transforms.push_back(transform3);
+    g_transforms.push_back(transform4);
+    g_transforms.push_back(transform5);
 
     LoadExtrinsics(fnameExtrinsics);
     for (int i = 0; i < 6; i++) {
         LoadIntrinsics(pathsINTRINSICS[i], i);
     }
-
+    float percentage = 0;
     for(int F=startFRAME;F<=endFRAME;F++){
+        percentage = ((float)(F-startFRAME) / (float)(endFRAME - startFRAME)) * 100.f;
+        std::cout << percentage << "%" << std::endl;
         // reset things for this frame
         //g_tris.resize(0);
         g_tris.erase(g_tris.begin(), g_tris.end());
@@ -818,7 +842,9 @@ int main(int argc, char** argv) {
         for (int CAMERA = 0; CAMERA < pathsRGB.size(); CAMERA++)
         {
             int CID = cameraIDS[CAMERA];
+#ifdef _VERBOSE
             std::cout << "CAMERA:" << CAMERA << std::endl;
+#endif
             cv::Mat imRGB, imMATTE, imDEPTH16, imDEPTH16_transformed;
             imRGB = cv::imread(pathsRGB[CAMERA]);
             imMATTE = cv::imread(pathsMATTE[CAMERA]);
@@ -827,7 +853,7 @@ int main(int argc, char** argv) {
            /* transform depth to RGB size */
             imDEPTH16_transformed = cv::Mat::zeros(imRGB.rows, imRGB.cols, CV_16UC1);
           
-            TransformDepth(imDEPTH16, imDEPTH16_transformed, k4aCalibrations[CID], k4a_pc);
+            TransformDepth(CAMERA,imDEPTH16, imDEPTH16_transformed, k4aCalibrations[CID], k4a_pc);
 
 #ifdef _VOXEL_CARVE       
             CarveWithSilhouette(theVolume, intrinsics[CID], extrinsics[CID], imRGB, imMATTE, imDEPTH16_transformed, k4a_pc);
