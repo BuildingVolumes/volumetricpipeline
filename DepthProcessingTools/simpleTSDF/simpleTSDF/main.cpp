@@ -4,6 +4,7 @@
 #include <string>
 #include <fstream>
 #include <filesystem>
+#include <chrono>
 
 #include "meshview/meshview.hpp"
 #include "meshview/meshview_imgui.hpp"
@@ -227,10 +228,8 @@ void AddMeshToViewer() {
 }
 
 void AddVolumeToViewer(TSDFVolume *v) {
-    theVolume->Smooth(VOXSMOOTH);
-    double isolevel = 1.0f/theVolume->res[0]/2;
-//    std::vector<TRIANGLE> tris;
-    int n = v->PolygoniseMC(isolevel, g_tris);
+
+    int n = g_tris.size();
     // * Triangle mesh: single color
     Points verts(3 * n, 3);
     Points colors(3 * n, 3);
@@ -720,7 +719,8 @@ int main(int argc, char** argv) {
 
     int startFRAME = 50;
     int endFRAME = 450;
-    std::string fnameExtrinsics = path + "Extrinsics_Open3D.log";
+//    std::string fnameExtrinsics = path + "Extrinsics_Open3D.log";
+    std::string fnameExtrinsics = path + "outputExtrinsics.log";
     std::string obj_prefix = "frame_";
     std::string obj_filepath = path + "ply\\";
     int camID0 = 0;
@@ -753,12 +753,13 @@ int main(int argc, char** argv) {
     pathsINTRINSICS.push_back(path + fnameIntrinsics5);
     cameraIDS.push_back(camID5);
 
+    k4a_transformation_t transform0 = 0;
     k4a_transformation_t transform1=0 ;
     k4a_transformation_t transform2=0;
     k4a_transformation_t transform3=0;
     k4a_transformation_t transform4=0;
     k4a_transformation_t transform5=0;
-
+    g_transforms.push_back(transform0);
     g_transforms.push_back(transform1);
     g_transforms.push_back(transform2);
     g_transforms.push_back(transform3);
@@ -770,6 +771,8 @@ int main(int argc, char** argv) {
         LoadIntrinsics(pathsINTRINSICS[i], i);
     }
     float percentage = 0;
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+   
     for(int F=startFRAME;F<=endFRAME;F++){
         percentage = ((float)(F-startFRAME) / (float)(endFRAME - startFRAME)) * 100.f;
         std::cout << percentage << "%" << std::endl;
@@ -872,9 +875,12 @@ int main(int argc, char** argv) {
             //k4a_image_release(k4a_pc);
         }
 #ifdef _VOXEL_CARVE 
-        AddVolumeToViewer(theVolume);
+        if(VOXSMOOTH>0)theVolume->Smooth(VOXSMOOTH);
+        double isolevel = 1.0f / theVolume->res[0] / 2;
+        int n = theVolume->PolygoniseMC(isolevel, g_tris);
+       // AddVolumeToViewer(theVolume);   // lol, this accumulates all frames into the viewer
 #else
-    AddMeshToViewer();
+        //AddMeshToViewer();
 #endif
         int frameNum = F;
         std::string obj_postfix = std::to_string(frameNum) + ".ply";
@@ -883,9 +889,15 @@ int main(int argc, char** argv) {
 //        WriteOBJ(obj_prefix + obj_postfix, obj_filepath, g_tris);
     
     }
-    
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::cout << "Processing Time = " << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count() << "[s]" << std::endl;
     // VIEWER STUFF
 
+#ifdef _VOXEL_CARVE 
+       AddVolumeToViewer(theVolume);  // should only view the last one
+#else
+    AddMeshToViewer();
+#endif
     // * Events: key handler
     viewer.on_key = [&](int button, input::Action action, int mods) -> bool {
         if (action != input::Action::release) {
