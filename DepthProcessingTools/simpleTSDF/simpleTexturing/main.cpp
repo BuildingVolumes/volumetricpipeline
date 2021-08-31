@@ -22,11 +22,12 @@
 #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
 #include <OpenMesh/Tools/Subdivider/Uniform/CatmullClarkT.hh>
 #include <OpenMesh/Tools/Subdivider/Adaptive/Composite/CompositeT.hh>
+#include <OpenMesh/Tools/Smoother/JacobiLaplaceSmootherT.hh>
 
 #define LARGE_F 1000000.f
 struct MyTraits : public OpenMesh::DefaultTraits
 {
-    typedef OpenMesh::Vec3d Point;
+    typedef OpenMesh::Vec3f Point;
     VertexAttributes(OpenMesh::Attributes::Normal | OpenMesh::Attributes::Color | OpenMesh::Attributes::TexCoord2D);
     HalfedgeAttributes(OpenMesh::Attributes::PrevHalfedge);
     FaceAttributes(OpenMesh::Attributes::Normal);
@@ -361,7 +362,7 @@ Eigen::Vector3d ProjectPoint(Eigen::Vector3d& p, Eigen::Matrix3d& intrin, Eigen:
 int main(int argc, char** argv) {
 //    std::vector<TRIANGLE> mesh;
     MyMesh mesh;
-    if(!OpenMesh::IO::read_mesh(mesh, "C:\\Users\\hogue\\Desktop\\DATA\\aug19_hogue-rawsync_0\\ply\\frame_160.obj"))
+    if(!OpenMesh::IO::read_mesh(mesh, "C:\\Users\\hogue\\Desktop\\DATA\\aug19_hogue-rawsync_0\\ply\\frame_160_im2-remNonManFaces-cut0.obj"))
     {
         std::cerr << "read error" << std::endl;
         exit(1);
@@ -375,8 +376,15 @@ int main(int argc, char** argv) {
     //OpenMesh::Subdivider::Uniform::CatmullClarkT<MyMesh> catmull;
     ////// Execute 1 subdivision steps
     //catmull.attach(mesh);
-    //catmull(1);
+    //catmull(3);
     //catmull.detach();
+    // Initialize smoother with input mesh
+   // OpenMesh::Smoother::JacobiLaplaceSmootherT<MyMesh> smoother(mesh);
+   // smoother.initialize(OpenMesh::Smoother::JacobiLaplaceSmootherT<MyMesh>::Component::Tangential_and_Normal,   //Smooth direction
+   //                     OpenMesh::Smoother::JacobiLaplaceSmootherT<MyMesh>::Continuity::C0);                      //Continuity
+
+   //// Execute 3 smooth steps
+   //     smoother.smooth(3);
 
     // now load in Livescan Take info
     LiveScan3d_Take theTake("C:\\Users\\hogue\\Desktop\\DATA\\aug19_hogue-rawsync_0","outputExtrinsics.log",6);
@@ -465,6 +473,10 @@ int main(int argc, char** argv) {
                     costPerCamera[CAMERA] += fabs(diff); // stupid silly cost at the moment
                 }
                 else {
+                    MyMesh::TexCoord2D uv;
+                    uv[0] = 0;//(float)u / (float)imRGB.cols;
+                    uv[1] = 0;//(float)v / (float)imRGB.rows;
+                    texCoords.push_back(uv);
                     // didn't project into the image boundaries
                     costPerCamera[CAMERA] = LARGE_F; // huge cost if it doesn't project
                 }
@@ -481,6 +493,7 @@ int main(int argc, char** argv) {
                 minCamera = i;
             }
         }
+        
         //std::cout << "MINCAM:" << minCamera << std::endl;
         /* minCamera is the camera with the minimum cost for this face */
         /* store the texture computed texture coordinates here */
@@ -492,8 +505,14 @@ int main(int argc, char** argv) {
         for (auto vit = vr.begin(); vit != vr.end(); ++vit) {
             auto uv = mesh.texcoord2D(*vit);
             uv[0] = uv[1] = 0;
-            uv[0] = (tc[vind])[0];
-            uv[1] = 1.0f - ((tc[vind])[1] * scale + offset);
+
+            if (minCost >= LARGE_F) {
+                uv[0] = uv[1] = 0;
+            }
+            else {
+                uv[0] = (tc[vind])[0];
+                uv[1] = 1.0f - ((tc[vind])[1] * scale + offset);
+            }
             mesh.set_texcoord2D(*vit, uv);
             vind++;
         }
