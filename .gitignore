@@ -80,7 +80,7 @@ Unity/LS3D_ExtrinsicsViewer/MemoryCaptures
 Unity/LS3D_ExtrinsicsViewer/Assets/*.meta
 
 
-
+Unity/testvolumetric/
 Unity/TestPCX/Assets/MegaFiers/MegaCache/Scenes/DemoScene.unity
 Unity/TestPCX/Assets/MegaFiers/MegaCache/Scenes/Materials/02___Default.mat
 Unity/TestPCX/Assets/MegaFiers/MegaCache/Scenes/Materials/03___Default.mat
@@ -2704,3 +2704,9 @@ Debug/
 *.pth
 Unity/LS3D_ExtrinsicsViewer/Library/ArtifactDB
 Unity/LS3D_ExtrinsicsViewer/Library/ArtifactDB-lock
+*.exe
+*.ipdb
+*.iobj
+DepthProcessingTools/simpleTSDF/simpleTSDF/x64/Release/main.obj
+DepthProcessingTools/simpleTSDF/simpleICP-ptcloud/x64/Release/main.obj
+Unity/testvolumetric/Library/AnnotationManager

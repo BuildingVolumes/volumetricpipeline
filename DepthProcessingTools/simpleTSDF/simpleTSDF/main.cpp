@@ -30,14 +30,18 @@ using namespace meshview;
 //int VOXRES = 256;
 //int VOXSMOOTH = 2;
 ////
-//#define _VOXEL_TRUNC 4;
+//#define _VOXEL_TRUNC 4
 //int VOXRES = 128;
 
-#define _VOXEL_TRUNC 3;
+#define _VOXEL_TRUNC 3
 int VOXRES = 64;
 
+#define _VOXEL_TRUNC_DELTA 5
 //#define _VOXEL_TRUNC 2;
 //int VOXRES = 32;
+
+#define _START_FRAME 160
+#define _END_FRAME 161
 
 int VOXSMOOTH = 1;
 
@@ -520,12 +524,12 @@ void CreateAndAddMesh(Eigen::Matrix3d& in, Eigen::Matrix4d& ex, cv::Mat& imRGB, 
     }
     
 }
-
+/* 
+NOTES: learned proper settings of tsdf calc by reading "variational level set evolution for non-rigid 3d reconstruction from a single depth camera" by Slavcheva, Baust, Ilic.
+- this implements just the simplest voxel carving and tsdf computation, non-rigid level set coming later
+*/
 void CarveWithSilhouette(TSDFVolume *vol, Eigen::Matrix3d &in, Eigen::Matrix4d &ex, cv::Mat &imRGB, cv::Mat &imMATTE, cv::Mat &imDepth, k4a_image_t &k4a_pointcloud) {
     /* ok, so the standard simplest way  */
-    /* for each voxel */
-    //v->makeSphereSDF(0.75f);
-    //return;
 #ifdef _VERBOSE
     std::cout << "extrinsics:" << std::endl;
     std::cout << ex << std::endl;
@@ -535,22 +539,23 @@ void CarveWithSilhouette(TSDFVolume *vol, Eigen::Matrix3d &in, Eigen::Matrix4d &
        - we need the transform to convert world coordinates (voxel coords) to be relative to the camera
        -  
     */
-
-    auto ExInv = ex;// .inverse();
+    auto ExInv = ex;
     auto R = ex.block<3, 3>(0, 0);
     auto T = ex.block<3, 1>(0, 3);
-    
     auto Rt = R.transpose();
     auto T2 = -Rt * T;
     ExInv.block<3, 3>(0, 0) = Rt;
     ExInv.block<3, 1>(0, 3) = T2;
+
 #ifdef _VERBOSE
     std::cout << "Ex:" << ex << std::endl;
     std::cout << "R:" << R << std::endl;
     std::cout << "T:" << T << std::endl;
     std::cout << "ExInv:" << ExInv << std::endl;
 #endif
+
     float trunc_margin = vol->vSize[0]* _VOXEL_TRUNC;// vol->vSize[0] * 6;
+    float delta = vol->vSize[0] * _VOXEL_TRUNC_DELTA;
 #pragma omp parallel for
     for (int k = 0; k < vol->res[2]; k++) {
 #pragma omp parallel for
@@ -559,7 +564,7 @@ void CarveWithSilhouette(TSDFVolume *vol, Eigen::Matrix3d &in, Eigen::Matrix4d &
             for (int i = 0; i < vol->res[0]; i++) {
                 Voxel& vx = vol->get(i, j, k);
                 // if the current voxel is already carved in any image then it should be empty for sure
-               // if (vx.flag != VOXEL_EMPTY)
+                if (vx.flag != VOXEL_EMPTY)
                 {
                     Eigen::Vector3d c;
                     vol->GetVoxelCoordsFromIndex(i, j, k, c);
@@ -567,15 +572,6 @@ void CarveWithSilhouette(TSDFVolume *vol, Eigen::Matrix3d &in, Eigen::Matrix4d &
                     // project voxel center on to image
                     Eigen::Vector4d pRotExInv;
                     Eigen::Vector3d proj = ProjectPoint(c, in, ExInv, pRotExInv);
-
-                    //// project all corners of the voxel
-                    //vol->GetVoxelCornersFromIndex(i, j, k, allcorners);
-                    //std::vector<Eigen::Vector3d> ptsOut;
-                    //std::vector<Eigen::Vector4d> ccOut;
-                    //ProjectAllPoints(allcorners, in, ExInv, ptsOut, ccOut);
-
-                    //std::vector<float> allDepth;
-                    //float avgDepth = GetAllDepth(ptsOut, imDepth, allDepth);
 
                     /* now look in image */
                     int u, v;
@@ -605,18 +601,22 @@ void CarveWithSilhouette(TSDFVolume *vol, Eigen::Matrix3d &in, Eigen::Matrix4d &
                            // std::cout << "depthMeasurement:" << depthMeasurement << " (u,v):"<<"("<<u<<","<<v<<"), ushort:"<< depth<<" m:"<<matte<<std::endl;
                            if (distFromVoxelToSurfaceSample > -trunc_margin)
                            {
-                              // std::cout << "distsdf:" << distsdf << std::endl;
-                               float sdf = fminf(1.f, distFromVoxelToSurfaceSample / trunc_margin);
+                               float sdf;
+                               float abDist = fabs(distFromVoxelToSurfaceSample);
+                               if (abDist >= delta) {
+                                   sdf = distFromVoxelToSurfaceSample;
+                               }
+                               else
+                               {
+                                   sdf = fminf(1.f, distFromVoxelToSurfaceSample / trunc_margin);
+                               }
                                float oldweight = vx.weight;
                                float newweight = oldweight + 1;
                                float weightSum = oldweight + newweight;
-
+                               
                                float d_old = vx.sdf;
                                float d_new = sdf;
                                float d =(d_old * oldweight + d_new) / newweight;
-                             //  if(oldweight) 
-                               //std::cout << "d_old:" << d_old << " d_new:" << d_new << " d:"<<d<< " distfromVox:"<< distFromVoxelToSurfaceSample << " depthf:"<< depthMeasurement<<std::endl;
-                               // std::cout << "d:" << d << std::endl;
 
                                vx.sdf = d;// (d < -1) ? -1 : (d > 1) ? 1 : d;// d_old + (1.0 / weightSum) * (d_new - d_old);// fmin(d_old, d_new);// d;
                                vx.weight = newweight;
@@ -717,10 +717,10 @@ int main(int argc, char** argv) {
     // load in a matte, rgb, and depth image
     std::string path = "C:\\Users\\hogue\\Desktop\\DATA\\aug19_hogue-rawsync_0\\";
 
-    int startFRAME = 50;
-    int endFRAME = 450;
-//    std::string fnameExtrinsics = path + "Extrinsics_Open3D.log";
-    std::string fnameExtrinsics = path + "outputExtrinsics.log";
+    int startFRAME = _START_FRAME;
+    int endFRAME = _END_FRAME;
+    std::string fnameExtrinsics = path + "Extrinsics_Open3D.log";
+    //std::string fnameExtrinsics = path + "outputExtrinsics.log";
     std::string obj_prefix = "frame_";
     std::string obj_filepath = path + "ply\\";
     int camID0 = 0;

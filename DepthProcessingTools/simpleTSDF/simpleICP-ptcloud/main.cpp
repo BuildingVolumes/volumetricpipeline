@@ -818,8 +818,8 @@ int main(int argc, char** argv) {
     // load in a matte, rgb, and depth image
     std::string path = "C:\\Users\\hogue\\Desktop\\DATA\\aug19_hogue-rawsync_0\\";
 
-    int startFRAME = 50;
-    int endFRAME = 51;
+    int startFRAME = 150;
+    int endFRAME = 151;
     std::string fnameExtrinsics = path + "Extrinsics_Open3D.log";
     std::string obj_prefix = "frame_";
     std::string obj_filepath = path + "ply\\";
@@ -983,6 +983,8 @@ int main(int argc, char** argv) {
         std::cout << "M(0,5)=" << M5 << std::endl;
         //Eigen::Matrix4d M15 = M1 * M5;
         M2 = ICP(0,2);
+        M4 = ICP(3,4);
+
 
         extrinsicsNEW[0] = M0*extrinsics[0];
         extrinsicsNEW[1] = M1*extrinsics[1];
