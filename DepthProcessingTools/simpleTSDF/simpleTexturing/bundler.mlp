@@ -1,0 +1,39 @@
+<!DOCTYPE MeshLabDocument>
+<MeshLabProject>
+<MeshGroup>
+<MLMesh filename="frame_160_im2-remNonManFaces-cut0.obj" visible="1" label="frame_160_im2-remNonManFaces-cut0.obj">
+<MLMatrix44>
+1 0 0 0 
+0 1 0 0 
+0 0 1 0 
+0 0 0 1 
+</MLMatrix44>
+</MLMesh>
+</MeshGroup>
+<RasterGroup>
+<MLRaster label="0_Color_160.jpg">
+<VCGCamera  CenterPx="640.623 366.39"  FocalMm="606.79"  TranslationVector="0.0610072 -1.6956 -1.62807 1"  PixelSizeMm="1 1" ViewportPx="1280 720" LensDistortion="0.000451417 -0.0041597" RotationMatrix="0.963656 -0.167014 0.208454 0 0.266597 0.650903 -0.710615 0 -0.0170041 0.739957 0.671981 0 0 0 0 1 "CameraType="0" />
+<Plane fileName="hogue_160/client_0/Color_160.jpg" semantic="1"/>
+</MLRaster>
+<MLRaster label="1_Color_160.jpg">
+<VCGCamera  CenterPx="639.126 369.391"  FocalMm="611.187"  TranslationVector="-2.12738 -0.803413 0.663234 1"  PixelSizeMm="1 1" ViewportPx="1280 720" LensDistortion="0.000946923 -0.00415503" RotationMatrix="0.287757 -0.957714 0.0054873 0 -0.186985 -0.0622816 -0.981062 0 0.94025 0.281055 -0.197031 0 0 0 0 1 "CameraType="0" />
+<Plane fileName="hogue_160/client_1/Color_160.jpg" semantic="1"/>
+</MLRaster>
+<MLRaster label="2_Color_160.jpg">
+<VCGCamera  CenterPx="635.671 366.827"  FocalMm="611.189"  TranslationVector="1.18334 -0.171545 -1.58363 1"  PixelSizeMm="1 1" ViewportPx="1280 720" LensDistortion="0.000335658 -0.00414042" RotationMatrix="0.0444425 -0.998548 -0.0282276 0 0.760181 0.0155536 0.649582 0 -0.648229 -0.0502659 0.759714 0 0 0 0 1 "CameraType="0" />
+<Plane fileName="hogue_160/client_2/Color_160.jpg" semantic="1"/>
+</MLRaster>
+<MLRaster label="3_Color_160.jpg">
+<VCGCamera  CenterPx="636.9 369.089"  FocalMm="610.096"  TranslationVector="-0.35732 -0.146827 1.57279 1"  PixelSizeMm="1 1" ViewportPx="1280 720" LensDistortion="0.001015 -0.00429032" RotationMatrix="-0.0255466 -0.99868 -0.0434573 0 -0.998535 0.0275883 -0.0466208 0 0.0477039 0.0424154 -0.997567 0 0 0 0 1 "CameraType="0" />
+<Plane fileName="hogue_160/client_3/Color_160.jpg" semantic="1"/>
+</MLRaster>
+<MLRaster label="4_Color_160.jpg">
+<VCGCamera  CenterPx="640.726 370.835"  FocalMm="612.456"  TranslationVector="1.50924 -0.852406 0.598149 1"  PixelSizeMm="1 1" ViewportPx="1280 720" LensDistortion="0.00108931 -0.00427567" RotationMatrix="-0.32109 -0.936282 -0.144324 0 -0.256774 -0.060237 0.964675 0 -0.912124 0.346571 -0.220725 0 0 0 0 1 "CameraType="0" />
+<Plane fileName="hogue_160/client_4/Color_160.jpg" semantic="1"/>
+</MLRaster>
+<MLRaster label="5_Color_160.jpg">
+<VCGCamera  CenterPx="638.594 367.378"  FocalMm="607.226"  TranslationVector="-2.02501 -0.19375 -1.14715 1"  PixelSizeMm="1 1" ViewportPx="1280 720" LensDistortion="0.0013026 -0.00470248" RotationMatrix="-0.067913 -0.997691 0.0174777 0 0.610349 -0.0556975 -0.791563 0 0.790697 -0.0424987 0.612374 0 0 0 0 1 "CameraType="0" />
+<Plane fileName="hogue_160/client_5/Color_160.jpg" semantic="1"/>
+</MLRaster>
+</RasterGroup>
+</MeshLabProject>

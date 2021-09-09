@@ -131,6 +131,8 @@ public:
         intrinsics(0, 2) = params.param.cx;
         intrinsics(1, 2) = params.param.cy;
         std::cout << intrinsics << std::endl;
+        kappa[0] = params.param.k1;
+        kappa[1] = params.param.k2;
         //intrinsics[cameraNum] = intrinsic_mat;
         //k4aCalibrations[cameraNum] = calibration;
     }
@@ -152,6 +154,12 @@ public:
     }
     Eigen::Matrix3d& GetIntrinsics() {
         return intrinsics;
+    }
+    Eigen::Vector2f& GetKappa() {
+        return kappa;
+    }
+    Eigen::Matrix4d& GetExtrinsics() {
+        return extrinsics;
     }
     Eigen::Matrix4d& GetExtrinsicsInv() {
         return extrinsicsInv;
@@ -197,6 +205,7 @@ public:
     Eigen::Matrix4d extrinsicsInv;
 
     Eigen::Matrix3d intrinsics;
+    Eigen::Vector2f kappa;// float k1, k2;
     k4a_calibration_t calibration;
 
     int id;
@@ -221,8 +230,15 @@ public:
         LoadIntrinsics();
         LoadExtrinsics();
     }
+    Eigen::Vector2f& GetKappa(int clientInd) {
+        return clients[clientInd].GetKappa();
+    }
+
     Eigen::Matrix3d& GetIntrinsics(int clientInd) {
         return clients[clientInd].GetIntrinsics();
+    }
+    Eigen::Matrix4d& GetExtrinsics(int clientInd) {
+        return clients[clientInd].GetExtrinsics();
     }
     Eigen::Matrix4d& GetExtrinsicsInv(int clientInd) {
         return clients[clientInd].GetExtrinsicsInv();

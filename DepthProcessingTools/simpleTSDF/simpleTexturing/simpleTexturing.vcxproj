@@ -128,9 +128,9 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;NDEBUG;_CONSOLE;_USE_MATH_DEFINES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\hogue\Documents\GitHub\volumetricpipeline\3rdparty\include;C:\Users\hogue\Documents\kinect\eigen;C:\Users\hogue\Documents\GitHub\volumetricpipeline\3rdparty\include\stb;C:\opencv\latest\include;C:\Program Files\Azure Kinect SDK v1.4.1\sdk\include;C:\Users\hogue\Documents\GitHub\volumetricpipeline\DepthProcessingTools\simpleTSDF\simpleTSDF;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\hogue\Documents\GitHub\volumetricpipeline\3rdparty\include;C:\Users\hogue\Documents\kinect\eigen;C:\Users\hogue\Documents\GitHub\volumetricpipeline\3rdparty\include\stb;C:\opencv\latest\include;C:\Program Files\Azure Kinect SDK v1.4.1\sdk\include;C:\Users\hogue\Documents\GitHub\volumetricpipeline\DepthProcessingTools\simpleTSDF\simpleTSDF;$(PACKMASTER_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <OpenMPSupport>true</OpenMPSupport>
@@ -143,15 +143,18 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\Users\hogue\Documents\GitHub\volumetricpipeline\3rdparty\lib;C:\opencv\latest\x64\vc16\lib;C:\Program Files\Azure Kinect SDK v1.4.1\sdk\windows-desktop\amd64\release\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>OpenMeshCore.lib;OpenMeshTools.lib;glfw3.lib;meshview.lib;opengl32.lib;opencv_world453.lib;opencv_sfm453.lib;opencv_img_hash453.lib;k4a.lib;k4arecord.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>OpenMeshCore.lib;OpenMeshTools.lib;glfw3.lib;meshview.lib;opengl32.lib;opencv_world453.lib;opencv_sfm453.lib;opencv_img_hash453.lib;k4a.lib;k4arecord.lib;$(PACKMASTER_DIR)\lib\vs2019\Release\uvpcore.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="TexturePacker.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LiveScan3D_utils.h" />
     <ClInclude Include="main.h" />
+    <ClInclude Include="MeshUtils.h" />
+    <ClInclude Include="TexturePacker.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
