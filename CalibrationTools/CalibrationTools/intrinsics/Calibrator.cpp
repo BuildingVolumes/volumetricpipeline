@@ -46,8 +46,39 @@ void Calibrator::SaveSelectedImages(std::string dirName) {
 		cv::imwrite(fname, selectedImages[i]);
 	}
 }
+using namespace lambdatwist;
+bool Calibrator::RunExtrinsicsCalibration() {
+		Eigen::Vector3d y1, y2, y3, X1, X2, X3;
 
+		y1(0) = 0.0; y1(1) = 0.0; y1(2) = 1.0;
+		y2(0) = 1.0; y2(1) = 0.0; y2(2) = 1.0;
+		y3(0) = 2.0; y3(1) = 1.0; y3(2) = 1.0;
 
+		y1.normalize();
+		y2.normalize();
+		y3.normalize();
+
+		X1(0) = 0.0; X1(1) = 0.0; X1(2) = 2.0;
+		X2(0) = 1.41421356237309; X2(1) = 0.0; X2(2) = 1.41421356237309;
+		X3(0) = 1.63299316185545; X3(1) = 0.816496580927726; X3(2) = 0.816496580927726;
+
+		std::vector<Eigen::Vector3d> x{ y1,y2,y3 };
+		std::vector<Eigen::Vector3d> X{ X1,X2,X3 };
+
+		std::vector<CameraPose> poses;
+
+		p3p(x, X, &poses);
+
+		for (CameraPose& pose : poses) {
+
+			double err_R = (pose.R - Eigen::Matrix3d::Identity()).norm();
+			double err_t = (pose.t - Eigen::Vector3d::Zero()).norm();
+			std::cout << "pose.R:" << pose.R << std::endl;
+			std::cout << "pose.t:" << pose.t << std::endl;
+			std::cout << "Rerr=" << err_R << " Terr=" << err_t << std::endl;
+		}
+		return true;
+}
 bool Calibrator::DetectTargets()
 {
 	int numFound = 0;

@@ -13,7 +13,7 @@ public:
 	virtual bool RunCalibration();
 	virtual double ComputeAverageReprojectionError();
 	virtual bool setTargetInfo(cv::Size rc, cv::Size sz, std::string type);
-	
+	virtual bool RunExtrinsicsCalibration();
 
 	std::vector<std::vector<cv::Point2f>> allCorners;
 	std::vector<std::vector<cv::Point3f>> allObjectPoints;

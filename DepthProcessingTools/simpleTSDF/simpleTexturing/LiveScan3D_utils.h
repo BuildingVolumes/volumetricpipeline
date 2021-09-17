@@ -164,6 +164,11 @@ public:
     Eigen::Matrix4d& GetExtrinsicsInv() {
         return extrinsicsInv;
     }
+    void SetExtrinsicsInv(Eigen::Matrix4d& einv) {
+        extrinsicsInv = einv;
+        extrinsics = einv.inverse();
+    }
+   
     cv::Mat& GetRGB() {
         return imRGB;
     }
@@ -239,6 +244,12 @@ public:
     }
     Eigen::Matrix4d& GetExtrinsics(int clientInd) {
         return clients[clientInd].GetExtrinsics();
+    }
+    void SetExtrinsicsInv(int clientInd,Eigen::Matrix4d& einv) {
+        clients[clientInd].SetExtrinsicsInv(einv);
+    }
+    void SetExtrinsics(int clientInd, Eigen::Matrix4d& e) {
+        clients[clientInd].SetExtrinsics(e);
     }
     Eigen::Matrix4d& GetExtrinsicsInv(int clientInd) {
         return clients[clientInd].GetExtrinsicsInv();

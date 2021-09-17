@@ -28,7 +28,7 @@
 <Plane fileName="hogue_160/client_3/Color_160.jpg" semantic="1"/>
 </MLRaster>
 <MLRaster label="4_Color_160.jpg">
-<VCGCamera  CenterPx="640.726 370.835"  FocalMm="612.456"  TranslationVector="1.50924 -0.852406 0.598149 1"  PixelSizeMm="1 1" ViewportPx="1280 720" LensDistortion="0.00108931 -0.00427567" RotationMatrix="-0.32109 -0.936282 -0.144324 0 -0.256774 -0.060237 0.964675 0 -0.912124 0.346571 -0.220725 0 0 0 0 1 "CameraType="0" />
+<VCGCamera  CenterPx="640.726 370.835"  FocalMm="612.456"  TranslationVector="1.50924 -0.852406 0.598149 1"  PixelSizeMm="1 1" ViewportPx="1280 720" LensDistortion="0.00108931 -0.00427567" RotationMatrix="-0.32079 -0.935872 -0.143825 0 -0.256485 -0.0607229 0.964556 0 -0.911212 0.346544 -0.220904 0 0 0 0 1 "CameraType="0" />
 <Plane fileName="hogue_160/client_4/Color_160.jpg" semantic="1"/>
 </MLRaster>
 <MLRaster label="5_Color_160.jpg">

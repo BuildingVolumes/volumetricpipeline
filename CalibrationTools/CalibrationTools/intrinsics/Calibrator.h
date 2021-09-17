@@ -12,6 +12,7 @@
 #include <opencv2/aruco.hpp>
 #include <opencv2/aruco/charuco.hpp>
 #include <opencv2/imgproc.hpp>
+#include "lambdatwist/p3p.h"
 
 #include "Target.h"
 #include "Camera.h"
@@ -41,6 +42,7 @@ public:
 	virtual double ComputeAverageReprojectionError() = 0;
 	virtual bool setTargetInfo(cv::Size rc, cv::Size sz, std::string type) = 0;
 	
+	virtual bool RunExtrinsicsCalibration();
 	// base generic functionality
 	void PrintResults();
 	bool DetectTargets(); 

@@ -18,13 +18,19 @@
 #include "main.h"
 
 // Texture packer stuff
-#include "TexturePacker.h"
+//#include "TexturePacker.h"
 #include "MeshUtils.h"
+
+//// ceres solver stuff
+#include "ceres/ceres.h"
+#include "ceres/rotation.h"
+#include "ceres/cubic_interpolation.h"
+
 
 
 
 /* project a point onto our camera using intrinsics and extrinsics */
-Eigen::Vector3d ProjectPoint(Eigen::Vector3d& p, Eigen::Matrix3d& intrin, Eigen::Matrix4d& exInv, Eigen::Vector4d& cc) {
+Eigen::Vector3d ProjectPoint(Eigen::Vector3d& p, const Eigen::Matrix3d& intrin, const Eigen::Matrix4d& exInv, Eigen::Vector4d& cc) {
     /* c is center in world coordinates */
                     // convert to camera coordinates
     cc = exInv * Eigen::Vector4d(p(0), p(1), p(2), 1);
@@ -413,8 +419,8 @@ void PackUVs(MyMesh& mesh, LiveScan3d_Take& theTake) {
     theTake.LoadFrame(160);*/
 
      /* do Texture packing thing here */
-    uvpcore::UvpOperationInputT inputUVP;
-    TexturePacker thePacker;
+  //  uvpcore::UvpOperationInputT inputUVP;
+   // TexturePacker thePacker;
     // set up the packer info
     //auto better_texture = std::make_shared<open3d::geometry::Image>();
     //better_texture->width_ = 1920; // color_images[0].width_;
@@ -438,7 +444,7 @@ void PackUVs(MyMesh& mesh, LiveScan3d_Take& theTake) {
     width = 4096;
     height = 4096;
     outputImage = cv::Mat::zeros(height, width, CV_8UC3);
-    thePacker.PerformTexturePack(mesh, color_array, outputImage, true);
+   // thePacker.PerformTexturePack(mesh, color_array, outputImage, true);
 
      // get the results
     // cv::imwrite("outputtex.png", outputImage);
@@ -517,7 +523,7 @@ void SaveMLPFormat(LiveScan3d_Take& theTake) {
 
         auto Rt = extrin.block<3, 3>(0, 0).transpose();
         auto t = extrin.block<3, 1>(0, 3);
-
+        std::wcout << "CLIENT:" << i << std::endl;
         std::cout << "extrin:" << extrin << std::endl;
         std::cout << "Rt:" << Rt << std::endl;
         std::cout << "t:" << t << std::endl;
@@ -566,10 +572,115 @@ void SaveMLPFormat(LiveScan3d_Take& theTake) {
 
 }
 
+using Grid = ceres::Grid2D<double>;
+using Interpolator = ceres::BiCubicInterpolator<Grid>;
+
+// NOTE: ArrayXXD defaults to a Column-Major ordering
+//        Eigen::ArrayXXd img_data = Eigen::ArrayXXd(rows,cols);
+// so lets use this alias to force it to be row-major for consistency
+using EigArray = Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+// Templated pinhole camera model for used with Ceres.  The camera is
+// parameterized using 6 parameters: 3 for rotation, 3 for translation,  
+struct ReprojectionError {
+    ReprojectionError(const Interpolator &interpolator, cv::Mat& theSDFimage,
+                      MyMesh& theMesh,
+                      const Eigen::Matrix3d& intrin,
+                      const Eigen::Matrix4d& extrin,
+                      int cameraID) : theInterpolator(interpolator), imSDF(theSDFimage), intrin(intrin), extrin(extrin), mesh(theMesh), cameraID(cameraID)
+    {
+       
+    }
+
+    /* this is the cost function for the minimizer */
+    template <typename T>
+    bool operator()(const T* const camera,
+                    T* residuals) const {
+
+        T t[3];
+        // camera[0,1,2] are the translation.
+        t[0] = camera[0];
+        t[1] = camera[1];
+        t[2] = camera[2];
+
+        int nV = mesh.n_vertices();
+        T err_x;
+        err_x = T(0.0);
+        Eigen::Matrix4d ex = extrin;
+        for (int i = 0; i < nV; ++i)
+        {
+            OpenMesh::VertexHandle vh = OpenMesh::VertexHandle(i);
+            OpenMesh::Vec3f p = mesh.point(vh);
+            Eigen::Vector3d pp;
+            Eigen::Vector4d cc;
+
+            /* c is center in world coordinates */
+            // convert to camera coordinates
+            cc = extrin * Eigen::Vector4d(p[0], p[1], p[2], 1);
+            T ccx, ccy, ccz;
+            // apply our parameter offset to the extrinsics 
+            // currently modelling this as an offset to the existing extrinsics
+            ccx = T(cc(0))+t[0];
+            ccy = T(cc(1))+t[1];
+            ccz = T(cc(2))+t[2];
+            /* project the center of the voxel onto the images */
+            T invz = 1.0 / ccz;
+            T fx, fy, cx, cy;
+            fx = T(intrin(0, 0));
+            fy = T(intrin(1, 1));
+            cx = T(intrin(0, 2));
+            cy = T(intrin(1, 2));
+
+            T proj[3];
+            proj[0] = ccx * fx * invz + cx;
+            proj[1] = ccy * fy * invz + cy;
+            // project point p onto image
+            // if in image look up distance in SDF image and add to residual sum
+            T u, v;
+            u = proj[0]; v = proj[1];
+            //if (u > T(10) && u < T(imSDF.cols-10) && v > T(10) && v < T(imSDF.rows-10))
+            {
+                T sdf;
+                theInterpolator.Evaluate(v, u, &sdf);
+                err_x = err_x +sdf;
+            }
+        }
+        *residuals = (T)err_x;
+        return true;
+    }
+
+    // Factory to hide the construction of the CostFunction object from the client code.
+    static ceres::CostFunction* Create(
+        const Interpolator &theInterpolator,
+        cv::Mat& theSDFimage,
+        MyMesh& theMesh,
+        LiveScan3d_Take & theLS3DTake,
+        int cameraID) 
+    {
+        return (new ceres::AutoDiffCostFunction<ReprojectionError, 1, 3>(
+            new ReprojectionError(theInterpolator, theSDFimage, theMesh, theLS3DTake.GetIntrinsics(cameraID), theLS3DTake.GetExtrinsicsInv(cameraID), cameraID)));
+    }
+    // members
+    cv::Mat imSDF;
+    MyMesh mesh;
+    int cameraID;
+    Eigen::Matrix3d intrin;
+    Eigen::Matrix4d extrin;
+    Grid *theImageGrid;
+    const Interpolator &theInterpolator;
+};
+
+
+
+
+
+
+
 
 /* THE MAIN FUNCTION */
 int main(int argc, char** argv) {
     //testMesh();
+
+
     MyMesh mesh;
 #define MESHNAME "frame_160_proc-mergedvertswithuvs.obj"
 //#define MESHNAME "C:\\Users\\hogue\\Desktop\\DATA\\aug19_hogue-rawsync_0\\ply\\frame_160_im2-remNonManFaces-cut0.obj"
@@ -582,8 +693,99 @@ int main(int argc, char** argv) {
     std::cout << "loaded: faces: " << mesh.n_faces() << std::endl;
     std::cout << "loaded: verts: " << mesh.n_vertices() << std::endl;
 
-    LiveScan3d_Take theTake("C:\\Users\\hogue\\Desktop\\DATA\\aug19_hogue-rawsync_0", "outputExtrinsics.log", 6);
+    LiveScan3d_Take theTake("C:\\Users\\hogue\\Desktop\\DATA\\aug19_hogue-rawsync_0", "Extrinsics_Open3D.log", 6);
     theTake.LoadFrame(160);
+
+    int TEST_CAMERA_ID = 4;
+    
+    /* this is how you compute a distance transform */
+    auto imMatte = theTake.GetMatte(TEST_CAMERA_ID);
+    cv::Mat imDist_positive, imDist_neg;// = cv::Mat::zeros(imMatte.rows, imMatte.cols, CV_8UC3);
+    cv::Mat imBW;
+    cv::cvtColor(imMatte, imBW, cv::COLOR_BGR2GRAY);
+    cv::threshold(imBW, imBW, 40, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
+    cv::Mat imBW_inverted;
+    cv::bitwise_not(imBW, imBW_inverted);
+    imshow("binary image", imBW);
+
+    // positive distances here are non-zero
+    cv::distanceTransform(imBW_inverted, imDist_positive, cv::DIST_L2, 3, CV_32F);
+
+    // non-zero distances here are inside object (negative distances)
+    cv::distanceTransform(imBW, imDist_neg, cv::DIST_L2, 3, CV_32F);
+    cv::Mat imSDF = cv::Mat::zeros(imDist_neg.rows, imDist_neg.cols, CV_32F);
+
+    // this makes the SDF positive everywhere but decreasing towards the edges
+    // zero at the edge contours
+    imSDF = imDist_neg + imDist_positive; 
+    cv::normalize(imSDF, imSDF, 0, 1.0, cv::NORM_MINMAX);
+    // values are now normalized.... not sure if this is needed
+
+    cv::imshow("distance", imSDF);
+    cv::waitKey(0);
+    // ok, so one thing we have to do is convert the SDF image into a BicubicInterpolator for Ceres 
+    const int cols = imSDF.cols;
+    const int rows = imSDF.rows;
+    EigArray img_data = EigArray(rows, cols);
+    for (int j = 0; j < rows; j++)
+    {
+        for (int i = 0; i < cols; i++)
+        {
+            float sdf = imSDF.at<float>(j, i);// same as  cv::Point(i, j));
+            img_data(j, i) = (double)sdf;
+        }
+    }
+    Grid theGrid(img_data.data(), 0, img_data.rows(), 0, img_data.cols());
+    Interpolator theInterpolator(theGrid);
+
+
+
+    // test the ceres solver here
+    ceres::Problem problem;
+    ceres::CostFunction* cost_function = ReprojectionError::Create(theInterpolator, imSDF, mesh, theTake, TEST_CAMERA_ID);
+   
+    // our parameter we are solving for is an "offset" to the extrinsics translation
+    double x[3] = { 0.,0.,0. };
+    double z[1] = { 0. };
+    problem.AddParameterBlock(x, 3);
+    problem.AddResidualBlock(cost_function, nullptr, &x[0]);
+    
+    ceres::Solver::Options options;
+    options.linear_solver_type = ceres::DENSE_SCHUR;
+    options.minimizer_progress_to_stdout = true;
+ 
+    ceres::Solver::Summary summary;
+    ceres::Solve(options, &problem, &summary);
+    std::cout << summary.FullReport() << "\n";
+
+    // set it here for MLP
+    auto eInv = theTake.GetExtrinsicsInv(TEST_CAMERA_ID);
+    auto ee = theTake.GetExtrinsics(TEST_CAMERA_ID);
+    std::cout << "EXTRIN BEFORE CERES:" << std::endl;
+    std::cout << ee << std::endl;
+
+    std::cout << "FINAL CERES RESULT:" << std::endl;
+   // x[2] = z[0];
+    std::cout << "x:" << x[0] << "," << x[1] << "," << x[2] << std::endl;
+    std::cout << "extrinsics for MLP" << std::endl;
+
+    
+    std::cout << "BEFORE applying resulting t:" << std::endl;
+    std::cout <<eInv  << std::endl;
+    auto t = eInv.block<3, 1>(0, 3);
+    t[0] += x[0];
+    t[1] += x[1];
+    t[2] += x[2];
+
+    eInv.block<3, 1>(0, 3) = t;
+    std::cout << "after applying resulting t:" << std::endl;
+    std::cout << eInv << std::endl;
+    theTake.SetExtrinsicsInv(TEST_CAMERA_ID, eInv);
+    // set it here for MLP
+    auto e = theTake.GetExtrinsics(TEST_CAMERA_ID);
+    e = eInv.inverse();
+    std::cout << "INVERSE:" << std::endl;
+    std::cout << eInv.inverse() << std::endl;
 
    // SaveBundlerFormat(theTake);
     SaveMLPFormat(theTake);
@@ -592,7 +794,7 @@ int main(int argc, char** argv) {
 
     //ComputeUVs(mesh,theTake);
     mesh.triangulate();
-    PackUVs(mesh,theTake);
+   // PackUVs(mesh,theTake);
 
 
     // save
