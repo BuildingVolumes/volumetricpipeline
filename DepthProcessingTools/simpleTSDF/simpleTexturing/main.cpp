@@ -483,11 +483,11 @@ void SaveBundlerFormat(LiveScan3d_Take &theTake) {
 
 
 void SaveMLPFormat(LiveScan3d_Take& theTake) {
-    std::ofstream file = std::ofstream("bundler.mlp");
+    std::ofstream file = std::ofstream("bundler.mlp", std::ios_base::binary);
     file << "<!DOCTYPE MeshLabDocument>\n";
     file << "<MeshLabProject>\n";
     file << "<MeshGroup>\n";
-    file << "<MLMesh filename=\"frame_160_im2-remNonManFaces-cut0.obj\" visible=\"1\" label=\"frame_160_im2-remNonManFaces-cut0.obj\">\n";
+    file << "<MLMesh filename=\"frame_160_proc-mergedvertswithuvs2.obj\" visible=\"1\" label=\"frame_160_proc-mergedvertswithuvs2.obj\">\n";
     file << "<MLMatrix44>\n";
     file << "1 0 0 0 \n0 1 0 0 \n0 0 1 0 \n0 0 0 1 \n";
     file << "</MLMatrix44>\n";
@@ -508,14 +508,15 @@ void SaveMLPFormat(LiveScan3d_Take& theTake) {
         float fx, fy, cx, cy, focal;
         float pxSx, pxSy, focalMm;
         float width, height;
+        width = 1280; height = 720;
 
         fx = intrin(0, 0);
         fy = intrin(1, 1);
-        cx = intrin(0, 2);
-        cy = intrin(1, 2);
+        cx = width / 2;// intrin(0, 2);
+        cy = height / 2;// intrin(1, 2);
         focal = fy;// (fx + fy) * 0.5;
     
-        width = 1280; height = 720;
+      
         pxSx = 1; pxSy = 1;
         focalMm = focal;
         k1 = kappa[0] / focal;
@@ -590,61 +591,52 @@ struct ReprojectionError {
     {
        
     }
+    ReprojectionError(const Interpolator& interpolator, 
+                      const OpenMesh::Vec3f vert,
+                      const Eigen::Matrix3d& intrin,
+                      const Eigen::Matrix4d& extrin,
+                      int cameraID) : theInterpolator(interpolator), vertex(vert), intrin(intrin), extrin(extrin), cameraID(cameraID)
+    {
+
+    }
 
     /* this is the cost function for the minimizer */
     template <typename T>
     bool operator()(const T* const camera,
                     T* residuals) const {
 
-        T t[3];
-        // camera[0,1,2] are the translation.
-        t[0] = camera[0];
-        t[1] = camera[1];
-        t[2] = camera[2];
-
-        int nV = mesh.n_vertices();
-        T err_x;
-        err_x = T(0.0);
+        T t[3], err_x;
         Eigen::Matrix4d ex = extrin;
-        for (int i = 0; i < nV; ++i)
-        {
-            OpenMesh::VertexHandle vh = OpenMesh::VertexHandle(i);
-            OpenMesh::Vec3f p = mesh.point(vh);
-            Eigen::Vector3d pp;
-            Eigen::Vector4d cc;
+        Eigen::Vector3d pp;
+        Eigen::Vector4d cc;
+        T invz, fx, fy, cx, cy;
+        T ccx, ccy, ccz;
+        T u, v, sdf;
 
-            /* c is center in world coordinates */
-            // convert to camera coordinates
-            cc = extrin * Eigen::Vector4d(p[0], p[1], p[2], 1);
-            T ccx, ccy, ccz;
-            // apply our parameter offset to the extrinsics 
-            // currently modelling this as an offset to the existing extrinsics
-            ccx = T(cc(0))+t[0];
-            ccy = T(cc(1))+t[1];
-            ccz = T(cc(2))+t[2];
-            /* project the center of the voxel onto the images */
-            T invz = 1.0 / ccz;
-            T fx, fy, cx, cy;
-            fx = T(intrin(0, 0));
-            fy = T(intrin(1, 1));
-            cx = T(intrin(0, 2));
-            cy = T(intrin(1, 2));
+        // camera[0,1,2] are the translation.
+        t[0] = camera[0]; t[1] = camera[1]; t[2] = camera[2];
+        err_x = T(0.0);
 
-            T proj[3];
-            proj[0] = ccx * fx * invz + cx;
-            proj[1] = ccy * fy * invz + cy;
-            // project point p onto image
-            // if in image look up distance in SDF image and add to residual sum
-            T u, v;
-            u = proj[0]; v = proj[1];
-            //if (u > T(10) && u < T(imSDF.cols-10) && v > T(10) && v < T(imSDF.rows-10))
-            {
-                T sdf;
-                theInterpolator.Evaluate(v, u, &sdf);
-                err_x = err_x +sdf;
-            }
-        }
-        *residuals = (T)err_x;
+        // convert to camera coordinates (cc)
+        cc = extrin * Eigen::Vector4d(vertex[0], vertex[1], vertex[2], 1);
+
+        // apply our parameter offset to the extrinsics 
+        ccx = T(cc(0))+t[0];
+        ccy = T(cc(1))+t[1];
+        ccz = T(cc(2))+t[2];
+        /* project the center of the voxel onto the images */
+        invz = 1.0 / ccz;
+        fx = T(intrin(0, 0)); fy = T(intrin(1, 1));
+        cx = T(640); cy = T(360);
+//        cx = T(intrin(0, 2)); cy = T(intrin(1, 2));
+
+        // project point p onto image
+        u = ccx * fx * invz + cx ;//+ t[0];
+        v = ccy * fy * invz + cy ;//+ t[1];
+
+        // sample the image to get the sdf value 
+        theInterpolator.Evaluate(v, u, &sdf);
+        *residuals = (T)sdf;
         return true;
     }
 
@@ -659,6 +651,17 @@ struct ReprojectionError {
         return (new ceres::AutoDiffCostFunction<ReprojectionError, 1, 3>(
             new ReprojectionError(theInterpolator, theSDFimage, theMesh, theLS3DTake.GetIntrinsics(cameraID), theLS3DTake.GetExtrinsicsInv(cameraID), cameraID)));
     }
+    // Factory to hide the construction of the CostFunction object from the client code.
+    static ceres::CostFunction* CreatePerVertex(
+        const Interpolator& theInterpolator,
+        const OpenMesh::Vec3f vert,
+        LiveScan3d_Take& theLS3DTake,
+        int cameraID)
+    {
+        return (new ceres::AutoDiffCostFunction<ReprojectionError, 1, 3>(
+            new ReprojectionError(theInterpolator, vert, theLS3DTake.GetIntrinsics(cameraID), theLS3DTake.GetExtrinsicsInv(cameraID), cameraID)));
+    }
+   // Create(theInterpolator, p, theTake, TEST_CAMERA_ID);
     // members
     cv::Mat imSDF;
     MyMesh mesh;
@@ -667,46 +670,61 @@ struct ReprojectionError {
     Eigen::Matrix4d extrin;
     Grid *theImageGrid;
     const Interpolator &theInterpolator;
+    OpenMesh::Vec3f vertex;
 };
 
 
 
 
-
-
-
-
-/* THE MAIN FUNCTION */
-int main(int argc, char** argv) {
-    //testMesh();
-
-
-    MyMesh mesh;
-#define MESHNAME "frame_160_proc-mergedvertswithuvs.obj"
-//#define MESHNAME "C:\\Users\\hogue\\Desktop\\DATA\\aug19_hogue-rawsync_0\\ply\\frame_160_im2-remNonManFaces-cut0.obj"
-    if (!OpenMesh::IO::read_mesh(mesh, MESHNAME))
+void ProjectMeshIntoImage(MyMesh &mesh, cv::Mat &img, Eigen::Matrix3d &intrin,Eigen::Matrix4d &extrin)
+{
+    double t[3], err_x;
+    Eigen::Matrix4d ex = extrin;
+    Eigen::Vector3d pp;
+    Eigen::Vector4d cc;
+    double invz, fx, fy, cx, cy;
+    double ccx, ccy, ccz;
+    double u, v, sdf;
+    int nnV = mesh.n_vertices();
+    //cv::Mat testImage = cv::Mat::zeros(imDist_neg.rows, imDist_neg.cols, CV_32F);
+    for (int i = 0; i < nnV; ++i)
     {
-        std::cerr << "read error" << std::endl;
-        exit(1);
+        OpenMesh::VertexHandle vh = OpenMesh::VertexHandle(i);
+        OpenMesh::Vec3f p = mesh.point(vh);
+        // convert to camera coordinates (cc)
+        cc = extrin * Eigen::Vector4d(p[0], p[1], p[2], 1);
+
+        // apply our parameter offset to the extrinsics 
+        ccx = double(cc(0));// + t[0];
+        ccy = double(cc(1));// + t[1];
+        ccz = double(cc(2));// + t[2];
+        /* project the center of the voxel onto the images */
+        invz = 1.0 / ccz;
+        fx = (intrin(0, 0)); fy = (intrin(1, 1));
+        cx = (intrin(0, 2)); cy = (intrin(1, 2));
+
+        // project point p onto image
+        u = ccx * fx * invz + cx;//+ t[0];
+        v = ccy * fy * invz + cy;//+ t[1];
+        if(v > 0 && v < img.rows && u > 0 && u < img.cols)
+            img.at<float>(v, u) = 100;
     }
+}
 
-    std::cout << "loaded: faces: " << mesh.n_faces() << std::endl;
-    std::cout << "loaded: verts: " << mesh.n_vertices() << std::endl;
+void MeshLab_Fix(LiveScan3d_Take &theTake, MyMesh &mesh, int CAMERAID) {
 
-    LiveScan3d_Take theTake("C:\\Users\\hogue\\Desktop\\DATA\\aug19_hogue-rawsync_0", "Extrinsics_Open3D.log", 6);
-    theTake.LoadFrame(160);
-
-    int TEST_CAMERA_ID = 4;
-    
     /* this is how you compute a distance transform */
-    auto imMatte = theTake.GetMatte(TEST_CAMERA_ID);
+    auto imMatte = theTake.GetMatte(CAMERAID);
     cv::Mat imDist_positive, imDist_neg;// = cv::Mat::zeros(imMatte.rows, imMatte.cols, CV_8UC3);
     cv::Mat imBW;
     cv::cvtColor(imMatte, imBW, cv::COLOR_BGR2GRAY);
     cv::threshold(imBW, imBW, 40, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
     cv::Mat imBW_inverted;
+    std::string postfix = std::string("_c_" + std::to_string(CAMERAID)) + ".png";
+
     cv::bitwise_not(imBW, imBW_inverted);
-    imshow("binary image", imBW);
+    cv::imshow("binary image", imBW);
+    cv::imwrite("res_0_binarymatte"+postfix, imBW);
 
     // positive distances here are non-zero
     cv::distanceTransform(imBW_inverted, imDist_positive, cv::DIST_L2, 3, CV_32F);
@@ -717,12 +735,20 @@ int main(int argc, char** argv) {
 
     // this makes the SDF positive everywhere but decreasing towards the edges
     // zero at the edge contours
-    imSDF = imDist_neg + imDist_positive; 
+    double thresh_positive, thresh_negative;
+    thresh_positive = 20;
+    thresh_negative = 20;
+
+    cv::threshold(imDist_positive, imDist_positive, thresh_positive, 100, cv::THRESH_TRUNC);
+    cv::normalize(imDist_positive, imDist_positive, 0, 1.0, cv::NORM_MINMAX);
+    cv::normalize(imDist_neg, imDist_neg, 0, 1.0, cv::NORM_MINMAX);
+    imSDF = imDist_positive + imDist_neg;
     cv::normalize(imSDF, imSDF, 0, 1.0, cv::NORM_MINMAX);
-    // values are now normalized.... not sure if this is needed
 
     cv::imshow("distance", imSDF);
-    cv::waitKey(0);
+    cv::imwrite("res_1_distance" + postfix, imSDF*200);
+  //  cv::waitKey(0);
+
     // ok, so one thing we have to do is convert the SDF image into a BicubicInterpolator for Ceres 
     const int cols = imSDF.cols;
     const int rows = imSDF.rows;
@@ -738,56 +764,106 @@ int main(int argc, char** argv) {
     Grid theGrid(img_data.data(), 0, img_data.rows(), 0, img_data.cols());
     Interpolator theInterpolator(theGrid);
 
-
+    auto intrin = theTake.GetIntrinsics(CAMERAID);
+    auto extrin = theTake.GetExtrinsicsInv(CAMERAID);
+    double t[3], err_x;
+    Eigen::Matrix4d ex = extrin;
+    Eigen::Vector3d pp;
+    Eigen::Vector4d cc;
+    double invz, fx, fy, cx, cy;
+    double ccx, ccy, ccz;
+    double u, v, sdf;\
+    cv::Mat testImage = cv::Mat::zeros(imDist_neg.rows, imDist_neg.cols, CV_32F);
+    ProjectMeshIntoImage(mesh, testImage, intrin, extrin);
+    cv::imshow("res_2_testImage", testImage);
+    cv::imwrite("res_2_meshProjection_verts" + postfix, testImage);
+   // cv::waitKey(0);
 
     // test the ceres solver here
     ceres::Problem problem;
-    ceres::CostFunction* cost_function = ReprojectionError::Create(theInterpolator, imSDF, mesh, theTake, TEST_CAMERA_ID);
-   
-    // our parameter we are solving for is an "offset" to the extrinsics translation
+
+     // our parameter we are solving for is an "offset" to the extrinsics translation
     double x[3] = { 0.,0.,0. };
-    double z[1] = { 0. };
     problem.AddParameterBlock(x, 3);
-    problem.AddResidualBlock(cost_function, nullptr, &x[0]);
-    
+
+    // each vertex in our mesh is an "observation" 
+    // each observation requires a cost function/residual
+    int nV = mesh.n_vertices();
+    for (int i = 0; i < nV; ++i)
+    {
+        OpenMesh::VertexHandle vh = OpenMesh::VertexHandle(i);
+        OpenMesh::Vec3f p = mesh.point(vh);
+        ceres::CostFunction* costPerObservation = ReprojectionError::CreatePerVertex(theInterpolator, p, theTake, CAMERAID);
+        problem.AddResidualBlock(costPerObservation, nullptr, &x[0]);
+    }
+
     ceres::Solver::Options options;
-    options.linear_solver_type = ceres::DENSE_SCHUR;
+    options.linear_solver_type = ceres::DENSE_QR;
     options.minimizer_progress_to_stdout = true;
- 
+    options.max_num_iterations = 1000;
     ceres::Solver::Summary summary;
     ceres::Solve(options, &problem, &summary);
     std::cout << summary.FullReport() << "\n";
 
     // set it here for MLP
-    auto eInv = theTake.GetExtrinsicsInv(TEST_CAMERA_ID);
-    auto ee = theTake.GetExtrinsics(TEST_CAMERA_ID);
+    auto eInv = theTake.GetExtrinsicsInv(CAMERAID);
+    auto ee = theTake.GetExtrinsics(CAMERAID);
     std::cout << "EXTRIN BEFORE CERES:" << std::endl;
     std::cout << ee << std::endl;
 
     std::cout << "FINAL CERES RESULT:" << std::endl;
-   // x[2] = z[0];
+    // x[2] = z[0];
     std::cout << "x:" << x[0] << "," << x[1] << "," << x[2] << std::endl;
     std::cout << "extrinsics for MLP" << std::endl;
 
-    
-    std::cout << "BEFORE applying resulting t:" << std::endl;
-    std::cout <<eInv  << std::endl;
-    auto t = eInv.block<3, 1>(0, 3);
-    t[0] += x[0];
-    t[1] += x[1];
-    t[2] += x[2];
 
-    eInv.block<3, 1>(0, 3) = t;
+    std::cout << "BEFORE applying resulting t:" << std::endl;
+    std::cout << eInv << std::endl;
+    auto tt = eInv.block<3, 1>(0, 3);
+    tt[0] += x[0];
+    tt[1] += x[1];
+    tt[2] += x[2];
+
+    eInv.block<3, 1>(0, 3) = tt;
     std::cout << "after applying resulting t:" << std::endl;
     std::cout << eInv << std::endl;
-    theTake.SetExtrinsicsInv(TEST_CAMERA_ID, eInv);
+    theTake.SetExtrinsicsInv(CAMERAID, eInv);
     // set it here for MLP
-    auto e = theTake.GetExtrinsics(TEST_CAMERA_ID);
+    auto e = theTake.GetExtrinsics(CAMERAID);
     e = eInv.inverse();
     std::cout << "INVERSE:" << std::endl;
     std::cout << eInv.inverse() << std::endl;
 
-   // SaveBundlerFormat(theTake);
+    cv::Mat testImage2 = cv::Mat::zeros(imDist_neg.rows, imDist_neg.cols, CV_32F);
+    ProjectMeshIntoImage(mesh, testImage2, intrin, eInv);
+    cv::imshow("testImage_AFTERCeres", testImage2);
+    cv::imwrite("res_3_meshProjection_verts" + postfix, testImage2);
+   // cv::waitKey(0);
+}
+
+
+/* THE MAIN FUNCTION */
+int main(int argc, char** argv) 
+{
+    MyMesh mesh;
+#define MESHNAME "frame_160_proc-mergedvertswithuvs.obj"
+//#define MESHNAME "C:\\Users\\hogue\\Desktop\\DATA\\aug19_hogue-rawsync_0\\ply\\frame_160_im2-remNonManFaces-cut0.obj"
+    if (!OpenMesh::IO::read_mesh(mesh, MESHNAME))
+    {
+        std::cerr << "read error" << std::endl;
+        exit(1);
+    }
+
+    std::cout << "loaded: faces: " << mesh.n_faces() << std::endl;
+    std::cout << "loaded: verts: " << mesh.n_vertices() << std::endl;
+
+    LiveScan3d_Take theTake("C:\\Users\\hogue\\Desktop\\DATA\\aug19_hogue-rawsync_0", "Extrinsics_Open3D.log", 6);
+    theTake.LoadFrame(160);
+    
+    for (int i = 0; i < 6; i++) 
+    {
+        MeshLab_Fix(theTake, mesh, i);
+    }
     SaveMLPFormat(theTake);
     return 0;
 
