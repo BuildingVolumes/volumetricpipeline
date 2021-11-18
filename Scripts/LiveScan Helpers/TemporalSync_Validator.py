@@ -4,8 +4,8 @@
 import os.path
 
 allTimeStampLists = []
-ideaTimeDifferenceus = 160
-acceptableTimeDifferenceus = 200
+idealTimeDifferenceInus = 160
+acceptableTimeDifferenceInus = 200
 
 fileBaseName = "Timestamps_Client"
 fileType = ".txt"
@@ -67,14 +67,14 @@ for i in range(0, maxFrames):
         usDifference = int(nsDifference / 1000)
         msDifference = (usDifference / 1000)
 
-        if usDifference < ((len(allTimeStampLists) - 1) * ideaTimeDifferenceus):
+        if usDifference < ((len(allTimeStampLists) - 1) * idealTimeDifferenceInus):
             print("Frame: " + str(i) + " Largest Difference in us between frames: " + str(usDifference) + "(Good)")
 
-        elif usDifference < ((len(allTimeStampLists) - 1) * acceptableTimeDifferenceus):
+        elif usDifference < ((len(allTimeStampLists) - 1) * acceptableTimeDifferencIneus):
             print("Frame: " + str(i) + " Largest Difference in us between frames: " + str(usDifference) + "(Ok)")
 
-        elif usDifference > ((len(allTimeStampLists) - 1) * acceptableTimeDifferenceus):
-            print("Frame: " + str(i) + " (Too Large) Largest Difference in us between frames: " + str(usDifference) + "(Too large)")
+        elif usDifference > ((len(allTimeStampLists) - 1) * acceptableTimeDifferenceInus):
+            print("Frame: " + str(i) + " Largest Difference in us between frames: " + str(usDifference) + "(Too large)")
 
 
 
