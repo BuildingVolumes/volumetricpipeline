@@ -37,7 +37,6 @@ ExportedObj/
 .consulo/
 *.csproj
 *.unityproj
-*.sln
 *.suo
 *.tmp
 *.user
@@ -2710,3 +2709,6 @@ Unity/LS3D_ExtrinsicsViewer/Library/ArtifactDB-lock
 DepthProcessingTools/simpleTSDF/simpleTSDF/x64/Release/main.obj
 DepthProcessingTools/simpleTSDF/simpleICP-ptcloud/x64/Release/main.obj
 Unity/testvolumetric/Library/AnnotationManager
+DepthProcessingTools/OfflineK4AImageToPointcloud/packages/
+DepthProcessingTools/OfflineK4AImageToPointcloud/OfflineK4AImageToPointcloud/opencv_world320.dll
+DepthProcessingTools/OfflineK4AImageToPointcloud/OfflineK4AImageToPointcloud/opencv_world320d.dll
