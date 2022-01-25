@@ -18,6 +18,67 @@ sys.path.append(os.path.dirname(__file__))
 from Nodes.HogueTest import Hogue
 widgets = import_widgets(__file__)
 
+
+  
+class GetFilename(Node):
+    title = 'GetFilename'
+    input_widget_classes = {
+        'path input': widgets.FileInput
+    }
+    init_inputs = [
+        NodeInputBP('path', add_data={'widget name': 'path input', 'widget pos': 'below'}),
+    ]
+    init_outputs = [
+        NodeInputBP(),
+    ]
+
+    def __init__(self, params):
+        super().__init__(params)
+        self.active = False
+        self.filepath = ''
+        self.actions['make executable'] = {'method': self.action_make_executable}
+        
+    def view_place_event(self):
+        self.input_widget(0).path_chosen.connect(self.path_chosen)
+
+        
+    def path_chosen(self, new_path):
+        print('path chosen')
+        self.filepath = new_path
+        self.update()
+
+    def action_make_executable(self):
+        self.create_input(type_='exec', insert=0)
+        self.active = True
+
+        del self.actions['make executable']
+        self.actions['make passive'] = {'method': self.action_make_passive}
+
+    def action_make_passive(self):
+        self.delete_input(0)
+        self.active = False
+
+        del self.actions['make passive']
+        self.actions['make executable'] = {'method': self.action_make_executable}
+
+    def update_event(self, inp=-1):
+        print('update event')
+        self.set_output_val(0,self.filepath)
+        
+    def get_state(self):
+        print('get state')
+        return { 
+            **super().get_state(), 
+            'path': self.filepath 
+        }
+
+    def set_state(self, data, version):
+        print('set state')
+        self.filepath = data['path']
+
+
+
+
 class Print_Node(Node):
     title = 'Button'
     version = 'v0.1'
@@ -451,15 +512,66 @@ class DisplayImg(OpenCVNodeBase):
 
 #-----END OPENCV STUFF -----------------------------------
 
-
+#-------MATTE EXTRACTOR NODE---------------
+import torch
+from torchvision.transforms.functional import to_tensor, to_pil_image
+from PIL import Image
+class MatteExtractor(Node):
+    title = 'MatteExtractor'
+    version = 'v0.1'
+    #main_widget_class = widgets.ButtonNode_MainWidget
+    #main_widget_pos = 'between ports'
+    # assume these are just paths to images and model
+    init_inputs = [
+        NodeInputBP('ref'),
+        NodeInputBP('img'),
+        NodeInputBP('model'),
+    ]   
+    init_outputs = [
+        NodeOutputBP()
+    ]
+    def __init__(self, params):
+        super().__init__(params)
+        
+    def doMatteExtract(self):
+        print('matte extract')
+        src = Image.open(self.imgPath)
+        bgr = Image.open(self.refPath)
+        src = to_tensor(src).cuda().unsqueeze(0)
+        bgr = to_tensor(bgr).cuda().unsqueeze(0)
+        self.theModel.backbone_scale = 1/4
+        self.theModel.refine_sample_pixels = 80_000
+        pha, fgr = self.theModel(src, bgr)[:2]
+        self.outputFileName = self.imgPath + ".matte.png"
+        to_pil_image(pha[0].cpu()).save(self.outputFileName)
+        self.set_output_val(0,self.outputFileName)
+        
+    def update_event(self, inp=-1):
+        ni = 0
+        if self.input(0) != None :
+            self.refPath = self.input(0)
+            ni = ni+1
+        if self.input(1) != None :
+            self.imgPath = self.input(1)
+            ni = ni+1
+        if self.input(2) != None :
+            self.modelPath = self.input(2)
+            self.theModel = torch.jit.load(self.modelPath).cuda().eval()
+            ni = ni+1
+        
+        if ni == 3 :
+            print('ready')
+            self.doMatteExtract()
+            
     
 nodes = [
     GLNode,
-	Hogue,
     Button_Node,
     Livescan3dDir,
     Show_Node,
     CameraDirNode,
     DisplayImg,
     ReadImage,
+    MatteExtractor,
+    GetFilename,
 ]

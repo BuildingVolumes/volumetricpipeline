@@ -225,6 +225,43 @@ class Custom_MainWidget(MWB, QWidget):
 
 
 
+class FileInput(IWB, QWidget):
+    path_chosen = Signal(str)
+
+    def __init__(self, params):
+        IWB.__init__(self, params)
+        QWidget.__init__(self)
+
+        self.path = ''
+
+        # setup UI
+        l = QVBoxLayout()
+        button = QPushButton('choose')
+        button.clicked.connect(self.choose_button_clicked)
+        l.addWidget(button)
+        self.path_label = QLabel('path')
+        l.addWidget(self.path_label)
+        self.setLayout(l)
+    
+    def choose_button_clicked(self):
+        abs_f_path, filter = QFileDialog.getOpenFileName(self, "Select File")
+        self.path = abs_f_path
+
+        self.path_label.setText(os.path.relpath(abs_f_path))
+        self.adjustSize()  # important! otherwise the widget won't shrink
+
+        self.path_chosen.emit(self.path)
+
+        self.node.update_shape()
+
+    def get_state(self):
+        return {'path': self.path}
+    
+    def set_state(self, data):
+        self.path = data['path']
+        self.path_label.setText(self.path)
+        self.node.update_shape()
+
 class PathInput(IWB, QWidget):
     path_chosen = Signal(str)
 
@@ -352,7 +389,7 @@ class OpenCVNode_MainWidget(MWB, QLabel):
 export_widgets(
     Custom_MainWidget,
     ButtonNode_MainWidget,
-    PathInput,
+    PathInput, FileInput, 
     CodeNode_MainWidget,
     OpenCVNode_MainWidget
 )

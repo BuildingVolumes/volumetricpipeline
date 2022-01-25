@@ -4,8 +4,11 @@ Setup:
 
 On windows:
 -Installed python 3.10 something
--Py -m pip install ryven
--Py -m pip install opencv
+
+Py -m pip install ryven
+Py -m pip install opencv
+py -m pip install --pre torch torchvision -f https://download.pytorch.org/whl/nightly/cu113/torch_nightly.html
+
 -Run “ryven” from powershell
 -Create new project and load in the nodes.py file
 
