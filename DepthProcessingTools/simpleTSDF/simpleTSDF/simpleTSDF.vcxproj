@@ -89,7 +89,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>glfw3.lib;meshview.lib;opengl32.lib;opencv_world453.lib;opencv_sfm453.lib;opencv_img_hash453.lib;k4a.lib;k4arecord.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\Users\hogue\Documents\GitHub\volumetricpipeline\3rdparty\lib;C:\opencv\latest\x64\vc16\lib;C:\Program Files\Azure Kinect SDK v1.4.1\sdk\windows-desktop\amd64\release\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\hogue\Documents\GitHub\volumetricpipeline\3rdparty\lib;C:\opencv\latest\x64\vc16\lib;C:\Program Files\Azure Kinect SDK v1.4.1\sdk\windows-desktop\amd64\release\lib;C:\Users\hogue\Documents\GitHub\meshview\build\dist\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

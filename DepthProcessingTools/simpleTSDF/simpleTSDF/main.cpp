@@ -34,16 +34,16 @@ using namespace meshview;
 //int VOXRES = 128;
 
 #define _VOXEL_TRUNC 3
-int VOXRES = 64;
+int VOXRES = 128;
 
 #define _VOXEL_TRUNC_DELTA 5
 //#define _VOXEL_TRUNC 2;
 //int VOXRES = 32;
 
-#define _START_FRAME 160
-#define _END_FRAME 161
+#define _START_FRAME 0
+#define _END_FRAME 925
 
-int VOXSMOOTH = 1;
+int VOXSMOOTH = 0;
 
 TSDFVolume *theVolume;
 Viewer viewer;
@@ -715,7 +715,8 @@ int main(int argc, char** argv) {
    
     /* carve */
     // load in a matte, rgb, and depth image
-    std::string path = "C:\\Users\\hogue\\Desktop\\DATA\\aug19_hogue-rawsync_0\\";
+    std::string path = "C:\\Users\\hogue\\Desktop\\DATA\\Nov4-Take1_0\\";
+    // std::string path = "C:\\Users\\hogue\\Desktop\\DATA\\aug19_hogue-rawsync_0\\";
 
     int startFRAME = _START_FRAME;
     int endFRAME = _END_FRAME;

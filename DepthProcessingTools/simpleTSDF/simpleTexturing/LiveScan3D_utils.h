@@ -289,6 +289,10 @@ public:
             int a, b, c;
             str >> a >> b >> c;
             std::cout << "cam:" << c << std::endl;
+            std::cout << "a=" << a << std::endl;
+            std::cout << "b=" << b << std::endl;
+            std::cout << "c=" << c << std::endl;
+
             int theCam = c;
             Eigen::Matrix4d theMat;
             for (int i = 0; i < 4; ++i)

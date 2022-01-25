@@ -482,12 +482,12 @@ void SaveBundlerFormat(LiveScan3d_Take &theTake) {
 }
 
 
-void SaveMLPFormat(LiveScan3d_Take& theTake) {
-    std::ofstream file = std::ofstream("bundler.mlp", std::ios_base::binary);
+void SaveMLPFormat(LiveScan3d_Take& theTake, std::string fname, std::string meshname, int FRAMENUM) {
+    std::ofstream file = std::ofstream(fname, std::ios_base::binary);
     file << "<!DOCTYPE MeshLabDocument>\n";
     file << "<MeshLabProject>\n";
     file << "<MeshGroup>\n";
-    file << "<MLMesh filename=\"frame_160_proc-mergedvertswithuvs2.obj\" visible=\"1\" label=\"frame_160_proc-mergedvertswithuvs2.obj\">\n";
+    file << "<MLMesh filename=\""<<meshname<<"\" visible=\"1\" label=\""<<meshname<<"\">\n";
     file << "<MLMatrix44>\n";
     file << "1 0 0 0 \n0 1 0 0 \n0 0 1 0 \n0 0 0 1 \n";
     file << "</MLMatrix44>\n";
@@ -535,13 +535,13 @@ void SaveMLPFormat(LiveScan3d_Take& theTake) {
         S(1, 1) = -1;
         S(2, 2) = -1;
         
+
         auto Rf = S * Rt;
         auto tf = -t;
 
-        
 
         // output to file 
-        file << "<MLRaster label=\"" << i << "_Color_160.jpg\">\n";
+        file << "<MLRaster label=\"" << i << "_Color_"<<FRAMENUM<<".jpg\">\n";
         file << "<VCGCamera ";
         file << " CenterPx=\"" << cx << " " << cy << "\" ";
         file << " FocalMm=\"" << focalMm << "\" ";
@@ -564,7 +564,7 @@ void SaveMLPFormat(LiveScan3d_Take& theTake) {
             << "0 "
             << "0 0 0 1 \"";
         file << "CameraType=\"0\" />\n";
-        file << "<Plane fileName=\"hogue_160/client_"<<i<<"/Color_160.jpg\" semantic=\"1\"/>";
+        file << "<Plane fileName=\"../client_"<<i<<"/Color_"<<FRAMENUM<<".jpg\" semantic=\"1\"/>";
         file << "\n</MLRaster>\n";
     }
     file << "</RasterGroup>\n";
@@ -724,7 +724,7 @@ void MeshLab_Fix(LiveScan3d_Take &theTake, MyMesh &mesh, int CAMERAID) {
 
     cv::bitwise_not(imBW, imBW_inverted);
     cv::imshow("binary image", imBW);
-    cv::imwrite("res_0_binarymatte"+postfix, imBW);
+    //cv::imwrite("res_0_binarymatte"+postfix, imBW);
 
     // positive distances here are non-zero
     cv::distanceTransform(imBW_inverted, imDist_positive, cv::DIST_L2, 3, CV_32F);
@@ -746,8 +746,8 @@ void MeshLab_Fix(LiveScan3d_Take &theTake, MyMesh &mesh, int CAMERAID) {
     cv::normalize(imSDF, imSDF, 0, 1.0, cv::NORM_MINMAX);
 
     cv::imshow("distance", imSDF);
-    cv::imwrite("res_1_distance" + postfix, imSDF*200);
-  //  cv::waitKey(0);
+   // cv::imwrite("res_1_distance" + postfix, imSDF*200);
+    //cv::waitKey(0);
 
     // ok, so one thing we have to do is convert the SDF image into a BicubicInterpolator for Ceres 
     const int cols = imSDF.cols;
@@ -772,7 +772,7 @@ void MeshLab_Fix(LiveScan3d_Take &theTake, MyMesh &mesh, int CAMERAID) {
     Eigen::Vector4d cc;
     double invz, fx, fy, cx, cy;
     double ccx, ccy, ccz;
-    double u, v, sdf;\
+    double u, v, sdf;
     cv::Mat testImage = cv::Mat::zeros(imDist_neg.rows, imDist_neg.cols, CV_32F);
     ProjectMeshIntoImage(mesh, testImage, intrin, extrin);
     cv::imshow("res_2_testImage", testImage);
@@ -845,9 +845,20 @@ void MeshLab_Fix(LiveScan3d_Take &theTake, MyMesh &mesh, int CAMERAID) {
 /* THE MAIN FUNCTION */
 int main(int argc, char** argv) 
 {
+    
     MyMesh mesh;
-#define MESHNAME "frame_160_proc-mergedvertswithuvs.obj"
-//#define MESHNAME "C:\\Users\\hogue\\Desktop\\DATA\\aug19_hogue-rawsync_0\\ply\\frame_160_im2-remNonManFaces-cut0.obj"
+/********************************/
+    // PARAMETERS 
+//#define MESHNAME "frame_160_proc-mergedvertswithuvs.obj"
+#define MESHNAME "C:\\Users\\hogue\\Desktop\\DATA\\Nov4-Take1_0\\ply\\frame_0_p2-im.obj"
+#define LIVESCAN3D_TAKE_DIR "C:\\Users\\hogue\\Desktop\\DATA\\Nov4-Take1_0"
+#define  MLP_OUTPUTNAME "C:\\Users\\hogue\\Desktop\\DATA\\Nov4-Take1_0\\ply\\frame_0.mlp"
+    //"C:\\Users\\hogue\\Desktop\\DATA\\aug19_hogue-rawsync_0"
+    int FRAME_TO_PROCESS = 0;
+    //#define MESHNAME "C:\\Users\\hogue\\Desktop\\DATA\\aug19_hogue-rawsync_0\\ply\\frame_160_im2-remNonManFaces-cut0.obj"
+
+    /********************************/
+
     if (!OpenMesh::IO::read_mesh(mesh, MESHNAME))
     {
         std::cerr << "read error" << std::endl;
@@ -857,14 +868,15 @@ int main(int argc, char** argv)
     std::cout << "loaded: faces: " << mesh.n_faces() << std::endl;
     std::cout << "loaded: verts: " << mesh.n_vertices() << std::endl;
 
-    LiveScan3d_Take theTake("C:\\Users\\hogue\\Desktop\\DATA\\aug19_hogue-rawsync_0", "Extrinsics_Open3D.log", 6);
-    theTake.LoadFrame(160);
+    LiveScan3d_Take theTake(LIVESCAN3D_TAKE_DIR, "Extrinsics_Open3D.log", 6);
+    theTake.LoadFrame(0);
     
     for (int i = 0; i < 6; i++) 
     {
-        MeshLab_Fix(theTake, mesh, i);
+        std::cout << "ITERATION:CAMERAID:" << i << std::endl;
+       // MeshLab_Fix(theTake, mesh, i);
     }
-    SaveMLPFormat(theTake);
+    SaveMLPFormat(theTake, MLP_OUTPUTNAME, MESHNAME,FRAME_TO_PROCESS);
     return 0;
 
 
