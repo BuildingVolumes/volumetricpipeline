@@ -1,0 +1,12 @@
+Setup:
+-Clone repo: https://github.com/Elite-Volumetric-Capture-Sqad/Node-Interface
+-Python 3.9+ only
+
+On windows:
+-Installed python 3.10 something
+-Py -m pip install ryven
+-Py -m pip install opencv
+-Run “ryven” from powershell
+-Create new project and load in the nodes.py file
+
+
