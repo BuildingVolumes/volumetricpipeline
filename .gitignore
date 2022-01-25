@@ -2712,3 +2712,4 @@ Unity/testvolumetric/Library/AnnotationManager
 DepthProcessingTools/OfflineK4AImageToPointcloud/packages/
 DepthProcessingTools/OfflineK4AImageToPointcloud/OfflineK4AImageToPointcloud/opencv_world320.dll
 DepthProcessingTools/OfflineK4AImageToPointcloud/OfflineK4AImageToPointcloud/opencv_world320d.dll
+*.pyc
