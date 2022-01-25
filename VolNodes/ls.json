@@ -1,0 +1,134 @@
+{
+    "general info": {
+        "type": "Ryven project file",
+        "ryven version": "v3.1"
+    },
+    "required packages": [
+        {
+            "name": "VolNodes",
+            "dir": "C:/Users/hogue/Documents/GitHub/volumetricpipeline/VolNodes"
+        }
+    ],
+    "scripts": [
+        {
+            "title": "hello world",
+            "variables": {},
+            "flow": {
+                "algorithm mode": "data",
+                "nodes": [
+                    {
+                        "identifier": "VolNodes.Livescan3dDir",
+                        "version": "v0.1",
+                        "state data": "gASVKgIAAAAAAAB9lCiMCm51bSBpbnB1dHOUSwCMC251bSBvdXRwdXRzlEsHjARwYXRolIwuLi5cLi5cLi5cLi5cRGVza3RvcFxEQVRBXGF1ZzE5X2hvZ3VlLXJhd3N5bmNfMJSMBmV4dHJpbpSMSS4uXC4uXC4uXC4uXERlc2t0b3BcREFUQVxhdWcxOV9ob2d1ZS1yYXdzeW5jXzBcRXh0cmluc2ljc19PcGVuM0Qtb3JpZy5sb2eUjApudW1DbGllbnRzlEsGjAdjbGllbnRzlF2UKIw3Li5cLi5cLi5cLi5cRGVza3RvcFxEQVRBXGF1ZzE5X2hvZ3VlLXJhd3N5bmNfMFxjbGllbnRfMJSMNy4uXC4uXC4uXC4uXERlc2t0b3BcREFUQVxhdWcxOV9ob2d1ZS1yYXdzeW5jXzBcY2xpZW50XzGUjDcuLlwuLlwuLlwuLlxEZXNrdG9wXERBVEFcYXVnMTlfaG9ndWUtcmF3c3luY18wXGNsaWVudF8ylIw3Li5cLi5cLi5cLi5cRGVza3RvcFxEQVRBXGF1ZzE5X2hvZ3VlLXJhd3N5bmNfMFxjbGllbnRfM5SMNy4uXC4uXC4uXC4uXERlc2t0b3BcREFUQVxhdWcxOV9ob2d1ZS1yYXdzeW5jXzBcY2xpZW50XzSUjDcuLlwuLlwuLlwuLlxEZXNrdG9wXERBVEFcYXVnMTlfaG9ndWUtcmF3c3luY18wXGNsaWVudF81lGV1Lg==",
+                        "additional data": {
+                            "special actions": {
+                                "add input": {
+                                    "method": "add_inp"
+                                },
+                                "add output": {
+                                    "method": "add_out"
+                                },
+                                "make executable": {
+                                    "method": "action_make_executable"
+                                },
+                                "remove output 0": {
+                                    "method": "remove_out",
+                                    "data": 0
+                                },
+                                "remove output 1": {
+                                    "method": "remove_out",
+                                    "data": 1
+                                },
+                                "remove output 2": {
+                                    "method": "remove_out",
+                                    "data": 2
+                                },
+                                "remove output 3": {
+                                    "method": "remove_out",
+                                    "data": 3
+                                },
+                                "remove output 4": {
+                                    "method": "remove_out",
+                                    "data": 4
+                                },
+                                "remove output 5": {
+                                    "method": "remove_out",
+                                    "data": 5
+                                },
+                                "remove output 6": {
+                                    "method": "remove_out",
+                                    "data": 6
+                                }
+                            },
+                            "display title": "Livescan3d Dir"
+                        },
+                        "inputs": [
+                            {
+                                "type": "data",
+                                "label": "path",
+                                "GID": 8,
+                                "val": "gAROLg==",
+                                "has widget": true,
+                                "widget name": "path input",
+                                "widget pos": "below",
+                                "widget data": "gASVPAAAAAAAAAB9lIwEcGF0aJSMLi4uXC4uXC4uXC4uXERlc2t0b3BcREFUQVxhdWcxOV9ob2d1ZS1yYXdzeW5jXzCUcy4="
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "type": "data",
+                                "label": "c0",
+                                "GID": 9
+                            },
+                            {
+                                "type": "data",
+                                "label": "c1",
+                                "GID": 10
+                            },
+                            {
+                                "type": "data",
+                                "label": "c2",
+                                "GID": 11
+                            },
+                            {
+                                "type": "data",
+                                "label": "c3",
+                                "GID": 12
+                            },
+                            {
+                                "type": "data",
+                                "label": "c4",
+                                "GID": 13
+                            },
+                            {
+                                "type": "data",
+                                "label": "c5",
+                                "GID": 14
+                            },
+                            {
+                                "type": "data",
+                                "label": "Extrin",
+                                "GID": 15
+                            }
+                        ],
+                        "GID": 7,
+                        "pos x": 538.0,
+                        "pos y": 308.0,
+                        "unconnected ports hidden": false,
+                        "collapsed": false
+                    }
+                ],
+                "connections": [],
+                "GID": 6,
+                "flow view": {
+                    "drawings": [],
+                    "view size": [
+                        6400.0,
+                        4800.0
+                    ]
+                }
+            },
+            "GID": 1
+        }
+    ]
+}

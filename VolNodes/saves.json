@@ -1,0 +1,338 @@
+{
+    "general info": {
+        "type": "Ryven project file",
+        "ryven version": "v3.1"
+    },
+    "required packages": [
+        {
+            "name": "VolNodes",
+            "dir": "C:/Users/hogue/Documents/GitHub/volumetricpipeline/VolNodes"
+        }
+    ],
+    "scripts": [
+        {
+            "title": "hello world",
+            "variables": {},
+            "flow": {
+                "algorithm mode": "data",
+                "nodes": [
+                    {
+                        "identifier": "VolNodes.MatteExtractor",
+                        "version": "v0.1",
+                        "state data": "gAR9lC4=",
+                        "additional data": {
+                            "special actions": {},
+                            "display title": "MatteExtractor"
+                        },
+                        "inputs": [
+                            {
+                                "type": "data",
+                                "label": "ref",
+                                "GID": 8,
+                                "val": "gAROLg==",
+                                "has widget": false
+                            },
+                            {
+                                "type": "data",
+                                "label": "img",
+                                "GID": 9,
+                                "val": "gAROLg==",
+                                "has widget": false
+                            },
+                            {
+                                "type": "data",
+                                "label": "model",
+                                "GID": 10,
+                                "val": "gAROLg==",
+                                "has widget": false
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "type": "data",
+                                "label": "",
+                                "GID": 11
+                            }
+                        ],
+                        "GID": 7,
+                        "pos x": 1186.0,
+                        "pos y": 190.0,
+                        "unconnected ports hidden": false,
+                        "collapsed": false
+                    },
+                    {
+                        "identifier": "VolNodes.ReadImage",
+                        "version": null,
+                        "state data": "gASVFwAAAAAAAAB9lIwPaW1hZ2UgZmlsZSBwYXRolE5zLg==",
+                        "additional data": {
+                            "special actions": {},
+                            "display title": "Read Image"
+                        },
+                        "inputs": [
+                            {
+                                "type": "data",
+                                "label": "",
+                                "GID": 13,
+                                "val": "gAROLg==",
+                                "has widget": false
+                            },
+                            {
+                                "type": "data",
+                                "label": "isDepth",
+                                "GID": 14,
+                                "val": "gAROLg==",
+                                "dtype": "DType.Boolean",
+                                "dtype state": "gASVKgAAAAAAAAB9lCiMB2RlZmF1bHSUiYwDdmFslImMA2RvY5SMAJSMBmJvdW5kc5ROdS4=",
+                                "has widget": true,
+                                "widget data": "gASVDwAAAAAAAAB9lIwHY2hlY2tlZJSJcy4="
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "type": "data",
+                                "label": "img",
+                                "GID": 15
+                            }
+                        ],
+                        "GID": 12,
+                        "pos x": 635.0,
+                        "pos y": 591.0,
+                        "unconnected ports hidden": false,
+                        "collapsed": false
+                    },
+                    {
+                        "identifier": "VolNodes.CameraDirNode",
+                        "version": "v0.1",
+                        "state data": "gASVJAAAAAAAAAB9lCiMCm51bSBpbnB1dHOUSwCMC251bSBvdXRwdXRzlEsDdS4=",
+                        "additional data": {
+                            "special actions": {
+                                "add input": {
+                                    "method": "add_inp"
+                                },
+                                "add output": {
+                                    "method": "add_out"
+                                },
+                                "remove output 0": {
+                                    "method": "remove_out",
+                                    "data": 0
+                                },
+                                "remove output 1": {
+                                    "method": "remove_out",
+                                    "data": 1
+                                },
+                                "remove output 2": {
+                                    "method": "remove_out",
+                                    "data": 2
+                                }
+                            },
+                            "display title": "CameraDirNode"
+                        },
+                        "inputs": [
+                            {
+                                "type": "data",
+                                "label": "",
+                                "GID": 20,
+                                "val": "gAROLg==",
+                                "has widget": false
+                            },
+                            {
+                                "type": "data",
+                                "label": "index",
+                                "GID": 21,
+                                "val": "gAROLg==",
+                                "dtype": "DType.Integer",
+                                "dtype state": "gASVLAAAAAAAAAB9lCiMB2RlZmF1bHSUSwCMA3ZhbJRLAIwDZG9jlIwAlIwGYm91bmRzlE51Lg==",
+                                "has widget": true,
+                                "widget data": "gASVDAAAAAAAAAB9lIwDdmFslEsAcy4="
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "type": "data",
+                                "label": "Intrinsics",
+                                "GID": 17
+                            },
+                            {
+                                "type": "data",
+                                "label": "RGB",
+                                "GID": 18
+                            },
+                            {
+                                "type": "data",
+                                "label": "Depth",
+                                "GID": 19
+                            },
+                            {
+                                "type": "data",
+                                "label": "Intrinsics",
+                                "GID": 22
+                            },
+                            {
+                                "type": "data",
+                                "label": "RGB",
+                                "GID": 23
+                            },
+                            {
+                                "type": "data",
+                                "label": "Depth",
+                                "GID": 24
+                            }
+                        ],
+                        "GID": 16,
+                        "pos x": 306.0,
+                        "pos y": 137.0,
+                        "unconnected ports hidden": false,
+                        "collapsed": false
+                    },
+                    {
+                        "identifier": "VolNodes.DisplayImg",
+                        "version": null,
+                        "state data": "gAR9lC4=",
+                        "additional data": {
+                            "special actions": {},
+                            "display title": "Display Image"
+                        },
+                        "inputs": [
+                            {
+                                "type": "data",
+                                "label": "img",
+                                "GID": 26,
+                                "val": "gAROLg==",
+                                "has widget": false
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "type": "data",
+                                "label": "",
+                                "GID": 27
+                            }
+                        ],
+                        "GID": 25,
+                        "pos x": 1097.0,
+                        "pos y": 593.0,
+                        "main widget data": "gAR9lC4=",
+                        "unconnected ports hidden": false,
+                        "collapsed": false
+                    },
+                    {
+                        "identifier": "VolNodes.GetFilename",
+                        "version": null,
+                        "state data": "gASVUAAAAAAAAAB9lIwEcGF0aJSMQkM6L1VzZXJzL2hvZ3VlL0RvY3VtZW50cy9HaXRIdWIvdm9sdW1ldHJpY3BpcGVsaW5lL1ZvbE5vZGVzL1JFQURNRZRzLg==",
+                        "additional data": {
+                            "special actions": {
+                                "make executable": {
+                                    "method": "action_make_executable"
+                                }
+                            },
+                            "display title": "GetFilename"
+                        },
+                        "inputs": [
+                            {
+                                "type": "data",
+                                "label": "path",
+                                "GID": 29,
+                                "val": "gAROLg==",
+                                "has widget": true,
+                                "widget name": "path input",
+                                "widget pos": "below",
+                                "widget data": "gASVUAAAAAAAAAB9lIwEcGF0aJSMQkM6L1VzZXJzL2hvZ3VlL0RvY3VtZW50cy9HaXRIdWIvdm9sdW1ldHJpY3BpcGVsaW5lL1ZvbE5vZGVzL1JFQURNRZRzLg=="
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "type": "data",
+                                "label": "",
+                                "GID": 30
+                            }
+                        ],
+                        "GID": 28,
+                        "pos x": 453.0,
+                        "pos y": 338.0,
+                        "unconnected ports hidden": false,
+                        "collapsed": false
+                    },
+                    {
+                        "identifier": "VolNodes.Livescan3dDir",
+                        "version": "v0.1",
+                        "state data": "gASVLgAAAAAAAAB9lCiMCm51bSBpbnB1dHOUSwCMC251bSBvdXRwdXRzlEsAjARwYXRolIwAlHUu",
+                        "additional data": {
+                            "special actions": {
+                                "add input": {
+                                    "method": "add_inp"
+                                },
+                                "add output": {
+                                    "method": "add_out"
+                                },
+                                "make executable": {
+                                    "method": "action_make_executable"
+                                }
+                            },
+                            "display title": "Livescan3d Dir"
+                        },
+                        "inputs": [
+                            {
+                                "type": "data",
+                                "label": "path",
+                                "GID": 32,
+                                "val": "gAROLg==",
+                                "has widget": true,
+                                "widget name": "path input",
+                                "widget pos": "below",
+                                "widget data": "gASVDgAAAAAAAAB9lIwEcGF0aJSMAJRzLg=="
+                            }
+                        ],
+                        "outputs": [],
+                        "GID": 31,
+                        "pos x": 174.0,
+                        "pos y": 468.0,
+                        "unconnected ports hidden": false,
+                        "collapsed": false
+                    },
+                    {
+                        "identifier": "VolNodes.Show_Node",
+                        "version": "v0.1",
+                        "state data": "gASVLgAAAAAAAAB9lCiMCm51bSBpbnB1dHOUSwCMC251bSBvdXRwdXRzlEsAjARjb2RllIwAlHUu",
+                        "additional data": {
+                            "special actions": {
+                                "add input": {
+                                    "method": "add_inp"
+                                },
+                                "add output": {
+                                    "method": "add_out"
+                                }
+                            },
+                            "display title": "ShowNode"
+                        },
+                        "inputs": [
+                            {
+                                "type": "data",
+                                "label": "",
+                                "GID": 34,
+                                "val": "gAROLg==",
+                                "has widget": false
+                            }
+                        ],
+                        "outputs": [],
+                        "GID": 33,
+                        "pos x": 815.0,
+                        "pos y": 322.0,
+                        "main widget data": "gASVDgAAAAAAAAB9lIwEdGV4dJSMAJRzLg==",
+                        "unconnected ports hidden": false,
+                        "collapsed": false
+                    }
+                ],
+                "connections": [],
+                "GID": 6,
+                "flow view": {
+                    "drawings": [],
+                    "view size": [
+                        6400.0,
+                        4800.0
+                    ]
+                }
+            },
+            "GID": 1
+        }
+    ]
+}

@@ -75,6 +75,7 @@ class GetFilename(Node):
     def set_state(self, data, version):
         print('set state')
         self.filepath = data['path']
+        self.set_output_val(0,self.filepath)
 
 
 
@@ -221,8 +222,10 @@ class _DynamicPorts_Node(Node):
         }
 
     def set_state(self, data: dict):
+        print(data)
         self.num_inputs = data['num inputs']
         self.num_outputs = data['num outputs']
+        print('dyn: num outputs:'+self.num_outputs)
 
 
 
@@ -280,6 +283,8 @@ class Livescan3dDir(_DynamicPorts_Node):
         self.actions['make executable'] = {'method': self.action_make_executable}
         super().clearout()
 
+    def place_event(self):
+        self.update()
         
     def view_place_event(self):
         self.input_widget(0).path_chosen.connect(self.path_chosen)
@@ -329,44 +334,62 @@ class Livescan3dDir(_DynamicPorts_Node):
 
     def update_event(self, inp=-1):
         print('update event')
-        i=0
-        self.set_output_val(0,self.value)
-        for (clientname) in self.clients :
-            self.set_output_val(i, clientname)
-            i = i + 1
-        self.set_output_val(i, self.extrinsicsLogName)
+        #i=0
+        #for (clientname) in self.clients :
+        #    self.set_output_val(i, clientname)
+        #    i = i + 1
+        #self.set_output_val(i, self.extrinsicsLogName)
 
     def get_state(self):
-        print('get state')
+        print('get state - saving?')
         return { 
             **super().get_state(), 
-            'path': self.dirpath 
+            'path': self.dirpath,
+            'extrin': self.extrinsicsLogName,
+            'numClients':self.numClients
         }
 
     def set_state(self, data, version):
-        print('set state')
-        super().set_state(data, version)
+        print('set state - loading?')
+        #super().set_state(data, version)
         self.dirpath = data['path']
-        self.parseDir()
+        print('dirpath'+self.dirpath)
+        clientPat = self.dirpath + '/client_*'
+        print('clientpat:'+clientPat)
+        self.clients = glob.glob(clientPat)
+        print(self.clients)
+        self.numClients = data['numClients']
+        print(self.numClients)
+        self.extrinsicsLogName = data['extrin']
 
+        i=0
+        for (clientname) in self.clients :
+            theName = clientname
+            tokens = clientname.split("client_")
+            labelName = "c" + tokens[1]
+            super().set_output_val(i,theName)
+            i = i + 1
+        super().set_output_val(i,self.extrinsicsLogName)
+        print('done')
 
       
-class CameraDirNode(_DynamicPorts_Node):
+class CameraDirNode(Node):
     title = 'CameraDirNode'
     
     init_inputs = [
         NodeInputBP(),
         NodeInputBP('index',dtype=dtypes.Integer(default=0)),
     ]
-
+    init_outputs = [
+        NodeOutputBP(label='Intrinsics'),
+        NodeOutputBP(label='RGB'),
+        NodeOutputBP(label='Depth'),
+    ]
+    
     def __init__(self, params):
         super().__init__(params)
         self.dir = ""
         self.index = 0
-        super().clearout()
-        super().add_out('Intrinsics')
-        super().add_out('RGB')
-        super().add_out('Depth')
 
     def parseDir(self):
         print("parse")

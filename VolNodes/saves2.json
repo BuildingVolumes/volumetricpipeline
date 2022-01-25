@@ -1,0 +1,83 @@
+{
+    "general info": {
+        "type": "Ryven project file",
+        "ryven version": "v3.1"
+    },
+    "required packages": [
+        {
+            "name": "VolNodes",
+            "dir": "C:/Users/hogue/Documents/GitHub/volumetricpipeline/VolNodes"
+        }
+    ],
+    "scripts": [
+        {
+            "title": "hello world",
+            "variables": {},
+            "flow": {
+                "algorithm mode": "data",
+                "nodes": [
+                    {
+                        "identifier": "VolNodes.CameraDirNode",
+                        "version": null,
+                        "state data": "gAR9lC4=",
+                        "additional data": {
+                            "special actions": {},
+                            "display title": "CameraDirNode"
+                        },
+                        "inputs": [
+                            {
+                                "type": "data",
+                                "label": "",
+                                "GID": 8,
+                                "val": "gAROLg==",
+                                "has widget": false
+                            },
+                            {
+                                "type": "data",
+                                "label": "index",
+                                "GID": 9,
+                                "val": "gAROLg==",
+                                "dtype": "DType.Integer",
+                                "dtype state": "gASVLAAAAAAAAAB9lCiMB2RlZmF1bHSUSwCMA3ZhbJRLAIwDZG9jlIwAlIwGYm91bmRzlE51Lg==",
+                                "has widget": true,
+                                "widget data": "gASVDAAAAAAAAAB9lIwDdmFslEsAcy4="
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "type": "data",
+                                "label": "Intrinsics",
+                                "GID": 10
+                            },
+                            {
+                                "type": "data",
+                                "label": "RGB",
+                                "GID": 11
+                            },
+                            {
+                                "type": "data",
+                                "label": "Depth",
+                                "GID": 12
+                            }
+                        ],
+                        "GID": 7,
+                        "pos x": 465.0,
+                        "pos y": 268.0,
+                        "unconnected ports hidden": false,
+                        "collapsed": false
+                    }
+                ],
+                "connections": [],
+                "GID": 6,
+                "flow view": {
+                    "drawings": [],
+                    "view size": [
+                        6400.0,
+                        4800.0
+                    ]
+                }
+            },
+            "GID": 1
+        }
+    ]
+}
