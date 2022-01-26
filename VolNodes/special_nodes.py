@@ -373,43 +373,71 @@ class Livescan3dDir(_DynamicPorts_Node):
         print('done')
 
       
-class CameraDirNode(Node):
+class CameraDirNode(_DynamicPorts_Node):
     title = 'CameraDirNode'
     
     init_inputs = [
         NodeInputBP(),
-        NodeInputBP('index',dtype=dtypes.Integer(default=0)),
+        NodeInputBP('index',dtype=dtypes.Integer(default=0, bounds=(1, 9999))),
     ]
-    init_outputs = [
-        NodeOutputBP(label='Intrinsics'),
-        NodeOutputBP(label='RGB'),
-        NodeOutputBP(label='Depth'),
-    ]
+    #init_outputs = [
+    #    NodeOutputBP(label='Intrinsics'),
+    #    NodeOutputBP(label='RGB'),
+    #    NodeOutputBP(label='Depth'),
+    #    NodeOutputBP(label='Matte'),
+    #]
     
     def __init__(self, params):
         super().__init__(params)
         self.dir = ""
         self.index = 0
+        super().add_out('Intrinsics')
+        super().add_out('RGB')
+        super().add_out('Depth')
+        super().add_out('Matte')
+        self.pin_intrin = 0
+        self.pin_rgb = 1
+        self.pin_depth = 2
+        self.pin_matte = 3
 
+    def resetPins(self) :
+        super().set_output_val(0,None)
+        super().set_output_val(1,None)
+        super().set_output_val(2,None)
+        super().set_output_val(3,None)
+        
+    def setOutputPinImageName(self, pinIndex, imName) :
+        v = glob.glob(imName)
+        print(v)
+        if len(v) == 0 :
+            return False
+        else :
+            value = v[0]
+            super().set_output_val(pinIndex,value)      
+            return True        
+        
     def parseDir(self):
-        print("parse")
-        print(self.dir)
-        print(self.index)
+        #print("parse")
+        #print(self.dir)
+        #print(self.index)
+        self.resetPins()
         pat = self.dir + "\\Intrinsics*.json"
-        intrin = glob.glob(pat)[0]
+        intrinMatch = glob.glob(pat)
+        if len(intrinMatch) != 0 :
+            intrin = intrinMatch[0]
         indS = str(self.index)
         rgbIm = self.dir + "\\Color_"+indS+".jpg"
         depthIm = self.dir + "\\Depth_"+indS+".tiff"
-
-        
-        print(intrin)
-        print(rgbIm)
-        print(depthIm)
-        print('-----------')
-        self.set_output_val(0,intrin)
-        self.set_output_val(1,rgbIm)
-        self.set_output_val(2,depthIm)
-        
+        matPat  = rgbIm + ".matte.png"
+        matPat2  = self.dir + "\\Color_"+indS+".matte.png"
+        self.setOutputPinImageName(self.pin_intrin, intrin)
+        self.setOutputPinImageName(self.pin_rgb, rgbIm)
+        self.setOutputPinImageName(self.pin_depth, depthIm)
+        #sometimes I have .jpg.matte.png and other times I have .matte.png  ... uggh... FIX
+        t = self.setOutputPinImageName(self.pin_matte, matPat)
+        if t == False : 
+            self.setOutputPinImageName(self.pin_matte,matPat2)
+                
 
     def update_event(self, inp=-1):
         print('update')

@@ -361,11 +361,17 @@ class OpenCVNode_MainWidget(MWB, QLabel):
             else :
                 self.is16bit = False
                 print('8 bit')
-                rgb_image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                if len(img.shape) < 3:
+                    print('grayscale')
+                    rgb_image = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+                else :
+                    rgb_image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         except cv2.error:
             return
 
         h, w, ch = rgb_image.shape
+        print("w:"+str(w))
+        print("h:"+str(h))
         bytes_per_line = ch * w
         qt_image = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
         img_w = qt_image.width()
