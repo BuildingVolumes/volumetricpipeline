@@ -178,8 +178,8 @@ class _DynamicPorts_Node(Node):
         self.num_inputs = 0
         self.num_outputs = 0
 
-    def add_inp(self):
-        self.create_input()
+    def add_inp(self,theLabel=''):
+        self.create_input(label=theLabel)
 
         index = self.num_inputs
         self.actions[f'remove input {index}'] = {
@@ -391,20 +391,21 @@ class CameraDirNode(_DynamicPorts_Node):
         super().__init__(params)
         self.dir = ""
         self.index = 0
+        self.dict = None
         super().add_out('Intrinsics')
         super().add_out('RGB')
         super().add_out('Depth')
         super().add_out('Matte')
+        super().add_out('Dict')
         self.pin_intrin = 0
         self.pin_rgb = 1
         self.pin_depth = 2
         self.pin_matte = 3
-
+        self.pin_dict = 4
+        
     def resetPins(self) :
-        super().set_output_val(0,None)
-        super().set_output_val(1,None)
-        super().set_output_val(2,None)
-        super().set_output_val(3,None)
+        for i in range(0,4,1) :
+            super().set_output_val(i,None)
         
     def setOutputPinImageName(self, pinIndex, imName) :
         v = glob.glob(imName)
@@ -434,10 +435,14 @@ class CameraDirNode(_DynamicPorts_Node):
         self.setOutputPinImageName(self.pin_rgb, rgbIm)
         self.setOutputPinImageName(self.pin_depth, depthIm)
         #sometimes I have .jpg.matte.png and other times I have .matte.png  ... uggh... FIX
+        MATTE = matPat
         t = self.setOutputPinImageName(self.pin_matte, matPat)
         if t == False : 
             self.setOutputPinImageName(self.pin_matte,matPat2)
-                
+            MATTE = matPat2
+        # setup dictionary pin
+        self.dict = {'intrinsics':intrin, 'rgb':rgbIm, 'depth':depthIm, 'matte':MATTE}
+        super().set_output_val(self.pin_dict, self.dict)
 
     def update_event(self, inp=-1):
         print('update')
@@ -614,7 +619,76 @@ class MatteExtractor(Node):
             print('ready')
             self.doMatteExtract()
             
+class VoxelCarveTSDF(_DynamicPorts_Node):
+    title = 'VoxelCarveTSDF'
+    version = 'v0.1'
+    main_widget_class = widgets.ButtonNode_MainWidget
+    main_widget_pos = 'between ports'
+    # assume these are just paths to images and model
+
+    init_inputs = [
+     ]   
+    init_outputs = [
+        NodeOutputBP()
+    ]
+    def __init__(self, params):
+        super().__init__(params)
+        super().add_inp('Extrinsics')
+        super().add_inp('Cam0')
+        self.numCameras = 1
+        self.main_exe = '.\\bin\\simpleTSDF.exe'
+        self.command = self.main_exe
+        
+    def doVoxelCarveTSDF(self):
+        print('doVoxelCarveTSDF')
+        print('running command:'+self.command)
+        os.system(self.command)
+        
+    def doButtonPress(self):
+        print('doButtonPress - make command')
+        self.command = self.main_exe
+        extrinsics = self.input(0)
+        self.command += ' -e '+  extrinsics
+        for i in range(1,self.numCameras,1) :
+            print('i='+str(i))
+            print(self.input(i))
+            cDict = self.input(i)
+            intrin = cDict['intrinsics']
+            rgb = cDict['rgb']
+            depth = cDict['depth']
+            matte = cDict['matte']
+            self.command += ' -i '+intrin 
+            self.command += ' -r '+rgb
+            self.command += ' -d '+depth
+            self.command += ' -m '+matte
+        self.doVoxelCarveTSDF()
     
+    def update_event(self, inp=-1):
+        print('tsdf: update')
+        print('inp:'+str(inp))
+        if inp == self.numCameras :
+            label = "Cam"+str(inp)
+            super().add_inp(label)
+            self.numCameras = self.numCameras + 1
+        
+        if inp == -1 :
+            self.doButtonPress()
+            
+        #ni = 0
+        #if self.input(0) != None :
+        #    self.cameraList = self.input(0)
+        #    ni = ni+1
+        #if self.input(1) != None :
+        #    self.extrinsicsPath = self.input(1)
+        #    ni = ni+1
+        #
+        #if ni == 2 :
+        #    print('ready')
+        #    self.doVoxelCarveTSDF()
+            
+            
+            
+            
 nodes = [
     GLNode,
     Button_Node,
@@ -625,4 +699,5 @@ nodes = [
     ReadImage,
     MatteExtractor,
     GetFilename,
+    VoxelCarveTSDF,
 ]
