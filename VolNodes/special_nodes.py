@@ -8,9 +8,9 @@ import sys
 import os
 from os import walk
 import glob
-
 # open cv 
 import cv2
+from plyfile import PlyData, PlyElement
 import numpy as np
 
 sys.path.append(os.path.dirname(__file__))
@@ -686,9 +686,84 @@ class VoxelCarveTSDF(_DynamicPorts_Node):
         #    print('ready')
         #    self.doVoxelCarveTSDF()
             
+     
+class PlyfileRead(Node):
+    title = 'Plyfile Read'
+    version = 'v0.1'
+    #main_widget_class = widgets.CustomGL_MESHWidget
+    #main_widget_pos = 'between ports'
+    # assume these are just paths to images and model
+    init_inputs = [
+        NodeInputBP('meshFile'),
+    ]   
+    init_outputs = [
+        NodeOutputBP()
+    ]
+    def __init__(self, params):
+        super().__init__(params)
+        self.modelPath = None
+        
+        
+    def update_event(self, inp=-1):
+        if self.input(0) != None :
+            self.modelPath = self.input(0)
+            print('reading : '+self.modelPath)
+            self.plydata = PlyData.read(self.modelPath)
+            print('plyfile read')       
+            print(self.plydata)
+            self.set_output_val(0,self.plydata)         
+
+class MeshIORead(Node):
+    title = 'MeshIORead'
+    version = 'v0.1'
+    #main_widget_class = widgets.CustomGL_MESHWidget
+    #main_widget_pos = 'between ports'
+    # assume these are just paths to images and model
+    init_inputs = [
+        NodeInputBP('meshFile'),
+    ]   
+    init_outputs = [
+        NodeOutputBP()
+    ]
+    def __init__(self, params):
+        super().__init__(params)
+        self.modelPath = None
+        
+    def update_event(self, inp=-1):
+        if self.input(0) != None :
+            self.modelPath = self.input(0)
+            print('reading : '+self.modelPath)
+            self.mesh = meshio.read(self.modelPath,)
+            print('mesh read')       
+            self.set_output_val(0,self.mesh)            
             
             
-            
+
+class GLMeshView(Node):
+    """Prints your data"""
+    # all basic properties
+    title = 'GLMeshView'
+    init_inputs = [
+        NodeInputBP('mesh'),
+    ]
+    color = '#A9D5EF'
+    main_widget_class = widgets.Custom_MESHWidget
+	
+    # see API doc for a full list of all properties
+
+    # we could also skip the constructor here
+    def __init__(self, params):
+        super().__init__(params)
+        self.mesh = None
+        self.isChanged = False
+    
+    def update_event(self, inp=-1):
+        if self.mesh != self.input(0) :
+            self.mesh = self.input(0)
+            self.isChanged = True
+        self.update()
+
+
 nodes = [
     GLNode,
     Button_Node,
@@ -700,4 +775,7 @@ nodes = [
     MatteExtractor,
     GetFilename,
     VoxelCarveTSDF,
+    MeshIORead,
+    GLMeshView,
+    PlyfileRead,
 ]
