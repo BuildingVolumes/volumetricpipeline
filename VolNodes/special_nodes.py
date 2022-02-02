@@ -10,6 +10,7 @@ from os import walk
 import glob
 # open cv 
 import cv2
+import plyfile
 from plyfile import PlyData, PlyElement
 import numpy as np
 
@@ -76,6 +77,66 @@ class GetFilename(Node):
         print('set state')
         self.filepath = data['path']
         self.set_output_val(0,self.filepath)
+
+
+  
+class GetDirname(Node):
+    title = 'GetDirname'
+    input_widget_classes = {
+        'path input': widgets.PathInput
+    }
+    init_inputs = [
+        NodeInputBP('path', add_data={'widget name': 'path input', 'widget pos': 'below'}),
+    ]
+    init_outputs = [
+        NodeInputBP(),
+    ]
+
+    def __init__(self, params):
+        super().__init__(params)
+        self.active = False
+        self.filepath = ''
+        self.actions['make executable'] = {'method': self.action_make_executable}
+        
+    def view_place_event(self):
+        self.input_widget(0).path_chosen.connect(self.path_chosen)
+
+        
+    def path_chosen(self, new_path):
+        print('path chosen')
+        self.filepath = new_path
+        self.update()
+
+    def action_make_executable(self):
+        self.create_input(type_='exec', insert=0)
+        self.active = True
+
+        del self.actions['make executable']
+        self.actions['make passive'] = {'method': self.action_make_passive}
+
+    def action_make_passive(self):
+        self.delete_input(0)
+        self.active = False
+
+        del self.actions['make passive']
+        self.actions['make executable'] = {'method': self.action_make_executable}
+
+    def update_event(self, inp=-1):
+        print('update event')
+        self.set_output_val(0,self.filepath)
+        
+    def get_state(self):
+        print('get state')
+        return { 
+            **super().get_state(), 
+            'path': self.filepath 
+        }
+
+    def set_state(self, data, version):
+        print('set state')
+        self.filepath = data['path']
+        self.set_output_val(0,self.filepath)
+
 
 
 
@@ -189,6 +250,9 @@ class _DynamicPorts_Node(Node):
 
         self.num_inputs += 1
 
+    def rename_inp(self, index, label):
+        self.rename_input(index, label)
+        
     def remove_inp(self, index):
         self.delete_input(index)
         self.num_inputs -= 1
@@ -246,8 +310,7 @@ class Show_Node(_DynamicPorts_Node):
         pass
 
     def update_event(self, inp=-1):
-        self.code = self.input(0)
-        #self.main_widget().update_text(self.node.code)
+        self.code = str(self.input(0))
         print('update:' + self.code)
         if self.session.gui and self.main_widget():
             self.main_widget().update_text(self.code)
@@ -260,7 +323,6 @@ class Show_Node(_DynamicPorts_Node):
 
     def set_state(self, data: dict, version):
         super().set_state(data, version)
-        self.code = self.input(0)
         print('set_state:' + self.code)
 
     
@@ -441,7 +503,7 @@ class CameraDirNode(_DynamicPorts_Node):
             self.setOutputPinImageName(self.pin_matte,matPat2)
             MATTE = matPat2
         # setup dictionary pin
-        self.dict = {'intrinsics':intrin, 'rgb':rgbIm, 'depth':depthIm, 'matte':MATTE}
+        self.dict = {'intrinsics':intrin, 'rgb':rgbIm, 'depth':depthIm, 'matte':MATTE, 'frame':self.index}
         super().set_output_val(self.pin_dict, self.dict)
 
     def update_event(self, inp=-1):
@@ -461,7 +523,7 @@ class CVImage:
     doesn't think two different images are the same.
     """
 
-    def __init__(self, img):
+    def __init__(self, img=None):
         self.img = img
         self.dtype = np.dtype('uint8')
 
@@ -634,8 +696,13 @@ class VoxelCarveTSDF(_DynamicPorts_Node):
     def __init__(self, params):
         super().__init__(params)
         super().add_inp('Extrinsics')
+        super().add_inp('OutputDir')
         super().add_inp('Cam0')
+        self.frameNum = 0
         self.numCameras = 1
+        self.lastPinIndex = 2
+        self.firstCameraPinIndex = self.lastPinIndex
+        self.outputDirName = "."
         self.main_exe = '.\\bin\\simpleTSDF.exe'
         self.command = self.main_exe
         
@@ -649,28 +716,33 @@ class VoxelCarveTSDF(_DynamicPorts_Node):
         self.command = self.main_exe
         extrinsics = self.input(0)
         self.command += ' -e '+  extrinsics
-        for i in range(1,self.numCameras,1) :
-            print('i='+str(i))
+        self.outputDirName = self.input(1)
+        for i in range(self.firstCameraPinIndex,self.lastPinIndex,1) :
+            print('pin(index)='+str(i))
             print(self.input(i))
             cDict = self.input(i)
             intrin = cDict['intrinsics']
             rgb = cDict['rgb']
             depth = cDict['depth']
             matte = cDict['matte']
+            self.frameNum = cDict['frame']
+            outputPlyName = self.outputDirName+'\\output_'+str(self.frameNum)+'.ply'
             self.command += ' -i '+intrin 
             self.command += ' -r '+rgb
             self.command += ' -d '+depth
             self.command += ' -m '+matte
+            self.command += ' -o '+outputPlyName
         self.doVoxelCarveTSDF()
+        self.set_output_val(0, outputPlyName)
     
     def update_event(self, inp=-1):
         print('tsdf: update')
         print('inp:'+str(inp))
-        if inp == self.numCameras :
-            label = "Cam"+str(inp)
+        if inp == self.lastPinIndex :
+            label = "Cam"+str(inp-1)
             super().add_inp(label)
             self.numCameras = self.numCameras + 1
-        
+            self.lastPinIndex = self.lastPinIndex + 1
         if inp == -1 :
             self.doButtonPress()
             
@@ -764,6 +836,191 @@ class GLMeshView(Node):
         self.update()
 
 
+
+class ExtrinsicsLogParse(_DynamicPorts_Node):
+    title = 'ExtrinsicsLogParse'
+    #input_widget_classes = {
+    #    'path input': widgets.FileInput
+    #}
+    init_inputs = [
+        NodeInputBP('path'),
+    ]
+
+    def __init__(self, params):
+        super().__init__(params)
+
+        self.active = False
+        self.dirpath = ''
+        #self.actions['make executable'] = {'method': self.action_make_executable}
+        super().clearout()
+
+    def place_event(self):
+        self.update()
+        
+
+    def readRow(self, file):
+        line = file.readline()
+        tokens = line.split()
+        if len(tokens) != 4:
+            print('error')
+        r = np.array([float(tokens[0]), float(tokens[1]), float(tokens[2]), float(tokens[3])], dtype=float)
+        return r
+        
+    def readMatrix(self,file):
+        print('reading matrix')
+        
+        r1 = self.readRow(file)
+        r2 = self.readRow(file)
+        r3 = self.readRow(file)
+        r4 = self.readRow(file)
+        m = np.stack((r1,r2,r3,r4))
+        return m
+        
+    def parseLog(self):
+        print('parseLog')
+        super().clearout()
+        print('file:'+self.dirpath)
+        file = open(self.dirpath,"r")
+        #lines = file.readlines()
+        count = 0
+        self.dict = {}
+        while True:
+            # first line is always int int CAMERAID
+            line = file.readline()
+            if not line:
+                break
+            tokens = line.split()
+            CAMERAID = int(tokens[2])
+ 
+            # now grab the next 4 lines and parse them as a 4x4 matrix
+            m = self.readMatrix(file)
+            print(m)
+            self.dict[CAMERAID] = m
+            labelName = "c"+str(CAMERAID)
+            super().add_out(labelName)
+            super().set_output_val(count,m)
+            count += 1
+        file.close()
+        print("found: "+str(count)+" transforms")
+        super().add_out('Num')
+        super().set_output_val(count, count)
+        super().add_out('Dict')
+        super().set_output_val(count+1,self.dict)
+       
+    def path_chosen(self, new_path):
+        print('path chosen')
+        self.dirpath = new_path
+        self.parseLog()
+        self.update()
+
+    def update_event(self, inp=-1):
+        print('update event')
+        self.dirpath = self.input(0)
+        self.parseLog()
+        self.update()
+        
+
+    def get_state(self):
+        print('get state - saving?')
+        return { 
+            **super().get_state(), 
+            'path': self.dirpath,
+        }
+
+    def set_state(self, data, version):
+        print('set state - loading?')
+        ##super().set_state(data, version)
+        #self.dirpath = data['path']
+        #print('dirpath'+self.dirpath)
+        #clientPat = self.dirpath + '/client_*'
+        #print('clientpat:'+clientPat)
+        #self.clients = glob.glob(clientPat)
+        #print(self.clients)
+        #self.numClients = data['numClients']
+        #print(self.numClients)
+        #self.extrinsicsLogName = data['extrin']
+        #
+        #i=0
+        #for (clientname) in self.clients :
+        #    theName = clientname
+        #    tokens = clientname.split("client_")
+        #    labelName = "c" + tokens[1]
+        #    super().set_output_val(i,theName)
+        #    i = i + 1
+        #super().set_output_val(i,self.extrinsicsLogName)
+        #print('done')
+
+     
+#GLViwer to rule them all
+gptype = plyfile.PlyData([], text=True, obj_info=["test obj_info"])
+class GLViewerDynamic(_DynamicPorts_Node):
+    title = 'GLViewerALL'
+    version = 'v0.1'
+   # main_widget_class = widgets.ButtonNode_MainWidget
+   # main_widget_pos = 'between ports'
+    # assume these are just paths to images and model
+
+    init_inputs = [
+     ]   
+    
+    def __init__(self, params):
+        super().__init__(params)
+        self.default_label = "INPUT................."
+        super().add_inp(self.default_label)
+        self.lastPinIndex = 0
+        # types we can handle
+        self.stringType = ""
+        self.intType = 0
+        self.floatType = 1.5
+        testim = np.ones((1,1,1),np.uint8)*255
+        self.plyfileType = gptype
+        self.imageType = CVImage(testim)
+        
+        
+    def doButtonPress(self):
+        print('doButtonPress - make command')
+    
+    def HandleInput(self, theInput) :
+        label = ""
+        print(type(theInput))
+        print(type(self.imageType))
+        if type(theInput) is type(self.stringType) :
+            label = "string"
+        elif type(theInput) is type(self.intType) :
+            label = "int"
+        elif type(theInput) is type(self.floatType) :
+            label = "float"
+        elif type(theInput) is type(self.imageType) :
+            label = "image"
+        elif type(theInput) is type(self.plyfileType) :
+            label = "plyfile"
+        return label
+    
+    def update_event(self, inp=-1):
+        if inp == self.lastPinIndex :
+            # check input type
+            # handle based on input type
+            label = self.HandleInput(self.input(inp))
+            stype = str(type(self.input(inp)))
+            super().rename_inp(inp, label)
+            super().add_inp(self.default_label)
+            self.lastPinIndex = self.lastPinIndex + 1
+        if inp == -1 :
+            self.doButtonPress()
+            
+        #ni = 0
+        #if self.input(0) != None :
+        #    self.cameraList = self.input(0)
+        #    ni = ni+1
+        #if self.input(1) != None :
+        #    self.extrinsicsPath = self.input(1)
+        #    ni = ni+1
+        #
+        #if ni == 2 :
+        #    print('ready')
+        #    self.doVoxelCarveTSDF()
+            
+
 nodes = [
     GLNode,
     Button_Node,
@@ -773,9 +1030,11 @@ nodes = [
     DisplayImg,
     ReadImage,
     MatteExtractor,
-    GetFilename,
+    GetFilename, GetDirname, 
     VoxelCarveTSDF,
     MeshIORead,
     GLMeshView,
     PlyfileRead,
+    ExtrinsicsLogParse,
+    GLViewerDynamic,
 ]
