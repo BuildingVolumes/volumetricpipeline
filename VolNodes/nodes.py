@@ -5,7 +5,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(__file__))
 from special_nodes import nodes as special_nodes
-
+from MacroNode import MacroNode
 class NodeBase(Node):
     def __init__(self, params):
         super().__init__(params)
@@ -31,4 +31,5 @@ class Hogue_Node(NodeBase):
 export_nodes(
     *special_nodes,
     Hogue_Node,
+    MacroNode
 )
