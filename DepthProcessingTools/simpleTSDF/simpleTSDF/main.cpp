@@ -19,6 +19,88 @@
 
 #include <k4a/k4a.h>
 
+#include <cxxopts.hpp>
+
+struct _ioptions {
+    std::string extrinsicsLogFilename;
+    std::string outputPlyFilename;
+    // multiple specified (Must be specified in same order for each) 
+    std::vector<std::string> intrinsicsPaths;
+    std::vector<std::string> rgbPaths;
+    std::vector<std::string> depthPaths;
+    std::vector<std::string> mattePaths;
+    int voxRes;
+}ioptions;
+
+/*
+Samples command arguments:
+--extrinsics extrinsics.log -i intrinsics0 -r rgb0 -d depth0 -m matte0 -i intrinsics1 -r rgb1 -d depth1 -m matte1 etc....
+*/
+cxxopts::ParseResult parse(int argc, char* argv[])
+{
+    try
+    {
+        cxxopts::Options options(argv[0], "VoxelCarveTSDF");
+
+        options
+            .add_options()
+            ("e,extrinsics", "path to extrinsics .log file"         , cxxopts::value<std::string>(ioptions.extrinsicsLogFilename))
+            ("i,intrinsics", "path to intrinsics file (multiple)"   , cxxopts::value<std::vector<std::string>>(ioptions.intrinsicsPaths))
+            ("r,rgb", "path to rgb image (multiple)"                , cxxopts::value<std::vector<std::string>>(ioptions.rgbPaths))
+            ("d,depth", "path to depth TIFF image (multiple)"       , cxxopts::value<std::vector<std::string>>(ioptions.depthPaths))
+            ("m,matte", "path to matte image (multiple)"            , cxxopts::value<std::vector<std::string>>(ioptions.mattePaths))
+            ("o,outputFilename", "path to output .ply file"         , cxxopts::value<std::string>(ioptions.outputPlyFilename)->default_value("./output.ply"))
+            ("v,voxres", "Voxel Resolution (32/64/128/256)"         , cxxopts::value<int>(ioptions.voxRes)->default_value("128"))
+            ("h,help", "print usage")
+            ;
+
+         auto result = options.parse(argc, argv);
+
+        if (result.count("help") || result.arguments().size() == 0)
+        {
+            std::cout << options.help() << std::endl;
+            exit(0);
+        }
+        return result;
+
+    }
+    catch (const cxxopts::OptionException& e)
+    {
+        std::cout << "error parsing options: " << e.what() << std::endl;
+        exit(1);
+    }
+}
+
+
+
+void PrintOptionsSelected() {
+    std::cout << "===============================================================" << std::endl;
+    std::cout << "SimpleTSDF:" << std::endl;
+    std::cout << "---------------------------------------------------------------" << std::endl;
+    std::cout << "Running with Options:" << std::endl;
+    std::cout << "- Extrinsics: " + ioptions.extrinsicsLogFilename << std::endl;
+    std::cout << "- Output PLY filename: " + ioptions.outputPlyFilename << std::endl;
+    std::cout << "- Voxel Resolution: " + ioptions.voxRes << std::endl;
+    int num = ioptions.intrinsicsPaths.size();
+    int numRGB = ioptions.rgbPaths.size();
+    int numDepth = ioptions.depthPaths.size();
+    int numMatte = ioptions.mattePaths.size();
+    if (num==0 || num != numRGB || num != numDepth || num != numMatte) {
+        std::cout << "ERROR: need to specify all Intrinsics|RGB|Depth|Matte paths for each camera" << std::endl;
+        exit(1);
+    }
+    std::cout << " - Num Cameras Specifed: " + std::to_string(num) << std::endl;
+    for (int i = 0; i < num; i++)
+    {
+        std::cout << " - Intrinsics:" + ioptions.intrinsicsPaths[i] << std::endl;
+        std::cout << " - rgbPath   :" + ioptions.rgbPaths[i] << std::endl;
+        std::cout << " - depthPath :" + ioptions.depthPaths[i] << std::endl;
+        std::cout << " - mattePath :" + ioptions.mattePaths[i] << std::endl;
+
+    }
+    std::cout << "===============================================================" << std::endl;
+}
+
 using namespace meshview;
 #define _VOXEL_CARVE 1
 
@@ -698,21 +780,100 @@ void TransformDepth(int cam, cv::Mat &old_depth, cv::Mat&new_depth, k4a_calibrat
     //k4a_transformation_destroy(transform);
 }
 
+
+
+// new main for connecting with VolNodes
+// all needed values should be passed in with arguments
+// processing only, no visuals
+// ALSO should only be 1 frame for now, expand later, let's do simplest single frame extraction solution
 int main(int argc, char** argv) {
+    auto result = parse(argc, argv);
+    auto arguments = result.arguments();
+    PrintOptionsSelected();
+    
     k4a_image_t k4a_pc=nullptr;
+    
     Eigen::Vector3d theCenter(0, 0, 0);
     float sz =2;
     Eigen::Vector3d theSize(sz,sz,sz);
-    int res = VOXRES;
+
+    int res = ioptions.voxRes;
     theVolume = new TSDFVolume(res,res,res, theCenter, theSize);
     theVolume->SetAllVoxels(VOXEL_UNSEEN, VOXEL_MAXDIST, 0);
     theVolume->ComputeAllVoxelCenters();   
 
+    std::string fnameExtrinsics = ioptions.extrinsicsLogFilename;
+
+    std::vector<std::string> pathsINTRINSICS = ioptions.intrinsicsPaths; // set from inputs
+    //std::vector<int>cameraIDS; //??
+    for (int i = 0; i < pathsINTRINSICS.size(); i++)
+    {
+        k4a_transformation_t transform = 0;
+        g_transforms.push_back(transform);
+    }
+    
+    LoadExtrinsics(fnameExtrinsics);
+    for (int i = 0; i < 6; i++) {
+        LoadIntrinsics(pathsINTRINSICS[i], i);
+    }
+    g_tris.erase(g_tris.begin(), g_tris.end());
+    g_tris.shrink_to_fit();
+
+    theVolume->reset();
+    
+    std::vector<std::string> pathsRGB = ioptions.rgbPaths; // set from inputs
+    std::vector<std::string> pathsMATTE = ioptions.mattePaths; // set from inputs
+    std::vector<std::string> pathsDEPTH = ioptions.depthPaths; // set from inputs (TIFF)
+    
+    /* load in all of the files */
+    for (int CAMERA = 0; CAMERA < pathsRGB.size(); CAMERA++)
+    {
+        int CID = CAMERA;
+        cv::Mat imRGB, imMATTE, imDEPTH16, imDEPTH16_transformed;
+        imRGB = cv::imread(pathsRGB[CAMERA]);
+        imMATTE = cv::imread(pathsMATTE[CAMERA]);
+        imDEPTH16 = cv::imread(pathsDEPTH[CAMERA], cv::IMREAD_ANYDEPTH); // 16bit short
+
+       /* transform depth to RGB size */
+        imDEPTH16_transformed = cv::Mat::zeros(imRGB.rows, imRGB.cols, CV_16UC1);
+      
+        TransformDepth(CAMERA,imDEPTH16, imDEPTH16_transformed, k4aCalibrations[CID], k4a_pc);
+
+        CarveWithSilhouette(theVolume, intrinsics[CID], extrinsics[CID], imRGB, imMATTE, imDEPTH16_transformed, k4a_pc);
+        
+        // clean up memory!!!!!!
+        imRGB.release();
+        imMATTE.release();
+        imDEPTH16.release();
+        imDEPTH16_transformed.release();
+    }
+    double isolevel = 1.0f / theVolume->res[0] / 2;
+    int n = theVolume->PolygoniseMC(isolevel, g_tris);
+    WritePLY(ioptions.outputPlyFilename, "", g_tris);
+}
+
+
+
+
+int oldmain(int argc, char** argv) {
+ 
+
+
+
+    k4a_image_t k4a_pc = nullptr;
+    Eigen::Vector3d theCenter(0, 0, 0);
+    float sz = 2;
+    Eigen::Vector3d theSize(sz, sz, sz);
+    int res = VOXRES;
+    theVolume = new TSDFVolume(res, res, res, theCenter, theSize);
+    theVolume->SetAllVoxels(VOXEL_UNSEEN, VOXEL_MAXDIST, 0);
+    theVolume->ComputeAllVoxelCenters();
+
     viewer.draw_axes = true;
-    viewer.light_pos = Vector3f(3,3,0);
+    viewer.light_pos = Vector3f(3, 3, 0);
     // Adjust camera
     viewer.camera.dist_to_center = 5.f;
-   
+
     /* carve */
     // load in a matte, rgb, and depth image
     std::string path = "C:\\Users\\hogue\\Desktop\\DATA\\Nov4-Take1_0\\";
@@ -755,11 +916,11 @@ int main(int argc, char** argv) {
     cameraIDS.push_back(camID5);
 
     k4a_transformation_t transform0 = 0;
-    k4a_transformation_t transform1=0 ;
-    k4a_transformation_t transform2=0;
-    k4a_transformation_t transform3=0;
-    k4a_transformation_t transform4=0;
-    k4a_transformation_t transform5=0;
+    k4a_transformation_t transform1 = 0;
+    k4a_transformation_t transform2 = 0;
+    k4a_transformation_t transform3 = 0;
+    k4a_transformation_t transform4 = 0;
+    k4a_transformation_t transform5 = 0;
     g_transforms.push_back(transform0);
     g_transforms.push_back(transform1);
     g_transforms.push_back(transform2);
@@ -773,9 +934,9 @@ int main(int argc, char** argv) {
     }
     float percentage = 0;
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-   
-    for(int F=startFRAME;F<=endFRAME;F++){
-        percentage = ((float)(F-startFRAME) / (float)(endFRAME - startFRAME)) * 100.f;
+
+    for (int F = startFRAME; F <= endFRAME; F++) {
+        percentage = ((float)(F - startFRAME) / (float)(endFRAME - startFRAME)) * 100.f;
         std::cout << percentage << "%" << std::endl;
         // reset things for this frame
         //g_tris.resize(0);
@@ -786,43 +947,43 @@ int main(int argc, char** argv) {
 
 
 
-        std::string fnameRGB0 = "client_0\\Color_"+std::to_string(F)+".jpg";
+        std::string fnameRGB0 = "client_0\\Color_" + std::to_string(F) + ".jpg";
         std::string fnameMATTE0 = "client_0\\Color_" + std::to_string(F) + ".matte.png";
         std::string fnameDEPTH0 = "client_0\\Depth_" + std::to_string(F) + ".tiff";// 
 
         std::string fnameRGB1 = "client_1\\Color_" + std::to_string(F) + ".jpg";
         std::string fnameMATTE1 = "client_1\\Color_" + std::to_string(F) + ".matte.png";
         std::string fnameDEPTH1 = "client_1\\Depth_" + std::to_string(F) + ".tiff";// 
-       
+
         std::string fnameRGB2 = "client_2\\Color_" + std::to_string(F) + ".jpg";
         std::string fnameMATTE2 = "client_2\\Color_" + std::to_string(F) + ".matte.png";
         std::string fnameDEPTH2 = "client_2\\Depth_" + std::to_string(F) + ".tiff";// 
-       
+
         std::string fnameRGB3 = "client_3\\Color_" + std::to_string(F) + ".jpg";
         std::string fnameMATTE3 = "client_3\\Color_" + std::to_string(F) + ".matte.png";
         std::string fnameDEPTH3 = "client_3\\Depth_" + std::to_string(F) + ".tiff";// 
-      
+
         std::string fnameRGB4 = "client_4\\Color_" + std::to_string(F) + ".jpg";
         std::string fnameMATTE4 = "client_4\\Color_" + std::to_string(F) + ".matte.png";
         std::string fnameDEPTH4 = "client_4\\Depth_" + std::to_string(F) + ".tiff";// 
-       
+
         std::string fnameRGB5 = "client_5\\Color_" + std::to_string(F) + ".jpg";
         std::string fnameMATTE5 = "client_5\\Color_" + std::to_string(F) + ".matte.png";
         std::string fnameDEPTH5 = "client_5\\Depth_" + std::to_string(F) + ".tiff";// 
-      
+
         std::vector<std::string> pathsRGB;
         std::vector<std::string> pathsMATTE;
         std::vector<std::string> pathsDEPTH;
-    
+
         pathsRGB.push_back(path + fnameRGB0);
         pathsMATTE.push_back(path + fnameMATTE0);
         pathsDEPTH.push_back(path + fnameDEPTH0);
-      
+
         // front side
         pathsRGB.push_back(path + fnameRGB1);
         pathsMATTE.push_back(path + fnameMATTE1);
         pathsDEPTH.push_back(path + fnameDEPTH1);
-  
+
         // back angle
         pathsRGB.push_back(path + fnameRGB2);
         pathsMATTE.push_back(path + fnameMATTE2);
@@ -832,16 +993,16 @@ int main(int argc, char** argv) {
         pathsRGB.push_back(path + fnameRGB3);
         pathsMATTE.push_back(path + fnameMATTE3);
         pathsDEPTH.push_back(path + fnameDEPTH3);
- 
+
         pathsRGB.push_back(path + fnameRGB4);
         pathsMATTE.push_back(path + fnameMATTE4);
         pathsDEPTH.push_back(path + fnameDEPTH4);
-      
+
         // backside
         pathsRGB.push_back(path + fnameRGB5);
         pathsMATTE.push_back(path + fnameMATTE5);
         pathsDEPTH.push_back(path + fnameDEPTH5);
-       
+
         /* load in all of the files */
         for (int CAMERA = 0; CAMERA < pathsRGB.size(); CAMERA++)
         {
@@ -856,8 +1017,8 @@ int main(int argc, char** argv) {
 
            /* transform depth to RGB size */
             imDEPTH16_transformed = cv::Mat::zeros(imRGB.rows, imRGB.cols, CV_16UC1);
-          
-            TransformDepth(CAMERA,imDEPTH16, imDEPTH16_transformed, k4aCalibrations[CID], k4a_pc);
+
+            TransformDepth(CAMERA, imDEPTH16, imDEPTH16_transformed, k4aCalibrations[CID], k4a_pc);
 
 #ifdef _VOXEL_CARVE       
             CarveWithSilhouette(theVolume, intrinsics[CID], extrinsics[CID], imRGB, imMATTE, imDEPTH16_transformed, k4a_pc);
@@ -871,15 +1032,15 @@ int main(int argc, char** argv) {
             imMATTE.release();
             imDEPTH16.release();
             imDEPTH16_transformed.release();
-           
+
 
             //k4a_image_release(k4a_pc);
         }
 #ifdef _VOXEL_CARVE 
-        if(VOXSMOOTH>0)theVolume->Smooth(VOXSMOOTH);
+        if (VOXSMOOTH > 0)theVolume->Smooth(VOXSMOOTH);
         double isolevel = 1.0f / theVolume->res[0] / 2;
         int n = theVolume->PolygoniseMC(isolevel, g_tris);
-       // AddVolumeToViewer(theVolume);   // lol, this accumulates all frames into the viewer
+        // AddVolumeToViewer(theVolume);   // lol, this accumulates all frames into the viewer
 #else
         //AddMeshToViewer();
 #endif
@@ -887,15 +1048,15 @@ int main(int argc, char** argv) {
         std::string obj_postfix = std::to_string(frameNum) + ".ply";
 
         WritePLY(obj_prefix + obj_postfix, obj_filepath, g_tris);
-//        WriteOBJ(obj_prefix + obj_postfix, obj_filepath, g_tris);
-    
+        //        WriteOBJ(obj_prefix + obj_postfix, obj_filepath, g_tris);
+
     }
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     std::cout << "Processing Time = " << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count() << "[s]" << std::endl;
     // VIEWER STUFF
 
 #ifdef _VOXEL_CARVE 
-       AddVolumeToViewer(theVolume);  // should only view the last one
+    AddVolumeToViewer(theVolume);  // should only view the last one
 #else
     AddMeshToViewer();
 #endif
@@ -903,10 +1064,10 @@ int main(int argc, char** argv) {
     viewer.on_key = [&](int button, input::Action action, int mods) -> bool {
         if (action != input::Action::release) {
             if (button == 'd') {
-               
+
             }
             else if (button == 'e') {
-                
+
 
             }
         }
@@ -916,7 +1077,7 @@ int main(int argc, char** argv) {
     viewer.on_loop = [&]() -> bool {
         return false;  // True to update all meshes and camera
     };
-    
+
     viewer.on_gui = [&]() -> bool {
         ImGui::SetNextWindowSize(ImVec2(200, 100));
         ImGui::Begin("Hello");

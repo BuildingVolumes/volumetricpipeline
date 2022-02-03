@@ -77,7 +77,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\hogue\Documents\GitHub\volumetricpipeline\3rdparty\include;C:\Users\hogue\Documents\kinect\eigen;C:\Users\hogue\Documents\GitHub\volumetricpipeline\3rdparty\include\stb;C:\opencv\latest\include;C:\Program Files\Azure Kinect SDK v1.4.1\sdk\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\hogue\Documents\GitHub\volumetricpipeline\3rdparty\include;C:\Users\hogue\Documents\kinect\eigen;C:\Users\hogue\Documents\GitHub\volumetricpipeline\3rdparty\include\stb;C:\opencv\latest\include;C:\Program Files\Azure Kinect SDK v1.4.1\sdk\include;C:\Users\hogue\Documents\GitHub\volumetricpipeline\CalibrationTools\CalibrationTools\3rdparty\cxxopts-2.2.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>

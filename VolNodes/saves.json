@@ -1,0 +1,981 @@
+{
+    "general info": {
+        "type": "Ryven project file",
+        "ryven version": "v3.1"
+    },
+    "required packages": [
+        {
+            "name": "VolNodes",
+            "dir": "C:/Users/hogue/Documents/GitHub/volumetricpipeline/VolNodes"
+        }
+    ],
+    "scripts": [
+        {
+            "title": "hello world",
+            "variables": {},
+            "flow": {
+                "algorithm mode": "data",
+                "nodes": [
+                    {
+                        "identifier": "VolNodes.VoxelCarveTSDF",
+                        "version": "v0.1",
+                        "state data": "gASVJAAAAAAAAAB9lCiMCm51bSBpbnB1dHOUSwmMC251bSBvdXRwdXRzlEsAdS4=",
+                        "additional data": {
+                            "special actions": {
+                                "add input": {
+                                    "method": "add_inp"
+                                },
+                                "add output": {
+                                    "method": "add_out"
+                                },
+                                "remove input 0": {
+                                    "method": "remove_inp",
+                                    "data": 0
+                                },
+                                "remove input 1": {
+                                    "method": "remove_inp",
+                                    "data": 1
+                                },
+                                "remove input 2": {
+                                    "method": "remove_inp",
+                                    "data": 2
+                                },
+                                "remove input 3": {
+                                    "method": "remove_inp",
+                                    "data": 3
+                                },
+                                "remove input 4": {
+                                    "method": "remove_inp",
+                                    "data": 4
+                                },
+                                "remove input 5": {
+                                    "method": "remove_inp",
+                                    "data": 5
+                                },
+                                "remove input 6": {
+                                    "method": "remove_inp",
+                                    "data": 6
+                                },
+                                "remove input 7": {
+                                    "method": "remove_inp",
+                                    "data": 7
+                                },
+                                "remove input 8": {
+                                    "method": "remove_inp",
+                                    "data": 8
+                                }
+                            },
+                            "display title": "VoxelCarveTSDF"
+                        },
+                        "inputs": [
+                            {
+                                "type": "data",
+                                "label": "Extrinsics",
+                                "GID": 8,
+                                "has widget": false
+                            },
+                            {
+                                "type": "data",
+                                "label": "OutputDir",
+                                "GID": 9,
+                                "has widget": false
+                            },
+                            {
+                                "type": "data",
+                                "label": "Cam0",
+                                "GID": 10,
+                                "has widget": false
+                            },
+                            {
+                                "type": "data",
+                                "label": "Cam1",
+                                "GID": 90,
+                                "has widget": false
+                            },
+                            {
+                                "type": "data",
+                                "label": "Cam2",
+                                "GID": 92,
+                                "has widget": false
+                            },
+                            {
+                                "type": "data",
+                                "label": "Cam3",
+                                "GID": 94,
+                                "has widget": false
+                            },
+                            {
+                                "type": "data",
+                                "label": "Cam4",
+                                "GID": 96,
+                                "has widget": false
+                            },
+                            {
+                                "type": "data",
+                                "label": "Cam5",
+                                "GID": 98,
+                                "has widget": false
+                            },
+                            {
+                                "type": "data",
+                                "label": "Cam6",
+                                "GID": 100,
+                                "val": "gAROLg==",
+                                "has widget": false
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "type": "data",
+                                "label": "",
+                                "GID": 11
+                            }
+                        ],
+                        "GID": 7,
+                        "pos x": 1219.36922248044,
+                        "pos y": 590.8946801293246,
+                        "main widget data": "gAR9lC4=",
+                        "unconnected ports hidden": false,
+                        "collapsed": false
+                    },
+                    {
+                        "identifier": "VolNodes.Livescan3dDir",
+                        "version": "v0.1",
+                        "state data": "gASV0wAAAAAAAAB9lCiMCm51bSBpbnB1dHOUSwCMC251bSBvdXRwdXRzlEsHjARwYXRolIw6Li5cLi5cLi5cLi5cLi5cLi5cLi5cLi5cRGVza3RvcFxEQVRBXGF1ZzE5X2hvZ3VlLXJhd3N5bmNfMJSMBmV4dHJpbpSMUC4uXC4uXC4uXC4uXC4uXC4uXC4uXC4uXERlc2t0b3BcREFUQVxhdWcxOV9ob2d1ZS1yYXdzeW5jXzBcRXh0cmluc2ljc19PcGVuM0QubG9nlIwKbnVtQ2xpZW50c5RLBnUu",
+                        "additional data": {
+                            "special actions": {
+                                "add input": {
+                                    "method": "add_inp"
+                                },
+                                "add output": {
+                                    "method": "add_out"
+                                },
+                                "make executable": {
+                                    "method": "action_make_executable"
+                                },
+                                "remove output 0": {
+                                    "method": "remove_out",
+                                    "data": 0
+                                },
+                                "remove output 1": {
+                                    "method": "remove_out",
+                                    "data": 1
+                                },
+                                "remove output 2": {
+                                    "method": "remove_out",
+                                    "data": 2
+                                },
+                                "remove output 3": {
+                                    "method": "remove_out",
+                                    "data": 3
+                                },
+                                "remove output 4": {
+                                    "method": "remove_out",
+                                    "data": 4
+                                },
+                                "remove output 5": {
+                                    "method": "remove_out",
+                                    "data": 5
+                                },
+                                "remove output 6": {
+                                    "method": "remove_out",
+                                    "data": 6
+                                }
+                            },
+                            "display title": "Livescan3d Dir"
+                        },
+                        "inputs": [
+                            {
+                                "type": "data",
+                                "label": "path",
+                                "GID": 13,
+                                "val": "gAROLg==",
+                                "has widget": true,
+                                "widget name": "path input",
+                                "widget pos": "below",
+                                "widget data": "gASVSAAAAAAAAAB9lIwEcGF0aJSMOi4uXC4uXC4uXC4uXC4uXC4uXC4uXC4uXERlc2t0b3BcREFUQVxhdWcxOV9ob2d1ZS1yYXdzeW5jXzCUcy4="
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "type": "data",
+                                "label": "c0",
+                                "GID": 14
+                            },
+                            {
+                                "type": "data",
+                                "label": "c1",
+                                "GID": 15
+                            },
+                            {
+                                "type": "data",
+                                "label": "c2",
+                                "GID": 16
+                            },
+                            {
+                                "type": "data",
+                                "label": "c3",
+                                "GID": 17
+                            },
+                            {
+                                "type": "data",
+                                "label": "c4",
+                                "GID": 18
+                            },
+                            {
+                                "type": "data",
+                                "label": "c5",
+                                "GID": 19
+                            },
+                            {
+                                "type": "data",
+                                "label": "Extrin",
+                                "GID": 20
+                            }
+                        ],
+                        "GID": 12,
+                        "pos x": 186.0,
+                        "pos y": 436.0,
+                        "unconnected ports hidden": false,
+                        "collapsed": false
+                    },
+                    {
+                        "identifier": "VolNodes.GetDirname",
+                        "version": null,
+                        "state data": "gASVUAAAAAAAAAB9lIwEcGF0aJSMQi4uXC4uXC4uXC4uXC4uXC4uXC4uXC4uXERlc2t0b3BcREFUQVxhdWcxOV9ob2d1ZS1yYXdzeW5jXzBccGx5LW91dJRzLg==",
+                        "additional data": {
+                            "special actions": {
+                                "make executable": {
+                                    "method": "action_make_executable"
+                                }
+                            },
+                            "display title": "GetDirname"
+                        },
+                        "inputs": [
+                            {
+                                "type": "data",
+                                "label": "path",
+                                "GID": 22,
+                                "val": "gAROLg==",
+                                "has widget": true,
+                                "widget name": "path input",
+                                "widget pos": "below",
+                                "widget data": "gASVUAAAAAAAAAB9lIwEcGF0aJSMQi4uXC4uXC4uXC4uXC4uXC4uXC4uXC4uXERlc2t0b3BcREFUQVxhdWcxOV9ob2d1ZS1yYXdzeW5jXzBccGx5LW91dJRzLg=="
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "type": "data",
+                                "label": "",
+                                "GID": 23
+                            }
+                        ],
+                        "GID": 21,
+                        "pos x": 1191.0,
+                        "pos y": 324.0,
+                        "unconnected ports hidden": false,
+                        "collapsed": true
+                    },
+                    {
+                        "identifier": "VolNodes.CameraDirNode",
+                        "version": "v0.1",
+                        "state data": "gASVJAAAAAAAAAB9lCiMCm51bSBpbnB1dHOUSwCMC251bSBvdXRwdXRzlEsFdS4=",
+                        "additional data": {
+                            "special actions": {
+                                "add input": {
+                                    "method": "add_inp"
+                                },
+                                "add output": {
+                                    "method": "add_out"
+                                },
+                                "remove output 0": {
+                                    "method": "remove_out",
+                                    "data": 0
+                                },
+                                "remove output 1": {
+                                    "method": "remove_out",
+                                    "data": 1
+                                },
+                                "remove output 2": {
+                                    "method": "remove_out",
+                                    "data": 2
+                                },
+                                "remove output 3": {
+                                    "method": "remove_out",
+                                    "data": 3
+                                },
+                                "remove output 4": {
+                                    "method": "remove_out",
+                                    "data": 4
+                                }
+                            },
+                            "display title": "CameraDirNode"
+                        },
+                        "inputs": [
+                            {
+                                "type": "data",
+                                "label": "",
+                                "GID": 32,
+                                "has widget": false
+                            },
+                            {
+                                "type": "data",
+                                "label": "index",
+                                "GID": 33,
+                                "dtype": "DType.Integer",
+                                "dtype state": "gASVMgAAAAAAAAB9lCiMB2RlZmF1bHSUSwCMA3ZhbJRLAIwDZG9jlIwAlIwGYm91bmRzlEsBTQ8nhpR1Lg==",
+                                "has widget": true,
+                                "widget data": "gASVDAAAAAAAAAB9lIwDdmFslEtNcy4="
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "type": "data",
+                                "label": "Intrinsics",
+                                "GID": 27
+                            },
+                            {
+                                "type": "data",
+                                "label": "RGB",
+                                "GID": 28
+                            },
+                            {
+                                "type": "data",
+                                "label": "Depth",
+                                "GID": 29
+                            },
+                            {
+                                "type": "data",
+                                "label": "Matte",
+                                "GID": 30
+                            },
+                            {
+                                "type": "data",
+                                "label": "Dict",
+                                "GID": 31
+                            }
+                        ],
+                        "GID": 26,
+                        "pos x": 545.0,
+                        "pos y": 61.0,
+                        "unconnected ports hidden": false,
+                        "collapsed": false
+                    },
+                    {
+                        "identifier": "VolNodes.CameraDirNode",
+                        "version": "v0.1",
+                        "state data": "gASVJAAAAAAAAAB9lCiMCm51bSBpbnB1dHOUSwCMC251bSBvdXRwdXRzlEsFdS4=",
+                        "additional data": {
+                            "special actions": {
+                                "add input": {
+                                    "method": "add_inp"
+                                },
+                                "add output": {
+                                    "method": "add_out"
+                                },
+                                "remove output 0": {
+                                    "method": "remove_out",
+                                    "data": 0
+                                },
+                                "remove output 1": {
+                                    "method": "remove_out",
+                                    "data": 1
+                                },
+                                "remove output 2": {
+                                    "method": "remove_out",
+                                    "data": 2
+                                },
+                                "remove output 3": {
+                                    "method": "remove_out",
+                                    "data": 3
+                                },
+                                "remove output 4": {
+                                    "method": "remove_out",
+                                    "data": 4
+                                }
+                            },
+                            "display title": "CameraDirNode"
+                        },
+                        "inputs": [
+                            {
+                                "type": "data",
+                                "label": "",
+                                "GID": 40,
+                                "has widget": false
+                            },
+                            {
+                                "type": "data",
+                                "label": "index",
+                                "GID": 41,
+                                "dtype": "DType.Integer",
+                                "dtype state": "gASVMgAAAAAAAAB9lCiMB2RlZmF1bHSUSwCMA3ZhbJRLAIwDZG9jlIwAlIwGYm91bmRzlEsBTQ8nhpR1Lg==",
+                                "has widget": true,
+                                "widget data": "gASVDAAAAAAAAAB9lIwDdmFslEtNcy4="
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "type": "data",
+                                "label": "Intrinsics",
+                                "GID": 35
+                            },
+                            {
+                                "type": "data",
+                                "label": "RGB",
+                                "GID": 36
+                            },
+                            {
+                                "type": "data",
+                                "label": "Depth",
+                                "GID": 37
+                            },
+                            {
+                                "type": "data",
+                                "label": "Matte",
+                                "GID": 38
+                            },
+                            {
+                                "type": "data",
+                                "label": "Dict",
+                                "GID": 39
+                            }
+                        ],
+                        "GID": 34,
+                        "pos x": 542.0000000000001,
+                        "pos y": 194.32065475331396,
+                        "unconnected ports hidden": false,
+                        "collapsed": false
+                    },
+                    {
+                        "identifier": "VolNodes.CameraDirNode",
+                        "version": "v0.1",
+                        "state data": "gASVJAAAAAAAAAB9lCiMCm51bSBpbnB1dHOUSwCMC251bSBvdXRwdXRzlEsFdS4=",
+                        "additional data": {
+                            "special actions": {
+                                "add input": {
+                                    "method": "add_inp"
+                                },
+                                "add output": {
+                                    "method": "add_out"
+                                },
+                                "remove output 0": {
+                                    "method": "remove_out",
+                                    "data": 0
+                                },
+                                "remove output 1": {
+                                    "method": "remove_out",
+                                    "data": 1
+                                },
+                                "remove output 2": {
+                                    "method": "remove_out",
+                                    "data": 2
+                                },
+                                "remove output 3": {
+                                    "method": "remove_out",
+                                    "data": 3
+                                },
+                                "remove output 4": {
+                                    "method": "remove_out",
+                                    "data": 4
+                                }
+                            },
+                            "display title": "CameraDirNode"
+                        },
+                        "inputs": [
+                            {
+                                "type": "data",
+                                "label": "",
+                                "GID": 48,
+                                "has widget": false
+                            },
+                            {
+                                "type": "data",
+                                "label": "index",
+                                "GID": 49,
+                                "dtype": "DType.Integer",
+                                "dtype state": "gASVMgAAAAAAAAB9lCiMB2RlZmF1bHSUSwCMA3ZhbJRLAIwDZG9jlIwAlIwGYm91bmRzlEsBTQ8nhpR1Lg==",
+                                "has widget": true,
+                                "widget data": "gASVDAAAAAAAAAB9lIwDdmFslEtNcy4="
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "type": "data",
+                                "label": "Intrinsics",
+                                "GID": 43
+                            },
+                            {
+                                "type": "data",
+                                "label": "RGB",
+                                "GID": 44
+                            },
+                            {
+                                "type": "data",
+                                "label": "Depth",
+                                "GID": 45
+                            },
+                            {
+                                "type": "data",
+                                "label": "Matte",
+                                "GID": 46
+                            },
+                            {
+                                "type": "data",
+                                "label": "Dict",
+                                "GID": 47
+                            }
+                        ],
+                        "GID": 42,
+                        "pos x": 543.0,
+                        "pos y": 323.0,
+                        "unconnected ports hidden": false,
+                        "collapsed": false
+                    },
+                    {
+                        "identifier": "VolNodes.CameraDirNode",
+                        "version": "v0.1",
+                        "state data": "gASVJAAAAAAAAAB9lCiMCm51bSBpbnB1dHOUSwCMC251bSBvdXRwdXRzlEsFdS4=",
+                        "additional data": {
+                            "special actions": {
+                                "add input": {
+                                    "method": "add_inp"
+                                },
+                                "add output": {
+                                    "method": "add_out"
+                                },
+                                "remove output 0": {
+                                    "method": "remove_out",
+                                    "data": 0
+                                },
+                                "remove output 1": {
+                                    "method": "remove_out",
+                                    "data": 1
+                                },
+                                "remove output 2": {
+                                    "method": "remove_out",
+                                    "data": 2
+                                },
+                                "remove output 3": {
+                                    "method": "remove_out",
+                                    "data": 3
+                                },
+                                "remove output 4": {
+                                    "method": "remove_out",
+                                    "data": 4
+                                }
+                            },
+                            "display title": "CameraDirNode"
+                        },
+                        "inputs": [
+                            {
+                                "type": "data",
+                                "label": "",
+                                "GID": 56,
+                                "has widget": false
+                            },
+                            {
+                                "type": "data",
+                                "label": "index",
+                                "GID": 57,
+                                "dtype": "DType.Integer",
+                                "dtype state": "gASVMgAAAAAAAAB9lCiMB2RlZmF1bHSUSwCMA3ZhbJRLAIwDZG9jlIwAlIwGYm91bmRzlEsBTQ8nhpR1Lg==",
+                                "has widget": true,
+                                "widget data": "gASVDAAAAAAAAAB9lIwDdmFslEtNcy4="
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "type": "data",
+                                "label": "Intrinsics",
+                                "GID": 51
+                            },
+                            {
+                                "type": "data",
+                                "label": "RGB",
+                                "GID": 52
+                            },
+                            {
+                                "type": "data",
+                                "label": "Depth",
+                                "GID": 53
+                            },
+                            {
+                                "type": "data",
+                                "label": "Matte",
+                                "GID": 54
+                            },
+                            {
+                                "type": "data",
+                                "label": "Dict",
+                                "GID": 55
+                            }
+                        ],
+                        "GID": 50,
+                        "pos x": 538.0,
+                        "pos y": 461.0,
+                        "unconnected ports hidden": false,
+                        "collapsed": false
+                    },
+                    {
+                        "identifier": "VolNodes.CameraDirNode",
+                        "version": "v0.1",
+                        "state data": "gASVJAAAAAAAAAB9lCiMCm51bSBpbnB1dHOUSwCMC251bSBvdXRwdXRzlEsFdS4=",
+                        "additional data": {
+                            "special actions": {
+                                "add input": {
+                                    "method": "add_inp"
+                                },
+                                "add output": {
+                                    "method": "add_out"
+                                },
+                                "remove output 0": {
+                                    "method": "remove_out",
+                                    "data": 0
+                                },
+                                "remove output 1": {
+                                    "method": "remove_out",
+                                    "data": 1
+                                },
+                                "remove output 2": {
+                                    "method": "remove_out",
+                                    "data": 2
+                                },
+                                "remove output 3": {
+                                    "method": "remove_out",
+                                    "data": 3
+                                },
+                                "remove output 4": {
+                                    "method": "remove_out",
+                                    "data": 4
+                                }
+                            },
+                            "display title": "CameraDirNode"
+                        },
+                        "inputs": [
+                            {
+                                "type": "data",
+                                "label": "",
+                                "GID": 64,
+                                "has widget": false
+                            },
+                            {
+                                "type": "data",
+                                "label": "index",
+                                "GID": 65,
+                                "dtype": "DType.Integer",
+                                "dtype state": "gASVMgAAAAAAAAB9lCiMB2RlZmF1bHSUSwCMA3ZhbJRLAIwDZG9jlIwAlIwGYm91bmRzlEsBTQ8nhpR1Lg==",
+                                "has widget": true,
+                                "widget data": "gASVDAAAAAAAAAB9lIwDdmFslEtNcy4="
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "type": "data",
+                                "label": "Intrinsics",
+                                "GID": 59
+                            },
+                            {
+                                "type": "data",
+                                "label": "RGB",
+                                "GID": 60
+                            },
+                            {
+                                "type": "data",
+                                "label": "Depth",
+                                "GID": 61
+                            },
+                            {
+                                "type": "data",
+                                "label": "Matte",
+                                "GID": 62
+                            },
+                            {
+                                "type": "data",
+                                "label": "Dict",
+                                "GID": 63
+                            }
+                        ],
+                        "GID": 58,
+                        "pos x": 549.0,
+                        "pos y": 596.0,
+                        "unconnected ports hidden": false,
+                        "collapsed": false
+                    },
+                    {
+                        "identifier": "VolNodes.CameraDirNode",
+                        "version": "v0.1",
+                        "state data": "gASVJAAAAAAAAAB9lCiMCm51bSBpbnB1dHOUSwCMC251bSBvdXRwdXRzlEsFdS4=",
+                        "additional data": {
+                            "special actions": {
+                                "add input": {
+                                    "method": "add_inp"
+                                },
+                                "add output": {
+                                    "method": "add_out"
+                                },
+                                "remove output 0": {
+                                    "method": "remove_out",
+                                    "data": 0
+                                },
+                                "remove output 1": {
+                                    "method": "remove_out",
+                                    "data": 1
+                                },
+                                "remove output 2": {
+                                    "method": "remove_out",
+                                    "data": 2
+                                },
+                                "remove output 3": {
+                                    "method": "remove_out",
+                                    "data": 3
+                                },
+                                "remove output 4": {
+                                    "method": "remove_out",
+                                    "data": 4
+                                }
+                            },
+                            "display title": "CameraDirNode"
+                        },
+                        "inputs": [
+                            {
+                                "type": "data",
+                                "label": "",
+                                "GID": 72,
+                                "has widget": false
+                            },
+                            {
+                                "type": "data",
+                                "label": "index",
+                                "GID": 73,
+                                "dtype": "DType.Integer",
+                                "dtype state": "gASVMgAAAAAAAAB9lCiMB2RlZmF1bHSUSwCMA3ZhbJRLAIwDZG9jlIwAlIwGYm91bmRzlEsBTQ8nhpR1Lg==",
+                                "has widget": true,
+                                "widget data": "gASVDAAAAAAAAAB9lIwDdmFslEtNcy4="
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "type": "data",
+                                "label": "Intrinsics",
+                                "GID": 67
+                            },
+                            {
+                                "type": "data",
+                                "label": "RGB",
+                                "GID": 68
+                            },
+                            {
+                                "type": "data",
+                                "label": "Depth",
+                                "GID": 69
+                            },
+                            {
+                                "type": "data",
+                                "label": "Matte",
+                                "GID": 70
+                            },
+                            {
+                                "type": "data",
+                                "label": "Dict",
+                                "GID": 71
+                            }
+                        ],
+                        "GID": 66,
+                        "pos x": 547.0,
+                        "pos y": 740.0,
+                        "unconnected ports hidden": false,
+                        "collapsed": false
+                    },
+                    {
+                        "identifier": "built_in.Val_Node",
+                        "version": "v0.1",
+                        "state data": "gASVDAAAAAAAAAB9lIwDdmFslEtNcy4=",
+                        "additional data": {
+                            "special actions": {
+                                "edit val via dialog": {
+                                    "method": "action_edit_via_dialog"
+                                }
+                            },
+                            "display title": ""
+                        },
+                        "inputs": [
+                            {
+                                "type": "data",
+                                "label": "",
+                                "GID": 81,
+                                "val": "gARLTS4=",
+                                "dtype": "DType.Data",
+                                "dtype state": "gASVNgAAAAAAAAB9lCiMB2RlZmF1bHSUTowDdmFslEtNjANkb2OUjACUjAZib3VuZHOUTowEc2l6ZZSMAXOUdS4=",
+                                "has widget": true,
+                                "widget data": "gASVEAAAAAAAAAB9lIwEdGV4dJSMAjc3lHMu"
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "type": "data",
+                                "label": "",
+                                "GID": 82
+                            }
+                        ],
+                        "GID": 80,
+                        "pos x": 250.91165189524756,
+                        "pos y": 744.1252421403175,
+                        "unconnected ports hidden": false,
+                        "collapsed": false
+                    }
+                ],
+                "connections": [
+                    {
+                        "GID": 74,
+                        "parent node index": 1,
+                        "output port index": 0,
+                        "connected node": 3,
+                        "connected input port index": 0
+                    },
+                    {
+                        "GID": 75,
+                        "parent node index": 1,
+                        "output port index": 1,
+                        "connected node": 4,
+                        "connected input port index": 0
+                    },
+                    {
+                        "GID": 76,
+                        "parent node index": 1,
+                        "output port index": 2,
+                        "connected node": 5,
+                        "connected input port index": 0
+                    },
+                    {
+                        "GID": 77,
+                        "parent node index": 1,
+                        "output port index": 3,
+                        "connected node": 6,
+                        "connected input port index": 0
+                    },
+                    {
+                        "GID": 78,
+                        "parent node index": 1,
+                        "output port index": 4,
+                        "connected node": 7,
+                        "connected input port index": 0
+                    },
+                    {
+                        "GID": 79,
+                        "parent node index": 1,
+                        "output port index": 5,
+                        "connected node": 8,
+                        "connected input port index": 0
+                    },
+                    {
+                        "GID": 25,
+                        "parent node index": 1,
+                        "output port index": 6,
+                        "connected node": 0,
+                        "connected input port index": 0
+                    },
+                    {
+                        "GID": 24,
+                        "parent node index": 2,
+                        "output port index": 0,
+                        "connected node": 0,
+                        "connected input port index": 1
+                    },
+                    {
+                        "GID": 89,
+                        "parent node index": 3,
+                        "output port index": 4,
+                        "connected node": 0,
+                        "connected input port index": 2
+                    },
+                    {
+                        "GID": 91,
+                        "parent node index": 4,
+                        "output port index": 4,
+                        "connected node": 0,
+                        "connected input port index": 3
+                    },
+                    {
+                        "GID": 93,
+                        "parent node index": 5,
+                        "output port index": 4,
+                        "connected node": 0,
+                        "connected input port index": 4
+                    },
+                    {
+                        "GID": 95,
+                        "parent node index": 6,
+                        "output port index": 4,
+                        "connected node": 0,
+                        "connected input port index": 5
+                    },
+                    {
+                        "GID": 97,
+                        "parent node index": 7,
+                        "output port index": 4,
+                        "connected node": 0,
+                        "connected input port index": 6
+                    },
+                    {
+                        "GID": 99,
+                        "parent node index": 8,
+                        "output port index": 4,
+                        "connected node": 0,
+                        "connected input port index": 7
+                    },
+                    {
+                        "GID": 83,
+                        "parent node index": 9,
+                        "output port index": 0,
+                        "connected node": 3,
+                        "connected input port index": 1
+                    },
+                    {
+                        "GID": 84,
+                        "parent node index": 9,
+                        "output port index": 0,
+                        "connected node": 4,
+                        "connected input port index": 1
+                    },
+                    {
+                        "GID": 85,
+                        "parent node index": 9,
+                        "output port index": 0,
+                        "connected node": 5,
+                        "connected input port index": 1
+                    },
+                    {
+                        "GID": 86,
+                        "parent node index": 9,
+                        "output port index": 0,
+                        "connected node": 6,
+                        "connected input port index": 1
+                    },
+                    {
+                        "GID": 87,
+                        "parent node index": 9,
+                        "output port index": 0,
+                        "connected node": 7,
+                        "connected input port index": 1
+                    },
+                    {
+                        "GID": 88,
+                        "parent node index": 9,
+                        "output port index": 0,
+                        "connected node": 8,
+                        "connected input port index": 1
+                    }
+                ],
+                "GID": 6,
+                "flow view": {
+                    "drawings": [],
+                    "view size": [
+                        6400.0,
+                        4800.0
+                    ]
+                }
+            },
+            "GID": 1
+        }
+    ]
+}
