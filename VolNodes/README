@@ -1,15 +1,14 @@
 Setup:
--Clone repo: https://github.com/Elite-Volumetric-Capture-Sqad/Node-Interface
+-Clone repo: https://github.com/Elite-Volumetric-Capture-Sqad/volumetricpipeline
 -Python 3.9+ only
 
 On windows:
 -Installed python 3.10 something
 
-Py -m pip install ryven
-Py -m pip install opencv
-py -m pip install --pre torch torchvision -f https://download.pytorch.org/whl/nightly/cu113/torch_nightly.html
+pip install ryven opencv-python plyfile PyOpenGL pyrr pillow
+pip install --pre torch torchvision -f https://download.pytorch.org/whl/nightly/cu113/torch_nightly.html
 
--Run “ryven” from powershell
+-Run "ryven" from powershell
 -Create new project and load in the nodes.py file
 
 

@@ -632,7 +632,9 @@ class DisplayImg(OpenCVNodeBase):
 
 #-------MATTE EXTRACTOR NODE---------------
 import torch
-from torchvision.transforms.functional import to_tensor, to_pil_image
+import torchvision.transforms
+to_tensor = torchvision.transforms.ToTensor
+to_pil_image = torchvision.transforms.ToPILImage
 from PIL import Image
 class MatteExtractor(Node):
     title = 'MatteExtractor'
