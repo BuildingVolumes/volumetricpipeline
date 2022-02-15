@@ -5,8 +5,7 @@ Setup:
 On windows:
 -Installed python 3.10 something
 
-pip install ryven opencv-python plyfile PyOpenGL pyrr pillow
-pip install --pre torch torchvision -f https://download.pytorch.org/whl/nightly/cu113/torch_nightly.html
+-Run setup.bat
 
 -Run "ryven" from powershell
 -Create new project and load in the nodes.py file

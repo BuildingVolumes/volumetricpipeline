@@ -1,0 +1,7 @@
+ryven
+opencv-python
+plyfile
+PyOpenGL
+pyrr
+pillow<9.0.0
+
