@@ -13,6 +13,9 @@
 #include <string>
 #include <vector>
 #include "tinyply.h"
+#include <filesystem>
+namespace fs = std::filesystem;
+
 using namespace std;
 
 typedef struct Point3f
@@ -125,20 +128,37 @@ public:
     PointCloudProcessing();
     ~PointCloudProcessing();
 
-    k4a_calibration_t GetCalibrationFromFile(std::string pathToTakeFolder);
+    k4a_calibration_t GetCalibrationFromFile(std::string pathToTakeFolder, std::string pathToColorImage);
 
     bool GetK4AImageFromFile(std::string path, k4a_image_t& k4aImageHandle);
     void ConvertDepthToCameraSpacePC(Point3f* pCameraSpacePoints, k4a_image_t& depthImage, int colorHeight, int colorWidth, k4a_transformation_t transformation);
     void FilterVerticesAndTransform(Point3f* vertices, RGB* colorInDepth, int frameWidth, int frameHeight, vector<Point3f>* &outGoodVertices, vector<RGB>* &outGoodVertColors);
     void WritePLY(const std::string& filename, vector<Point3f>* vertices, vector<RGB>* color);
     void CreatePointcloudFromK4AImage(k4a_image_t colorImage, k4a_image_t depthImage, k4a_transformation_t &transformation, vector<Point3f>* &outVertices, vector<RGB>* &outVerticeColors);
+    k4a_image_t TransformDepthToColor(k4a_image_t& depthImage, int colorHeight, int colorWidth, k4a_transformation_t transformation);
+
 };
 
 int main()
 {
+    std::string pathToCapture = "broff/client_0/";
+    std::vector<string> colorFiles;
+    std::vector<string> depthFiles;
+
+    for (const auto& entry : fs::directory_iterator(pathToCapture))
+    {
+        if (entry.path().string().find("Color") != std::string::npos)
+            colorFiles.push_back(entry.path().string());
+
+        if (entry.path().string().find("Depth") != std::string::npos)
+            depthFiles.push_back(entry.path().string());
+    }
+        
+
+
     PointCloudProcessing pointcloudProcessor;
 
-    k4a_calibration_t calibration = pointcloudProcessor.GetCalibrationFromFile("");
+    k4a_calibration_t calibration = pointcloudProcessor.GetCalibrationFromFile(pathToCapture, colorFiles[0]);
     k4a_transformation_t transformation = k4a_transformation_create(&calibration);
 
     vector<Point3f>* vertices;
@@ -147,19 +167,37 @@ int main()
     k4a_image_t colorImage = NULL;
     k4a_image_t depthImage = NULL;
 
-    if (!pointcloudProcessor.GetK4AImageFromFile("color_test.jpg", colorImage))
-        std::cout << "Could not read color image" << std::endl;
+    for (size_t i = 0; i < colorFiles.size(); i++)
+    {
+        std::cout << colorFiles[i] << std::endl;
+        std::cout << depthFiles[i] << std::endl;
 
-    if (!pointcloudProcessor.GetK4AImageFromFile("depth_test_original.tiff", depthImage))
-        std::cout << "Could not read depth image" << std::endl;
+        if (!pointcloudProcessor.GetK4AImageFromFile(colorFiles[i], colorImage))
+            std::cout << "Could not read color image" << std::endl;
 
-    pointcloudProcessor.CreatePointcloudFromK4AImage(colorImage, depthImage, transformation, vertices, verticeColors);
-    pointcloudProcessor.WritePLY("Pointcloud", vertices, verticeColors);
+        if (!pointcloudProcessor.GetK4AImageFromFile(depthFiles[i], depthImage))
+            std::cout << "Could not read depth image" << std::endl;
 
-    delete vertices;
-    delete verticeColors;
-    k4a_image_release(colorImage);
-    k4a_image_release(depthImage);
+        int colorWidth = k4a_image_get_width_pixels(colorImage);
+        int colorHeight = k4a_image_get_height_pixels(colorImage);
+
+        k4a_image_t transformedImage = pointcloudProcessor.TransformDepthToColor(depthImage, colorHeight, colorWidth, transformation);
+        cv::Mat transformedDepthImage = cv::Mat(k4a_image_get_height_pixels(transformedImage), k4a_image_get_width_pixels(transformedImage), CV_16UC1, k4a_image_get_buffer(transformedImage), k4a_image_get_stride_bytes(transformedImage));
+
+        cv::imwrite(pathToCapture + "Transformed_Image_" + to_string(i) + ".tiff", transformedDepthImage);
+
+        k4a_image_release(transformedImage);
+        k4a_image_release(colorImage);
+        k4a_image_release(depthImage);
+    }
+
+    //pointcloudProcessor.CreatePointcloudFromK4AImage(colorImage, depthImage, transformation, vertices, verticeColors);
+    //pointcloudProcessor.WritePLY("Pointcloud", vertices, verticeColors);
+
+    //delete vertices;
+    //elete verticeColors;
+    //k4a_image_release(colorImage);
+    //k4a_image_release(depthImage);
     k4a_transformation_destroy(transformation);    
 }
 
@@ -183,10 +221,10 @@ void PointCloudProcessing::CreatePointcloudFromK4AImage(k4a_image_t colorImage, 
 }
 
 //TODO: Replace fixed values with variables
-k4a_calibration_t PointCloudProcessing::GetCalibrationFromFile(std::string pathToTakeFolder)
+k4a_calibration_t PointCloudProcessing::GetCalibrationFromFile(std::string pathToTakeFolder, std::string pathToColorImage)
 {
     //TODO: Replace with reading configuration
-    cv::Mat colorImage = cv::imread("color_test.jpg");
+    cv::Mat colorImage = cv::imread(pathToColorImage);
     int colorWidth = colorImage.cols;
     int colorHeight = colorImage.rows;
 
@@ -277,6 +315,17 @@ void PointCloudProcessing::ConvertDepthToCameraSpacePC(Point3f* pCameraSpacePoin
 
     k4a_image_release(transformedDepthImage);
     k4a_image_release(pointCloudImage);
+}
+
+k4a_image_t PointCloudProcessing::TransformDepthToColor(k4a_image_t& depthImage, int colorHeight, int colorWidth, k4a_transformation_t transformation)
+{
+    k4a_image_t transformedDepthImage = NULL;
+
+    k4a_image_create(K4A_IMAGE_FORMAT_DEPTH16, colorWidth, colorHeight, colorWidth * sizeof(uint16_t), &transformedDepthImage);
+
+    k4a_result_t depthToColorResult = k4a_transformation_depth_image_to_color_camera(transformation, depthImage, transformedDepthImage);
+
+    return transformedDepthImage;
 }
 
 /// <summary>
