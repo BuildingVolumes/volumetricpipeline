@@ -141,7 +141,7 @@ public:
 
 int main()
 {
-    std::string pathToCapture = "broff/client_0/";
+    std::string pathToCapture = "input/";
     std::vector<string> colorFiles;
     std::vector<string> depthFiles;
 
@@ -153,7 +153,6 @@ int main()
         if (entry.path().string().find("Depth") != std::string::npos)
             depthFiles.push_back(entry.path().string());
     }
-        
 
 
     PointCloudProcessing pointcloudProcessor;
@@ -172,6 +171,9 @@ int main()
         std::cout << colorFiles[i] << std::endl;
         std::cout << depthFiles[i] << std::endl;
 
+        std::string splitter = "_";
+        std::string fileNumber = colorFiles[i].substr(colorFiles[i].find(splitter) + 1, (colorFiles[i].find(".") - colorFiles[i].find(splitter)) - 1);
+
         if (!pointcloudProcessor.GetK4AImageFromFile(colorFiles[i], colorImage))
             std::cout << "Could not read color image" << std::endl;
 
@@ -184,7 +186,9 @@ int main()
         k4a_image_t transformedImage = pointcloudProcessor.TransformDepthToColor(depthImage, colorHeight, colorWidth, transformation);
         cv::Mat transformedDepthImage = cv::Mat(k4a_image_get_height_pixels(transformedImage), k4a_image_get_width_pixels(transformedImage), CV_16UC1, k4a_image_get_buffer(transformedImage), k4a_image_get_stride_bytes(transformedImage));
 
-        cv::imwrite(pathToCapture + "Transformed_Image_" + to_string(i) + ".tiff", transformedDepthImage);
+        std::string outPutPath = pathToCapture + "TransformedOutput/" + "Transformed_Image_" + fileNumber + ".tiff";
+        cv::imwrite(outPutPath, transformedDepthImage);
+        std::cout << "Wrote file: " + outPutPath << std::endl;
 
         k4a_image_release(transformedImage);
         k4a_image_release(colorImage);
@@ -231,8 +235,16 @@ k4a_calibration_t PointCloudProcessing::GetCalibrationFromFile(std::string pathT
     int calibrationSize;
     char* calibrationRaw;
 
+    std::string pathToCalibFile = "";
+
+    for (const auto& entry : fs::directory_iterator(pathToTakeFolder))
+    {
+        if (entry.path().string().find(".json") != std::string::npos)
+            pathToCalibFile = entry.path().string();
+    }
+
     //TODO: What if no/one file doesn't exist?
-    ifstream calibrationFile("calibration.json", ios::in | ios::binary | ios::ate);
+    ifstream calibrationFile(pathToCalibFile, ios::in | ios::binary | ios::ate);
     if (calibrationFile.is_open()) {
 
         calibrationSize = calibrationFile.tellg();
