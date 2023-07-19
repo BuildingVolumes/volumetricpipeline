@@ -1,0 +1,8 @@
+/[Rr]esults
+/[Oo]utput
+/[Ii]nput
+/lib/colmap
+/lib/ffmpeg.exe
+
+/.venv
+/__pycache__

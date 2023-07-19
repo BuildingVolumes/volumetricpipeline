@@ -1,0 +1,1 @@
+Put ffmpeg.exe in this folder and a built version of colmap in a /colmap folder
