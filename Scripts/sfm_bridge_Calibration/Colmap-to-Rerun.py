@@ -13,7 +13,7 @@ from read_write_model import Camera, read_model
 from sfm_pipeline import *
 
 # A collection of all data we'll be creating for a registered Depth Camera
-registeredRGBDCam = collections.namedtuple("registeredRGBDCam", ["id", "name", "meshset", "sfm_matrix", "icp_matrix"])
+registeredRGBDCam = collections.namedtuple("registeredRGBDCam", ["id", "name", "meshset", "sfm_matrix", "icp_matrix", "pointcloud_file"])
 
 #Hardcoded paths
 base_path = Path(__file__).parent
@@ -28,7 +28,6 @@ intermediate_results_path = output_path / "intermediate_results"
 
 
 scale_factor = 3.85
-
 visualize = True #Visualize pipeline in rerun
 save_intermediate_results = True #Save the pointclouds generated in each step
 
@@ -43,10 +42,24 @@ mock_cam_instrinsics = [[mock_f_len, 0,    mock_u_cen], [0,     mock_f_len, mock
 
 def read_sparse_reconstruction(dataset_path: Path):
     print("Reading sparse COLMAP reconstruction")
+    dataset_path = Path(dataset_path)
     cameras, images, points3D = read_model(dataset_path, ext=".bin")
-    return cameras, images, points3D
 
-def get_sparse_reconstruction_mesh(cameras: dict, images: dict, points3D: dict, filter_output: bool) -> None:
+    #Seperate the rgbd camera poses from the SfM process into it's own dictionary
+    rgbd_images = []
+    rgbdcam_keys = []
+
+    for image in images:
+        if "Client" in images[image].name:
+            rgbd_images.append(images[image])
+            rgbdcam_keys.append(image)
+
+    for key in rgbdcam_keys:
+        del images[key]
+
+    return cameras, images, rgbd_images, points3D
+
+def get_sparse_reconstruction_mesh(cameras: dict, images: dict, rgbd_images: dict, points3D: dict, filter_output: bool) -> None:
     
     print("Getting sparse reconstruction pointcloud from SfM process")
 
@@ -94,7 +107,8 @@ def get_sparse_reconstruction_mesh(cameras: dict, images: dict, points3D: dict, 
             )
     
     if(save_intermediate_results):
-        referencePC.save_current_mesh(os.path.join(export_path, "referenceMesh.ply"))
+        create_folder(intermediate_results_path, True)
+        referencePC.save_current_mesh(os.path.join(intermediate_results_path, "referenceMesh.ply"))
 
     return referencePC
 
@@ -123,7 +137,7 @@ def generate_transformation_matrix(tVec, QVec, scale):
                            [0, 0, 0, 1]])
 
     #Translate uniform scale into homogeneous transformation matrix aswell
-    s = scale_factor
+    s = scale
     scale_matrix = np.array([[s, 0, 0, 0],
                            [0, s, 0, 0],
                            [0, 0, s, 0],
@@ -138,15 +152,15 @@ def generate_transformation_matrix(tVec, QVec, scale):
 def register_pointcloud_from_sfm_poses(rgbdcam_poses):
     
     registeredCams = {}
-    cam_id = 0
 
     print("Registering RGBD pointclouds")
 
     for rgbdcam in rgbdcam_poses:
 
-        client_name = "RGDBCam_" + str(cam_id)
+        pointcloud_name = rgbdcam.name.split('.')[0]
+        pointcloud_filename = pointcloud_name + ".ply"
 
-        print("Registering RGBD cam: " + cam_id)
+        print(pointcloud_filename)
 
         #Get rgbd camera pose from SfM Process
         trans_xyz = rgbdcam.tvec
@@ -154,8 +168,9 @@ def register_pointcloud_from_sfm_poses(rgbdcam_poses):
         quat_xyzw = [quat_wxyz[1], quat_wxyz[2], quat_wxyz[3], quat_wxyz[0]] #switch Quaternion format into the more common xyzw format 
 
         #Load pointcloud from rgbd camera from disk
+        pointcloud_fullpath = os.path.join(rgbd_Pointclouds_path, pointcloud_filename)
         pointcloud = pymeshlab.MeshSet()
-        pointcloud.load_new_mesh(str(os.path.join(rgbd_Pointclouds_path, (client_name + ".ply"))))
+        pointcloud.load_new_mesh(str(pointcloud_fullpath))
 
         #Generate transformation matrix for the pointcloud from SfM-pipeline results and apply
         trs_matrix = generate_transformation_matrix(tVec=trans_xyz, QVec=quat_xyzw, scale=scale_factor)
@@ -163,21 +178,23 @@ def register_pointcloud_from_sfm_poses(rgbdcam_poses):
         pointcloud.apply_matrix_freeze()
 
         #Save results into our dictionary
-        registeredCams[cam_id] = registeredRGBDCam(id=cam_id, name=client_name, meshset=pointcloud, sfm_matrix=trs_matrix, icp_matrix=None)
+        registeredCams[rgbdcam.id] = registeredRGBDCam(id=rgbdcam.id, name=pointcloud_name, meshset=pointcloud, sfm_matrix=trs_matrix, icp_matrix=None, pointcloud_file=str(pointcloud_filename))
 
         if(visualize):
             #Visualize the camera pose in rerun
-            rr.log_transform3d(client_name, rr.TranslationRotationScale3D(trans_xyz, rr.Quaternion(xyzw=quat_xyzw)), from_parent=True)
-            rr.log_view_coordinates(client_name, xyz="RDF")  # X=Right, Y=Down, Z=Forward
-            rr.log_pinhole(client_name + "/image", child_from_parent = mock_cam_instrinsics, width = mock_width, height = mock_height)
+            rr.log_transform3d(pointcloud_name, rr.TranslationRotationScale3D(trans_xyz, rr.Quaternion(xyzw=quat_xyzw)), from_parent=True)
+            rr.log_view_coordinates(pointcloud_name, xyz="RDF")  # X=Right, Y=Down, Z=Forward
+            rr.log_pinhole(pointcloud_name + "/image", child_from_parent = mock_cam_instrinsics, width = mock_width, height = mock_height)
 
             pc = pointcloud.current_mesh()
             vertices = pc.vertex_matrix()
             colors = pc.vertex_color_matrix()
-            rr.log_points(client_name + "/SfM", vertices, colors=colors, radii=0.01)
+            rr.log_points("rgbd" + pointcloud_name, vertices, colors=colors, radii=0.01)
 
         if(save_intermediate_results):
-            pointcloud.save_current_mesh(os.path.join(export_path, ("sfm_pose_" + client_name + ".ply")))   
+            pointcloud.save_current_mesh(os.path.join(intermediate_results_path, ("sfm_pose_" + pointcloud_name + ".ply")))   
+
+
 
     return registeredCams
 
@@ -194,9 +211,11 @@ def refine_poses_ICP(referenceMesh : pymeshlab.MeshSet, registeredCams : dict):
     
     for cam in registeredCams:
 
-        print("Refining pose for RGBD camera: " + cam.cam_id)
+        registeredCam = registeredCams[cam]
 
-        ICP_pointcloud = cam.meshset
+        print("Refining pose for RGBD camera: " + registeredCam.name)
+
+        ICP_pointcloud = registeredCam.meshset
 
         vertices = ICP_pointcloud.current_mesh().vertex_matrix()
         pc_mov = PointCloud(vertices, columns=["x", "y", "z"])
@@ -210,69 +229,59 @@ def refine_poses_ICP(referenceMesh : pymeshlab.MeshSet, registeredCams : dict):
         ICP_pointcloud.set_matrix(transformmatrix = icp_matrix)
         ICP_pointcloud.apply_matrix_freeze()
 
-        refinedCams[cam.cam_id] = registeredRGBDCam(id=cam.cam_id, name=cam.client_name, meshset=ICP_pointcloud, sfm_matrix=cam.trs_matrix, icp_matrix=icp_matrix)
+        refinedCams[cam] = registeredRGBDCam(id=cam, name=registeredCam.name, meshset=ICP_pointcloud, sfm_matrix=registeredCam.sfm_matrix, icp_matrix=icp_matrix, pointcloud_file=registeredCam.pointcloud_file)
 
         if(visualize):
             icp_pc = ICP_pointcloud.current_mesh()
             vertices = icp_pc.vertex_matrix()
             colors = icp_pc.vertex_color_matrix()
-            rr.log_points(cam.name + "/SfM", vertices, colors=colors, radii=0.01)
+            rr.log_points("rgbd" + registeredCam.name, vertices, colors=colors, radii=0.01)
 
         if(save_intermediate_results):
-            ICP_pointcloud.save_current_mesh(os.path.join(export_path, ("sfm_icp_pose_" + cam.name + ".ply")))
+            ICP_pointcloud.save_current_mesh(os.path.join(intermediate_results_path, ("sfm_icp_pose_" + registeredCam.name + ".ply")))
 
-        return refinedCams
-
+    
+    return refinedCams
 
 
 def main():
 
-    run_image_creation = False
+    run_image_creation = True
     run_bridging_sfm = True
-    register_rgbd_images_to_SfM = False
+    register_rgbd_images_to_SfM = True
 
-    visualize = False
+    visualize = True
 
     create_output_folder_structure()
+
+
+    sfm_image_path = "C:\Dev\Volcapture\Experiments\volumetricpipeline\Scripts\sfm_bridge_Calibration\output\\tmp\images"
+    if(run_image_creation):
+        sfm_image_path = split_video_into_images(video_path)
+
+    bridging_colmap_path = "C:\Dev\Volcapture\Experiments\\volumetricpipeline\Scripts\sfm_bridge_Calibration\output\\tmp\colmap"
+    if(run_bridging_sfm):
+        bridging_colmap_path = create_sfm_bridge(sfm_image_path)
+
+    complete_reconstruction = "C:\Dev\Volcapture\Experiments\\volumetricpipeline\Scripts\sfm_bridge_Calibration\output\\tmp\colmap\sparse\output"
+    if(register_rgbd_images_to_SfM):
+        complete_reconstruction = register_rgdb_color_images_to_briding_sfm(bridging_colmap_path, rgbd_Color_images_path)
 
     if(visualize):
         rr.init("Colmap to Rerun")
         rr.spawn()
 
-    sfm_image_path = "C:\Dev\Volcapture\Experiments\SfM_Experiement\Rerun_SfM-To-Calibrated_PLY-Tool\output\\tmp\images"
-    if(run_image_creation):
-        sfm_image_path = split_video_into_images(video_path)
-
-    if(run_bridging_sfm):
-        bridging_colmap_path = create_sfm_bridge(sfm_image_path)
-
-    if(register_rgbd_images_to_SfM):
-        complete_reconstruction = register_rgdb_color_images_to_briding_sfm(bridging_colmap_path, rgbd_Color_images_path)
-
-    return
-
     #Read colmap reconstruction
-    cameras, images, points3D = read_sparse_reconstruction(colmap_path)
+    cameras, images, rgbd_images, points3D = read_sparse_reconstruction(complete_reconstruction)
 
-    #Seperate the rgbd camera poses from the SfM process into it's own dictionary
-    rgbdcam_poses = []
-    rgbdcam_keys = []
-
-    for image in images:
-        if "Client" in images[image].name:
-            rgbdcam_poses.append(images[image])
-            rgbdcam_keys.append(image)
-
-    for key in rgbdcam_keys:
-        del images[key]
 
     # Get the sparse pointcloud from the SfM, which we'll use as a reference/truth
-    referenceMesh = get_sparse_reconstruction_mesh(cameras, images, points3D, True)
+    referenceMesh = get_sparse_reconstruction_mesh(cameras, images, rgbd_images, points3D, True)
     
     # Read the unregistered pointclouds from 
 
-    registered_RGBD_cams = register_pointcloud_from_sfm_poses(rgbdcam_poses)
-    refined_RGBD_cams = refine_poses_ICP(referenceMesh, refined_RGBD_cams)
+    registered_RGBD_cams = register_pointcloud_from_sfm_poses(rgbd_images)
+    refined_RGBD_cams = refine_poses_ICP(referenceMesh, registered_RGBD_cams)
 
     #reconstructedMesh.generate_by_merging_visible_meshes(mergevisible = True, deletelayer = True)
     #reconstructedMesh.save_current_mesh(os.path.join(export_path, "reconstruedMesh.ply"))
@@ -281,8 +290,6 @@ def main():
 
     #reconstructedMesh.generate_by_merging_visible_meshes(mergevisible = True, deletelayer = True)
     #reconstructedMesh.save_current_mesh(os.path.join(export_path, "reconstruedMeshWithReference.ply"))
-
-
 
 if __name__ == '__main__':
     main()

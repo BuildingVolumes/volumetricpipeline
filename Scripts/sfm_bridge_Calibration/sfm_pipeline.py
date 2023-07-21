@@ -15,7 +15,7 @@ base_path = Path(__file__).parent
 lib_path = base_path / "lib"
 ffmpeg_path = lib_path / "ffmpeg.exe"
 colmap_path = lib_path / "colmap"
-colmap_bin_path = colmap_path / "colmap.exe"
+colmap_bin_path = colmap_path / "colmap.bat"
 colmap_vocab_tree_path = colmap_path / "vctree.bin"
 
 #User defined paths
@@ -112,10 +112,15 @@ def register_rgdb_color_images_to_briding_sfm(sfm_bridge_project_path, rgdb_colo
 
     colmap_project_db = sfm_bridge_project_path / "database.db"
     colmap_project_images = sfm_bridge_project_path / "images"
+    input_reconstruction = sfm_bridge_project_path / "sparse/0"
+    output_reconstruction = sfm_bridge_project_path / "sparse/output"
 
     # Check file integrity
     exit_if_file_not_exists(colmap_project_db)
     exit_if_file_not_exists(colmap_bin_path)
+    exit_if_file_not_exists(colmap_vocab_tree_path)
+
+    create_folder(output_reconstruction, True)
 
     image_files = []
 
@@ -134,25 +139,23 @@ def register_rgdb_color_images_to_briding_sfm(sfm_bridge_project_path, rgdb_colo
     with open(str(image_list_file), 'w') as f:
         for image in image_files:
             f.write(image)
-            f.write('/n')
+            f.write('\n')
             image_fullpath = rgdb_color_images_path / image
             shutil.copy(image_fullpath, colmap_project_images)
 
 
     #Feature extraction
-    cmd = str(colmap_bin_path) + "feature_extractor --database_path " + str(colmap_project_db) + " --image_path " + str(colmap_project_images) + " --image_list_path " + str(image_list_file)
+    cmd = str(colmap_bin_path) + " feature_extractor --database_path " + str(colmap_project_db) + " --image_path " + str(colmap_project_images) + " --image_list_path " + str(image_list_file) + " --SiftExtraction.use_gpu 0"
     print("Running feature extraction: " + cmd)
     subprocess.run(cmd) 
 
     #Vocabulary Tree matching
-    cmd = str(colmap_bin_path) + "vocab_tree_matcher --database_path " + str(colmap_project_db) + " --VocabTreeMatching.vocab_tree_path " + str(colmap_vocab_tree_path) + " --VocabTreeMatching.match_list_path " + str(image_list_file)
+    cmd = str(colmap_bin_path) + " vocab_tree_matcher --database_path " + str(colmap_project_db) + " --VocabTreeMatching.vocab_tree_path " + str(colmap_vocab_tree_path) + " --VocabTreeMatching.match_list_path " + str(image_list_file) + " --SiftMatching.use_gpu 0"
     print("Running vocabulary tree matching: " + cmd)
     subprocess.run(cmd) 
 
     #Mapping
-    input_reconstruction = sfm_bridge_project_path / "sparse/0"
-    output_reconstruction = sfm_bridge_project_path / "sparse/output"
-    cmd = str(colmap_bin_path) + "mapper --database_path " + str(colmap_project_db) + " --image_path " + str(colmap_project_images) + " --input_path " + str(input_reconstruction) + " --output_path " + str(output_reconstruction)
+    cmd = str(colmap_bin_path) + " mapper --database_path " + str(colmap_project_db) + " --image_path " + str(colmap_project_images) + " --input_path " + str(input_reconstruction) + " --output_path " + str(output_reconstruction)
     print("Running feature extraction: " + cmd)
     subprocess.run(cmd) 
 
@@ -176,4 +179,4 @@ def create_folder(folder, delete_if_exists = False):
     
 def exit_if_file_not_exists(filepath):
     if(not os.path.isfile(filepath)):
-       exit("Fatal error: Could not find file: " + filepath)
+       exit("Fatal error: Could not find file: " + str(filepath))
