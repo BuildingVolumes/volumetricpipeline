@@ -450,6 +450,91 @@ def write_model(cameras, images, points3D, path, ext=".bin"):
     return cameras, images, points3D
 
 
+def write_transformation_mat(path : Path, filename, sfm_mat, icp_mat, combined_mat):
+
+    filename = str(path / filename) + "_calibration.txt"
+
+    print("Writing: " + str(filename))
+
+    with open(str(filename), 'w') as f:
+        if(sfm_mat is not None):
+            f.write("SfM Transformation Matrix: \n")
+            f.write(serialize_mat(sfm_mat))
+            f.write("\n")
+        if(icp_mat is not None):
+            f.write("ICP refinement Transformation Matrix: \n")
+            f.write(serialize_mat(icp_mat))
+            f.write("\n")
+        if(combined_mat is not None):
+            f.write("Combined SfM + ICP Transformation Matrix: \n")
+            f.write(serialize_mat(combined_mat))
+            f.write("\n")
+
+def write_transformation_mat_LiveScan(path : Path, filename, sfm_mat, icp_mat):
+
+    filename = str(path) + "/" + filename + ".txt"
+
+    print("Writing: " + str(filename))
+
+    with open(str(filename), 'w') as f:
+        if(sfm_mat is not None):
+            f.write(serialize_mat(sfm_mat))
+            f.write("\n")
+        if(icp_mat is not None):
+            f.write(serialize_mat(icp_mat))
+
+        f.write("0\n")
+        f.write("1\n")
+
+def serialize_mat(mat):
+
+    serialized = ""
+
+    for i in range(0, 4):
+        for j in range(0,4):
+            serialized += (str(mat[i][j]) + " ")
+        serialized += "\n"
+
+    return serialized
+
+
+def read_transformation_mat(path : Path):
+    
+    npMats = []
+
+    with open(path) as f:
+        for mats in range(0,3):
+            f.readline()
+            mat_str = ""
+            for matline in range(0,4):
+                mat_str += f.readline()
+            f.readline()
+            npMats.append(deserialize_mat(mat_str))
+    
+    sfm_mat = npMats[0]
+    icp_mat = npMats[1]
+    combined_mat = npMats[2]
+
+    return sfm_mat, icp_mat, combined_mat
+
+
+
+def deserialize_mat(mat : str):
+
+    matrix = np.zeros(shape = (4,4))
+
+    rows = mat.split('\n') #Gives us the 4 rows of the matrix
+    
+    for i in range(0,4):
+        cols = rows[i].split(' ')
+        for j in range(0,4):
+            matrix[i][j] = float(cols[j])
+
+    return matrix
+            
+
+
+
 def qvec2rotmat(qvec):
     return np.array(
         [
