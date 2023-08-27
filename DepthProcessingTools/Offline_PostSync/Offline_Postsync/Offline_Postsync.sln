@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33502.453
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Offline_Postsync", "Offline_Postsync.csproj", "{77467673-04CA-4CB1-9861-FD97D44B03DB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{77467673-04CA-4CB1-9861-FD97D44B03DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{77467673-04CA-4CB1-9861-FD97D44B03DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{77467673-04CA-4CB1-9861-FD97D44B03DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{77467673-04CA-4CB1-9861-FD97D44B03DB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9CDB7A4F-DF62-43EB-8043-0C6081713F75}
+	EndGlobalSection
+EndGlobal
