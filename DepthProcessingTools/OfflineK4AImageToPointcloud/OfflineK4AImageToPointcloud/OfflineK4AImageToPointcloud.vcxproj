@@ -150,13 +150,18 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="OfflineK4AImageToPointcloud.cpp" />
+    <ClCompile Include="PointCloudProcessor.cpp" />
     <ClCompile Include="tinyply.cpp" />
+    <ClCompile Include="Math.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="PointCloudProcessing.h" />
     <ClInclude Include="tinyply.h" />
+    <ClInclude Include="Math.h" />
+    <ClInclude Include="Utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
