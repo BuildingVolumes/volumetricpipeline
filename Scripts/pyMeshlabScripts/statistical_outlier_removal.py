@@ -2,7 +2,7 @@ import pymeshlab
 import os
 from pathlib import Path
 
-path_to_sequence = "C:/Users/Christopher/Videos/Volumetrische Videos/Knot_Middle_Finger_3"
+path_to_sequence = "C:\\Users\\chris\Downloads\\wetransfer_thumbgs_2023-08-30_0851"
 path_to_sequence = Path(path_to_sequence)
 path_to_cleaned_sequence = path_to_sequence / "cleaned"
 

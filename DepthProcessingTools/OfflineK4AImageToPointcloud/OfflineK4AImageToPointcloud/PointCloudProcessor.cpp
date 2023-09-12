@@ -5,7 +5,17 @@
 #include "Math.h"
 #include <stdio.h>
 #include<fstream>
+#include "vmath.hpp/vmath_all.hpp"
 
+using fvec3 = vmath_hpp::vec<float, 3>;
+
+PointCloudProcessing::PointCloudProcessing()
+{
+}
+
+PointCloudProcessing::~PointCloudProcessing()
+{
+}
 
 std::vector<std::filesystem::path> PointCloudProcessing::GetClientPathsFromTakePath(std::string takepath)
 {
@@ -22,23 +32,77 @@ std::vector<std::filesystem::path> PointCloudProcessing::GetClientPathsFromTakeP
     return clientPaths;
 }
 
-void PointCloudProcessing::CreatePointcloudFromK4AImage(k4a_image_t colorImage, k4a_image_t depthImage, k4a_transformation_t& transformation, std::vector<Point3f>*& outVertices, std::vector<RGB>*& outVerticeColors)
+int PointCloudProcessing::GetIDFromPath(std::string path)
 {
-    int colorWidth = k4a_image_get_width_pixels(colorImage);
-    int colorHeight = k4a_image_get_height_pixels(colorImage);
+    std::string delimiter = "_";
 
-    Point3f* pointCloudInCameraCoordinates = new Point3f[colorHeight * colorWidth];
-    ConvertDepthToCameraSpacePC(pointCloudInCameraCoordinates, depthImage, colorHeight, colorWidth, transformation);
+    size_t pos = 0;
+    std::string token;
+    while ((pos = path.find(delimiter)) != std::string::npos)
+    {
+        token = path.substr(0, pos);
+        path.erase(0, pos + delimiter.length());
+    }
 
-    RGB* pColorRGBX = new RGB[colorHeight * colorWidth];
-    memcpy(pColorRGBX, k4a_image_get_buffer(colorImage), colorHeight * colorWidth * sizeof(RGB));
-
-    FilterVerticesAndTransform(pointCloudInCameraCoordinates, pColorRGBX, colorWidth, colorHeight, outVertices, outVerticeColors);
-
-    delete[] pointCloudInCameraCoordinates;
-    delete[] pColorRGBX;
+    return std::stoi(path);
 }
 
+Matrix4x4 PointCloudProcessing::LoadOpen3DExtrinsics(const int clientNumber, std::filesystem::path pathToCapture)
+{
+    std::ifstream file;
+    Matrix4x4 extrinsic = Matrix4x4::GetIdentity();
+
+    std::filesystem::path filePath = pathToCapture / "Extrinsics_Open3D.log";
+    file.open(filePath.string());
+    if (!file.is_open())
+    {
+        std::cout << "Could not open extrinsics: " + filePath.string() << std::endl;
+        return extrinsic;
+    }
+
+    std::string serial;
+    int number = -1;
+    int notUsed;
+
+    while (number != clientNumber)
+    {
+        file >> notUsed;
+        file >> serial;
+        file >> number;
+
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                file >> extrinsic.mat[i][j];
+            }
+        }
+    }
+        
+
+    if (number == -1)
+    {
+        std::cout << "Could not find extrinsic client: " + std::to_string(clientNumber) << std::endl;
+        return extrinsic;
+    }
+
+    else
+    {
+        std::cout << "Found extrinsics for client : " + std::to_string(number) << std::endl;
+
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                std::cout << extrinsic.mat[i][j] << " ";
+            }
+
+            std::cout << std::endl;
+        }
+    }
+
+        return extrinsic;
+}
 
 
 //TODO: Replace fixed values with variables
@@ -196,6 +260,23 @@ k4a_image_t PointCloudProcessing::TransformDepthToColor(k4a_image_t& depthImage,
     return transformedDepthImage;
 }
 
+void PointCloudProcessing::CreatePointcloudFromK4AImage(k4a_image_t colorImage, k4a_image_t depthImage, k4a_transformation_t transformation, Matrix4x4 extrinsics, std::vector<Point3f>*& outVertices, std::vector<RGB>*& outVerticeColors)
+{
+    int colorWidth = k4a_image_get_width_pixels(colorImage);
+    int colorHeight = k4a_image_get_height_pixels(colorImage);
+
+    Point3f* pointCloudInCameraCoordinates = new Point3f[colorHeight * colorWidth];
+    ConvertDepthToCameraSpacePC(pointCloudInCameraCoordinates, depthImage, colorHeight, colorWidth, transformation);
+
+    RGB* pColorRGBX = new RGB[colorHeight * colorWidth];
+    memcpy(pColorRGBX, k4a_image_get_buffer(colorImage), colorHeight * colorWidth * sizeof(RGB));
+
+    FilterVerticesAndTransform(pointCloudInCameraCoordinates, pColorRGBX, colorWidth, colorHeight, extrinsics, outVertices, outVerticeColors);
+
+    delete[] pointCloudInCameraCoordinates;
+    delete[] pColorRGBX;
+}
+
 /// <summary>
 /// Filters out any invalid vertices, and optionally also with Nearest Neighbor-Filtering.
 /// Applies the transformation offset given by the extrinsic marker calibration.
@@ -208,17 +289,29 @@ k4a_image_t PointCloudProcessing::TransformDepthToColor(k4a_image_t& depthImage,
 /// <param name="outGoodVertices"></param>
 /// <param name="outGoodVerticesSize"></param>
 /// <param name="outGoodVertColors"></param>
-void PointCloudProcessing::FilterVerticesAndTransform(Point3f* vertices, RGB* color, int frameWidth, int frameHeight, std::vector<Point3f>*& outGoodVertices, std::vector<RGB>*& outGoodVertColors)
+void PointCloudProcessing::FilterVerticesAndTransform(Point3f* vertices, RGB* color, int frameWidth, int frameHeight, Matrix4x4 extrinsics, std::vector<Point3f>*& outGoodVertices, std::vector<RGB>*& outGoodVertColors)
 {
-    //TODO: Load calibration
-    Calibration calibration;
-
     unsigned int nVertices = frameWidth * frameHeight;
 
     //Reserving all the memory of the vector ahead saves some processing costs
     Point3f invalidPoint = Point3f(0, 0, 0, true);
     std::vector<Point3f> AllVertices(nVertices);
     int goodVerticesSize = 0;
+
+    Matrix4x4 scale = Matrix4x4(
+        0.001f, 0.0f, 0.0f, 0.0f,
+        0.0f, 0.001f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.001f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f);
+
+    Matrix4x4 toWorld = extrinsics;
+
+    //Bounding Box values
+    fvec3 center(0,0,0); // Center of the box.
+    fvec3 dx(-0.958, - 0.059, 0.279);
+    fvec3 dy(-0.122, 0.969, - 0.213);
+    fvec3 dz(0.258, 0.238, 0.936); // X,Y, and Z directions, normalized.
+    fvec3 half(2,2,2); // Box size in each dimension, divided by 2.
 
     for (unsigned int vertexIndex = 0; vertexIndex < nVertices; vertexIndex++)
     {
@@ -227,36 +320,37 @@ void PointCloudProcessing::FilterVerticesAndTransform(Point3f* vertices, RGB* co
         {
             Point3f temp = vertices[vertexIndex];
             RGB tempColor = color[vertexIndex];
-            if (calibration.bCalibrated)
+            
+            temp = toWorld * temp;
+
+            fvec3 point;
+            point.x = temp.X;
+            point.y = temp.Y;
+            point.z = temp.Z;
+
+            //Check if point is inside bounding box
+            fvec3 d = point - center;
+            bool inside = vmath_hpp::abs(vmath_hpp::dot(d, dx)) <= half.x &&
+                vmath_hpp::abs(vmath_hpp::dot(d, dy)) <= half.y &&
+                vmath_hpp::abs(vmath_hpp::dot(d, dz)) <= half.z;
+
+            if (inside)
             {
-                temp.X += calibration.worldT[0];
-                temp.Y += calibration.worldT[1];
-                temp.Z += calibration.worldT[2];
-                temp = RotatePoint(temp, calibration.worldR);
-
-                //TODO: Reimplement bound checking
-                /*if (temp.X < m_vBounds[0] || temp.X > m_vBounds[3]
-                    || temp.Y < m_vBounds[1] || temp.Y > m_vBounds[4]
-                    || temp.Z < m_vBounds[2] || temp.Z > m_vBounds[5])
-                {
-                    AllVertices[vertexIndex] = invalidPoint;
-                    continue;
-                }*/
-
+                AllVertices[vertexIndex] = temp;
+                goodVerticesSize++;
             }
 
-            AllVertices[vertexIndex] = temp;
-            goodVerticesSize++;
+            else
+                AllVertices[vertexIndex] = invalidPoint;
         }
 
         else
-        {
             AllVertices[vertexIndex] = invalidPoint;
-        }
+
     }
 
-    std::vector<Point3f>* goodVertices = new std::vector<Point3f>(goodVerticesSize);
-    std::vector<RGB>* goodColorPoints = new std::vector<RGB>(goodVerticesSize);
+    outGoodVertices = new std::vector<Point3f>(goodVerticesSize);
+    outGoodVertColors = new std::vector<RGB>(goodVerticesSize);
 
     int goodVerticesCounter = 0;
 
@@ -265,28 +359,11 @@ void PointCloudProcessing::FilterVerticesAndTransform(Point3f* vertices, RGB* co
     {
         if (!AllVertices[i].Invalid)
         {
-            goodVertices->data()[goodVerticesCounter] = AllVertices[i];
-            goodColorPoints->data()[goodVerticesCounter] = color[i];
+            outGoodVertices->data()[goodVerticesCounter] = AllVertices[i];
+            outGoodVertColors->data()[goodVerticesCounter] = color[i];
             goodVerticesCounter++;
         }
     }
-
-    //TODO: Reimplement NN-Filtering
-
-    /*if (m_bFilter)
-        filter(goodVertices, goodColorPoints, m_nFilterNeighbors, m_fFilterThreshold);*/
-
-        //TODO: Float-To-Short Conversion somewhere else
-
-        /*vector<Point3s> goodVerticesShort(goodVertices.size());
-
-        for (size_t i = 0; i < goodVertices.size(); i++)
-        {
-            goodVerticesShort[i] = goodVertices[i];
-        }*/
-
-    outGoodVertices = goodVertices;
-    outGoodVertColors = goodColorPoints;
 }
 
 void PointCloudProcessing::WritePLY(const std::string& filename, std::vector<Point3f>* vertices, std::vector<RGB>* color)
@@ -295,24 +372,18 @@ void PointCloudProcessing::WritePLY(const std::string& filename, std::vector<Poi
 
     for (size_t i = 0; i < vertices->size(); i++)
     {
-        floatVerts[i].X = ((float)vertices->data()[i].X) / 1000;
-        floatVerts[i].Y = ((float)vertices->data()[i].Y) / 1000;
-        floatVerts[i].Z = ((float)vertices->data()[i].Z) / 1000;
+        floatVerts[i].X = ((float)vertices->data()[i].X);
+        floatVerts[i].Y = ((float)vertices->data()[i].Y);
+        floatVerts[i].Z = ((float)vertices->data()[i].Z);
     }
-
-    /*cout << (int)color->data()[(1280 * 720) - 1].rgbRed << endl;
-    cout << (int)color->data()[(1280 * 720) - 1].rgbGreen << endl;
-    cout << (int)color->data()[(1280 * 720) - 1].rgbBlue << endl;*/
 
     std::filebuf fb_binary;
     fb_binary.open(filename + "-binary.ply", std::ios::out | std::ios::binary);
     std::ostream outstream_binary(&fb_binary);
-    if (outstream_binary.fail()) throw std::runtime_error("failed to open " + filename);
-
-    std::filebuf fb_ascii;
-    fb_ascii.open(filename + "-ascii.ply", std::ios::out);
-    std::ostream outstream_ascii(&fb_ascii);
-    if (outstream_ascii.fail()) throw std::runtime_error("failed to open " + filename);
+    if (outstream_binary.fail())
+    {
+        std::cout << "failed to open " + filename << std::endl;
+    }
 
     tinyply::PlyFile cube_file;
 
@@ -323,9 +394,6 @@ void PointCloudProcessing::WritePLY(const std::string& filename, std::vector<Poi
         tinyply::Type::UINT8, floatVerts.size(), reinterpret_cast<uint8_t*>(color->data()), tinyply::Type::INVALID, 0);
 
     cube_file.get_comments().push_back("generated by tinyply 2.3");
-
-    //Write an ASCII file
-    cube_file.write(outstream_ascii, false);
 
     //Write a binary file
     cube_file.write(outstream_binary, true);

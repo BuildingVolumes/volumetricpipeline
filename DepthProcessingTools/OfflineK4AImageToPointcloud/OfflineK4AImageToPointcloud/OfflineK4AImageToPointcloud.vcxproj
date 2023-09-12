@@ -162,6 +162,16 @@
     <ClInclude Include="tinyply.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="Utils.h" />
+    <ClInclude Include="vmath.hpp\vmath_all.hpp" />
+    <ClInclude Include="vmath.hpp\vmath_ext.hpp" />
+    <ClInclude Include="vmath.hpp\vmath_fun.hpp" />
+    <ClInclude Include="vmath.hpp\vmath_fwd.hpp" />
+    <ClInclude Include="vmath.hpp\vmath_mat.hpp" />
+    <ClInclude Include="vmath.hpp\vmath_mat_fun.hpp" />
+    <ClInclude Include="vmath.hpp\vmath_qua.hpp" />
+    <ClInclude Include="vmath.hpp\vmath_qua_fun.hpp" />
+    <ClInclude Include="vmath.hpp\vmath_vec.hpp" />
+    <ClInclude Include="vmath.hpp\vmath_vec_fun.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
