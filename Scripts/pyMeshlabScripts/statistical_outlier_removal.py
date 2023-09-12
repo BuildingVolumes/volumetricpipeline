@@ -2,7 +2,7 @@ import pymeshlab
 import os
 from pathlib import Path
 
-path_to_sequence = "C:\\Users\\chris\Downloads\\wetransfer_thumbgs_2023-08-30_0851"
+path_to_sequence = "D:\\Test_BB_clean\\Zeigefinger\\cleaned"
 path_to_sequence = Path(path_to_sequence)
 path_to_cleaned_sequence = path_to_sequence / "cleaned"
 
@@ -35,7 +35,9 @@ for pc in pc_files:
     ms.compute_selection_point_cloud_outliers(knearest = 128)
     ms.meshing_remove_selected_vertices()
     
-    ms.save_current_mesh(str(path_to_cleaned_sequence) + "/" + name + "_cleaned.ply")
+    outputPath = str(path_to_cleaned_sequence) + "/" + name + "_cleaned.ply"
+    print(outputPath)
+    ms.save_current_mesh(outputPath)
     
 
 
