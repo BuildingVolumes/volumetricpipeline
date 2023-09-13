@@ -34,7 +34,7 @@ void GetVerticesFromRawImages(ClientData& clientData, int imageIndex, PointCloud
 
 int main()
 {
-	std::string pathToCapture = "C:\\Test\\";
+	std::string pathToCapture = "C:\\OP_Entnahme_Verschluss_0\\";
 	PointCloudProcessing pcProcessor;
 	std::vector<ClientData> clients = LoadClientData(pathToCapture, pcProcessor);
 
@@ -45,31 +45,36 @@ int main()
 		std::vector<Point3f> allVertices;
 		std::vector<RGB> allColors;
 
-		for (size_t j = 0; j < clients.size(); j++)
+		std::string filename = pathToCapture + "\\out\\video_" + std::to_string(pcProcessor.GetIndexFromColorFileName(clients[0].colorFiles[i])) + ".ply";
+		std::cout << "Creating file: " + filename << std::endl;
+
+		if(std::filesystem::exists(filename))
+			std::cout << "File exists already, skipping" << std::endl;
+
+		else
 		{
-			if (clients[j].vertices != NULL)
+			for (size_t j = 0; j < clients.size(); j++)
 			{
-				delete clients[j].vertices;
-				clients[j].vertices = NULL;
+				if (clients[j].vertices != NULL)
+				{
+					delete clients[j].vertices;
+					clients[j].vertices = NULL;
+				}
+
+				if (clients[j].colors != NULL)
+				{
+					delete clients[j].colors;
+					clients[j].colors = NULL;
+				}
+
+				GetVerticesFromRawImages(clients[j], i, pcProcessor);
+
+				allVertices.insert(allVertices.end(), clients[j].vertices->begin(), clients[j].vertices->end());
+				allColors.insert(allColors.end(), clients[j].colors->begin(), clients[j].colors->end());
 			}
 
-			if (clients[j].colors != NULL)
-			{
-				delete clients[j].colors;
-				clients[j].colors = NULL;
-			}
-
-			GetVerticesFromRawImages(clients[j], i, pcProcessor);
-
-			allVertices.insert(allVertices.end(), clients[j].vertices->begin(), clients[j].vertices->end());
-			allColors.insert(allColors.end(), clients[j].colors->begin(), clients[j].colors->end());
+			pcProcessor.WritePLY(filename, &allVertices, &allColors);
 		}
-
-		std::string filename = pathToCapture + "\\out\\video_" + std::to_string(i);
-		std::cout << "Writing file: " + filename << std::endl;
-		pcProcessor.WritePLY(filename, &allVertices, &allColors);
-
-
 	}
 
 }
@@ -93,10 +98,10 @@ std::vector<ClientData> LoadClientData(std::filesystem::path pathToCapture, Poin
 
 		for (const auto& entry : std::filesystem::directory_iterator(client.clientPath.string()))
 		{
-			if (entry.path().string().find("Color") != std::string::npos)
+			if (entry.path().string().find("synced_color") != std::string::npos)
 				client.colorFiles.push_back(entry.path().string());
 
-			if (entry.path().string().find("Depth") != std::string::npos)
+			if (entry.path().string().find("synced_depth") != std::string::npos)
 				client.depthFiles.push_back(entry.path().string());
 		}
 

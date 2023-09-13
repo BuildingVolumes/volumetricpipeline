@@ -34,17 +34,15 @@ std::vector<std::filesystem::path> PointCloudProcessing::GetClientPathsFromTakeP
 
 int PointCloudProcessing::GetIDFromPath(std::string path)
 {
-    std::string delimiter = "_";
+    std::vector<std::string> splittedStrings = SplitString(path, '_');
+    return std::stoi(splittedStrings[splittedStrings.size() - 1]);
+}
 
-    size_t pos = 0;
-    std::string token;
-    while ((pos = path.find(delimiter)) != std::string::npos)
-    {
-        token = path.substr(0, pos);
-        path.erase(0, pos + delimiter.length());
-    }
-
-    return std::stoi(path);
+int PointCloudProcessing::GetIndexFromColorFileName(std::string path)
+{
+    std::vector<std::string> splittedStrings = SplitString(path, '_');
+    splittedStrings = SplitString(splittedStrings[splittedStrings.size() - 1], '.');
+    return std::stoi(splittedStrings[0]);
 }
 
 Matrix4x4 PointCloudProcessing::LoadOpen3DExtrinsics(const int clientNumber, std::filesystem::path pathToCapture)
@@ -378,7 +376,7 @@ void PointCloudProcessing::WritePLY(const std::string& filename, std::vector<Poi
     }
 
     std::filebuf fb_binary;
-    fb_binary.open(filename + "-binary.ply", std::ios::out | std::ios::binary);
+    fb_binary.open(filename, std::ios::out | std::ios::binary);
     std::ostream outstream_binary(&fb_binary);
     if (outstream_binary.fail())
     {
@@ -397,4 +395,27 @@ void PointCloudProcessing::WritePLY(const std::string& filename, std::vector<Poi
 
     //Write a binary file
     cube_file.write(outstream_binary, true);
+}
+
+
+std::vector<std::string> PointCloudProcessing::SplitString(std::string str, char splitter)
+{
+    std::vector<std::string> result;
+    std::string current = "";
+    for (int i = 0; i < str.size(); i++)
+    {
+        if (str[i] == splitter)
+        {
+            if (current != "")
+            {
+                result.push_back(current);
+                current = "";
+            }
+            continue;
+        }
+        current += str[i];
+    }
+    if (current.size() != 0)
+        result.push_back(current);
+    return result;
 }

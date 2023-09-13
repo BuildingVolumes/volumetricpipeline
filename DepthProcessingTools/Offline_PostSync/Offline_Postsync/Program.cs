@@ -9,7 +9,7 @@ public class OfflinePostSync
 {
     static void Main(string[] args)
     {
-        string pathToCapture = "D:\\Test";
+        string pathToCapture = "C:\\OP_Entnahme_Verschluss_0\\";
         string[] clientFolders = Directory.GetDirectories(pathToCapture, "client_*");
         List<ClientData> clientData = new List<ClientData>();
 
