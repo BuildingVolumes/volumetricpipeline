@@ -3,9 +3,9 @@
 
 typedef struct RGB
 {
-    char   rgbBlue;
-    char    rgbGreen;
     char    rgbRed;
+    char    rgbGreen;
+    char   rgbBlue;
     char    rgbReserved;
 } RGB;
 

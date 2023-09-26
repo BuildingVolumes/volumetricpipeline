@@ -34,7 +34,7 @@ void GetVerticesFromRawImages(ClientData& clientData, int imageIndex, PointCloud
 
 int main()
 {
-	std::string pathToCapture = "C:\\OP_Entnahme_Verschluss_0\\";
+	std::string pathToCapture = "C:\\Users\\Christopher\\Desktop\\ChrisReading_0\\";
 	PointCloudProcessing pcProcessor;
 	std::vector<ClientData> clients = LoadClientData(pathToCapture, pcProcessor);
 
@@ -98,10 +98,10 @@ std::vector<ClientData> LoadClientData(std::filesystem::path pathToCapture, Poin
 
 		for (const auto& entry : std::filesystem::directory_iterator(client.clientPath.string()))
 		{
-			if (entry.path().string().find("synced_color") != std::string::npos)
+			if (entry.path().string().find("Color") != std::string::npos || entry.path().string().find("synced_color") != std::string::npos)
 				client.colorFiles.push_back(entry.path().string());
 
-			if (entry.path().string().find("synced_depth") != std::string::npos)
+			if (entry.path().string().find("Depth") != std::string::npos || entry.path().string().find("synced_depth") != std::string::npos)
 				client.depthFiles.push_back(entry.path().string());
 		}
 
