@@ -1,1 +1,1 @@
-This programm needs the opencv_world_320.dll and opencv_world_320d.dll from the Livescan repo in the project folder (OfflineK4AImage_ToPointcloud) and the Kinect Azure 1.41 package from the Nuget Manager needs to be reinstalled to work
+The Kinect Azure 1.41 package from the Nuget Manager needs to be reinstalled in Visual Studio for this solution to build properly.

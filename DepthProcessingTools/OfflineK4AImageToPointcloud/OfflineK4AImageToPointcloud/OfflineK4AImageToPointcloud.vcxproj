@@ -150,6 +150,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="FileUtils.h" />
     <ClCompile Include="OfflineK4AImageToPointcloud.cpp" />
     <ClCompile Include="PointCloudProcessor.cpp" />
     <ClCompile Include="tinyply.cpp" />
