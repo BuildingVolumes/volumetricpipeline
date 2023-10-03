@@ -10,7 +10,7 @@
 #include "Math.h"
 #include <filesystem>
 #include "PointCloudProcessing.h"
-
+#include <Windows.h>
 
 class ClientData
 {
