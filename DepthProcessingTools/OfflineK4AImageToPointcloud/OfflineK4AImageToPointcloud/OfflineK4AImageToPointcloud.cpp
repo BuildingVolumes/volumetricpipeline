@@ -10,7 +10,7 @@
 #include "Math.h"
 #include <filesystem>
 #include "PointCloudProcessing.h"
-
+#include <Windows.h>
 
 class ClientData
 {
@@ -37,7 +37,15 @@ int main()
 	std::string pathToCapture = "C:\\Users\\Christopher\\Desktop\\ChrisReading_0\\";
 	PointCloudProcessing pcProcessor;
 	std::vector<ClientData> clients = LoadClientData(pathToCapture, pcProcessor);
-
+	
+	std::string outpathToCapture = pathToCapture+"out";
+	if (CreateDirectoryA(outpathToCapture.c_str(), NULL)) {
+		std::cout << "Folder created successfully!" << std::endl;
+	}
+	else {
+		std::cout << "Failed to create folder: " << outpathToCapture << std::endl;
+	}
+	
 	int i = 0;
 
 	for (size_t i = 0; i < clients[0].colorFiles.size(); i++)
