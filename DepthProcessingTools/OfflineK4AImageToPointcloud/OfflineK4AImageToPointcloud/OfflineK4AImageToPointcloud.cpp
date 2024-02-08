@@ -106,10 +106,10 @@ std::vector<ClientData> LoadClientData(std::filesystem::path pathToCapture, Poin
 
 		for (const auto& entry : std::filesystem::directory_iterator(client.clientPath.string()))
 		{
-			if (entry.path().string().find("Color") != std::string::npos || entry.path().string().find("synced_color") != std::string::npos)
-				client.colorFiles.push_back(entry.path().string());
+			if (entry.path().string().find("Color_") != std::string::npos || entry.path().string().find("synced_color_") != std::string::npos) //Bug: This could also mean just finding "Color_" anywhere in the path (folder name)
+				client.colorFiles.push_back(entry.path().string()); 
 
-			if (entry.path().string().find("Depth") != std::string::npos || entry.path().string().find("synced_depth") != std::string::npos)
+			if (entry.path().string().find("Depth_") != std::string::npos || entry.path().string().find("synced_depth_") != std::string::npos)
 				client.depthFiles.push_back(entry.path().string());
 		}
 
