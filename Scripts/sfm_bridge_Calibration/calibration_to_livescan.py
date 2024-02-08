@@ -58,6 +58,8 @@ for calib_file in calib_files:
     icp_matrix[2][2] = icp_matrix[2][2] * -1
     icp_matrix[2][3] = icp_matrix[2][3] * -1
 
+    icp_matrix = linalg.inv(icp_matrix)
+
     print("Writing Matrix: " + str(filename))
     write_transformation_mat_LiveScan(livescan_calib_path, filename, sfm_matrix, identity_matrix)
 
