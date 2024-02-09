@@ -10,10 +10,12 @@ def ShowImage(Mat, showColor):
         Mat = cv.applyColorMap(Mat, cv.COLORMAP_MAGMA)
 
     cv.imshow("Depth map window", Mat)
-    cv.waitKey(3)
+    k = cv.waitKey(0)
+    if(k == ord('q')):
+        quit()
 
 
-path = "C:/Users/FutureLab/Desktop/Depthmap_Filter_Test/Standard/client_0/"
+path = "C:/Users/Christopher/Desktop/Depthmap_Filter_Test/FlyingPixel/client_0/"
 
 files = fm.GetFiles(path, ".tiff")
 files = fm.SortFileList(files)
@@ -43,17 +45,24 @@ for f in files:
 
     # Get all the pixels that are more than 23mm away from the average value of the neighbor pixels
     # These are our flying pixels
-    ret, tres = cv.threshold(diff, 15, 255, 4)
+    ret, tres = cv.threshold(diff, 10, 255, 4)
     #ShowImage(tres, False)
 
     # Create a boolean mask from the flying pixel map, blur it to make it smoother
     tres = cv.normalize(tres, None, 0, 255, cv.NORM_MINMAX, cv.CV_8UC1)
-    blur2 = cv.blur(tres, (10,10))
-    ret2, tres2 = cv.threshold(blur2, 10, 255, 0)
+    blur2 = cv.blur(tres, (5,5))
+    ret2, tres2 = cv.threshold(blur2, 20, 255, 0)
     #ShowImage(tres2, False)
 
+    dilationShape = 1
+    dilatation_size = 2
+    element = cv.getStructuringElement(1, (2 * dilatation_size + 1, 2 * dilatation_size + 1),
+                                       (dilatation_size, dilatation_size))
+    dilatated = cv.dilate(tres2, element)
+
     # Invert the mask, so that the flying pixels are black and the rest is white
-    mask = cv.bitwise_not(tres2)
+    mask = cv.bitwise_not(dilatated)
+    ShowImage(mask, False)
 
     # Remove the flying pixels from the original depth image using the mask
     masked = cv.bitwise_and(depthMat, depthMat, mask= mask)
@@ -65,7 +74,9 @@ for f in files:
     digit = fm.GetDigitFromFilename(f)
 
     # Save the filtered depth image
-    cv.imwrite(outputDir + "/Depth_" + str(digit) + ".tiff", masked)
+    # cv.imwrite(outputDir + "/Depth_" + str(digit) + ".tiff", masked)
+
+    
 
 
 

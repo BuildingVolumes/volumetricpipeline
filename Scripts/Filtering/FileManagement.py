@@ -25,5 +25,6 @@ def CreateOutputDir(path, foldername):
 
 def GetDigitFromFilename(filename):
     digit = filename.split(".")[0]
-    digit = digit.split("_")[1]
+    split_digit = digit.split("_")
+    digit = split_digit[len(split_digit) - 1]
     return digit
