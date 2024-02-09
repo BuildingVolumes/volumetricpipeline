@@ -34,7 +34,7 @@ void GetVerticesFromRawImages(ClientData& clientData, int imageIndex, PointCloud
 
 int main()
 {
-	std::string pathToCapture = "C:\\Users\\Christopher\\Desktop\\ChrisReading_0\\";
+	std::string pathToCapture = "C:\\Users\\Christopher\\Desktop\\Depthmap_Filter_Test\\TempFilter\\";
 	PointCloudProcessing pcProcessor;
 	std::vector<ClientData> clients = LoadClientData(pathToCapture, pcProcessor);
 	
@@ -141,6 +141,7 @@ void GetVerticesFromRawImages(ClientData& clientData, int imageIndex, PointCloud
 	pcProcessor.GetK4AImageFromFile(colorImagePath, colorImage);
 	pcProcessor.GetK4AImageFromFile(depthImagePath, depthImage);
 
+	depthImage = pcProcessor.RemoveFlyingPixels(depthImage, 10, 20, 2);
 	pcProcessor.CreatePointcloudFromK4AImage(colorImage, depthImage, clientData.transformation, clientData.calibrationMatrix, clientData.vertices, clientData.colors);
 
 	k4a_image_release(colorImage);

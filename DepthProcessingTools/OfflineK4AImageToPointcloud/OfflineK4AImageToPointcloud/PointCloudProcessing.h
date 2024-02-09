@@ -29,6 +29,7 @@ public:
     Matrix4x4 LoadOpen3DExtrinsics(const int clientNumber, std::filesystem::path pathToCapture);
     void CreatePointcloudFromK4AImage(k4a_image_t colorImage, k4a_image_t depthImage, k4a_transformation_t transformation, Matrix4x4 extrinsics, std::vector<Point3f>*& outVertices, std::vector<RGB>*& outVerticeColors);
     k4a_image_t TransformDepthToColor(k4a_image_t& depthImage, int colorHeight, int colorWidth, k4a_transformation_t transformation);
+    k4a_image_t RemoveFlyingPixels(k4a_image_t depthImage, int flyingPixelDistancemm, int treshold, int dilationSize);
 
 };
 
